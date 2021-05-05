@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="unit">
+    <test name="unit-test">
+        <packages>
+            <package name="com.facebook.presto.s3.unit"/>
+        </packages>
+    </test>
+</suite>
+

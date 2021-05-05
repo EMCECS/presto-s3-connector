@@ -1,0 +1,74 @@
+{
+  "schemas": [
+    {
+      "schemaTableName": {
+        "schema_name": "bogusdb",
+        "table_name": "bogusBucketTable"
+      },
+      "s3Table": {
+        "name": "bogusBucketTable",
+        "columns": [
+          {
+            "name": "Name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "IQ",
+            "type": "INTEGER"
+          }
+       ],
+        "sources": {"BogusBucket": ["bogusBucket.csv"] },
+        "objectDataFormat": "csv",
+        "hasHeaderRow": "true",
+        "recordDelimiter": "\n"
+      }
+    },
+    {
+      "schemaTableName": {
+        "schema_name": "bogusdb",
+        "table_name": "bogusObjectTable"
+      },
+      "s3Table": {
+        "name": "bogusObjectTable",
+        "columns": [
+          {
+            "name": "Name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "ShoeSize",
+            "type": "DOUBLE"
+          }
+       ],
+        "sources": {"testbucket": ["bogusTable.csv"] },
+        "objectDataFormat": "csv",
+        "hasHeaderRow": "true",
+        "recordDelimiter": "\n"
+      }
+    },
+    {
+      "schemaTableName": {
+        "schema_name": "bogusdb",
+        "table_name": "bogusObjectFormat"
+      },
+      "s3Table": {
+        "name": "bogusObjectFormat",
+        "columns": [
+          {
+            "name": "Name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "HairColor",
+            "type": "VARCHAR"
+          }
+       ],
+        "sources": {"testbucket": ["datafile.txt"] },
+        "objectDataFormat": "txt",
+        "hasHeaderRow": "false",
+        "recordDelimiter": "\n"
+      }
+    }
+  ]
+}
+
