@@ -21,7 +21,7 @@ import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.decoder.DispatchingRowDecoderFactory;
 import com.facebook.presto.decoder.RowDecoder;
-import com.facebook.presto.s3.csv.CsvRowDecoder;
+import com.facebook.presto.s3.decoder.CsvRowDecoder;
 import com.facebook.presto.spi.*;
 import com.facebook.presto.spi.connector.ConnectorPageSourceProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;

@@ -1,0 +1,33 @@
+Internal logging successfully configured to commons logger: true
+Admin mbean registered under com.amazonaws.management:type=AwsSdkMetrics
+Configuration override awssdk_config_override.json not found.
+Unable to load configuration from com.amazonaws.monitoring.EnvironmentVariableCsmConfigurationProvider@402adc9c: Unable to load Client Side Monitoring configurations from environment variables!
+Unable to load configuration from com.amazonaws.monitoring.SystemPropertyCsmConfigurationProvider@70313b0b: Unable to load Client Side Monitoring configurations from system properties variables!
+Closing connections idle longer than 60000 MILLISECONDS
+Unable to load configuration from com.amazonaws.monitoring.ProfileCsmConfigurationProvider@5da16ed6: The 'default' profile does not define all the required properties!
+Sending Request: GET http://10.247.179.136:9020/ / Headers: (amz-sdk-invocation-id: b179f33e-0e10-dcf2-630d-2bf4f51b7841, Content-Type: application/octet-stream, User-Agent: aws-sdk-java/1.11.871 Linux/5.8.0-50-generic OpenJDK_64-Bit_Server_VM/25.292-b10 java/1.8.0_292 vendor/Private_Build, ) 
+AWS4 Canonical Request: '"GET
+/
+
+amz-sdk-invocation-id:b179f33e-0e10-dcf2-630d-2bf4f51b7841
+amz-sdk-request:attempt=1;max=4
+amz-sdk-retry:0/0/500
+content-type:application/octet-stream
+host:10.247.179.136:9020
+user-agent:aws-sdk-java/1.11.871 Linux/5.8.0-50-generic OpenJDK_64-Bit_Server_VM/25.292-b10 java/1.8.0_292 vendor/Private_Build
+x-amz-content-sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+x-amz-date:20210513T220735Z
+
+amz-sdk-invocation-id;amz-sdk-request;amz-sdk-retry;content-type;host;user-agent;x-amz-content-sha256;x-amz-date
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+AWS4 String to Sign: '"AWS4-HMAC-SHA256
+20210513T220735Z
+20210513/us-east-1/s3/aws4_request
+d997dee52f5bf01fe7e605540dbca6d88b05bd3d3f47869ff809c89529ffd4ed"
+Generating a new signing key as the signing key not available in the cache for the date 1620864000000
+CookieSpec selected: default
+Auth cache not set in the context
+Connection request: [route: {}->http://10.247.179.136:9020][total kept alive: 0; route allocated: 0 of 500; total allocated: 0 of 500]
+Connection leased: [id: 0][route: {}->http://10.247.179.136:9020][total kept alive: 0; route allocated: 1 of 500; total allocated: 1 of 500]
+Opening connection {}->http://10.247.179.136:9020
+Connecting to /10.247.179.136:9020

@@ -66,8 +66,8 @@ public final class S3TableHandle
         this.tableBucketName = requireNonNull(tableBucketName, "tableBucketName is null");
         this.tableBucketPrefix = tableBucketPrefix != null ? tableBucketPrefix : "/";
         // TODO: https://github.com/EMCECS/presto-s3-connector/issues/17
-        this.bucketObjectsMap = requireNonNull(bucketObjectsMap, "bucketObjectsMap is null");
-//        this.bucketObjectsMap = bucketObjectsMap;
+//        this.bucketObjectsMap = requireNonNull(bucketObjectsMap, "bucketObjectsMap is null");
+        this.bucketObjectsMap = bucketObjectsMap;
     }
 
     @JsonProperty
