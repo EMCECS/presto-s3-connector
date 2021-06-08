@@ -53,7 +53,7 @@ public final class S3TableHandle
             @JsonProperty("hasHeaderRow") String hasHeaderRow,
             @JsonProperty("tableBucketName") String tableBucketName,
             @JsonProperty("tableBucketPrefix") String tableBucketPrefix,
-            @JsonProperty("sources") Map<String, List<String>> bucketObjectsMap
+            @JsonProperty("bucketObjectsMap") Map<String, List<String>> bucketObjectsMap
             )
     {
         this.connectorId = requireNonNull(connectorId, "connectorId is null");
@@ -66,8 +66,7 @@ public final class S3TableHandle
         this.tableBucketName = requireNonNull(tableBucketName, "tableBucketName is null");
         this.tableBucketPrefix = tableBucketPrefix != null ? tableBucketPrefix : "/";
         // TODO: https://github.com/EMCECS/presto-s3-connector/issues/17
-//        this.bucketObjectsMap = requireNonNull(bucketObjectsMap, "bucketObjectsMap is null");
-        this.bucketObjectsMap = bucketObjectsMap;
+        this.bucketObjectsMap = requireNonNull(bucketObjectsMap, "bucketObjectsMap is null");
     }
 
     @JsonProperty
@@ -109,7 +108,7 @@ public final class S3TableHandle
     }
 
     @JsonProperty
-    public String getTablePrefix() {
+    public String getTableBucketPrefix() {
         return tableBucketPrefix;
     }
 
