@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableMap;
 
 import com.facebook.presto.s3.*;
 
-import com.facebook.airlift.log.Logger;
 import com.facebook.airlift.log.Logging;
 import com.facebook.airlift.log.LoggingConfiguration;
 
