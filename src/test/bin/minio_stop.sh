@@ -24,6 +24,3 @@ do
         echo "Remove container $image" && docker rm $image
     fi
 done
-
-# IMAGES=$(docker images | grep $image | awk '{print $3}' | tr '\012' ' ')
-# [[ ! -z "$IMAGES" ]] && docker rmi $IMAGES 
