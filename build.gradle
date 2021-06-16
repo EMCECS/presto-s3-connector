@@ -45,6 +45,7 @@ repositories {
 dependencies {
     compile 'org.glassfish.hk2.external:jakarta.inject:2.6.1'
     compile 'jakarta.validation:jakarta.validation-api:2.0.2'
+//    compile 'com.fasterxml.jackson.core:jackson-core:2.10.0'
     compile 'com.facebook.airlift:bootstrap:0.198'
     implementation('javax.annotation:javax.annotation-api') {
         version {
@@ -106,6 +107,26 @@ dependencies {
         }
     }
     compile 'com.facebook.airlift:log-manager:0.198'
+    implementation('org.slf4j:slf4j-jdk14') {
+        version {
+            strictly '1.7.25'
+        }
+    }//runtime
+    implementation('org.slf4j:log4j-over-slf4j') {
+        version {
+            strictly '1.7.25'
+        }
+    }//runtime
+    implementation('org.slf4j:jcl-over-slf4j') {
+        version {
+            strictly '1.7.25'
+        }
+    }//runtime
+    implementation('ch.qos.logback:logback-core') {
+        version {
+            strictly '1.2.3'
+        }
+    }
     compile 'com.google.guava:guava:26.0-jre'
     implementation('com.google.code.findbugs:jsr305') {
         version {
@@ -132,6 +153,7 @@ dependencies {
             strictly '1.14'
         }
     }
+//    compile 'com.facebook.airlift:jaxrs:0.198'
     compile 'com.google.inject:guice:4.2.2'
     implementation('aopalliance:aopalliance') {
         version {
@@ -408,12 +430,18 @@ dependencies {
     }//compile
     compile 'org.weakref:jmxutils:1.19'
     compile 'com.facebook.presto:presto-parquet:0.248'
+    implementation('com.facebook.presto.hive:hive-apache') {
+        version {
+            strictly '1.2.2-2'
+        }
+    }//compile
     compile 'com.facebook.presto:presto-memory-context:0.248'
     compile 'com.facebook.presto.hadoop:hadoop-apache2:2.7.4-8'
     compile 'com.facebook.presto:presto-main:0.248'
 
     runtime 'javax.xml.bind:jaxb-api:2.3.0'
     runtime 'io.airlift:joda-to-java-time-bridge:3'
+    runtime 'org.slf4j:slf4j-simple:1.7.5'
     runtime 'com.emc.ecs:smart-client:2.2.1'
     implementation('com.sun.jersey:jersey-client') {
         version {
@@ -570,11 +598,19 @@ dependencies {
     }//runtime
     runtime 'io.pravega:pravega-common:0.9.0'
 
+//    compile 'com.sun.xml.bind:jaxb-core:2.3.0'
+//    compile 'com.sun.xml.bind:jaxb-impl:2.3.0'
+//    compile 'org.slf4j:slf4j-simple:1.7.5'
+
     testImplementation 'com.facebook.presto:presto-tests:0.249'
     testImplementation 'org.eclipse.jetty:jetty-server:9.4.14.v20181114'
     testImplementation 'org.testng:testng:6.10'
     testImplementation 'com.facebook.airlift:testing:0.198'
 }
+
+/*
+    testImplementation "io.pravega:schemaregistry-common:${pravegaSchemaRegistryVersion}"
+*/
 
 group = 'com.facebook.presto'
 version = '0.1.0'
