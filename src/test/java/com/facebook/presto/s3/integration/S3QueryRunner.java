@@ -64,9 +64,9 @@ public class S3QueryRunner {
             queryRunner.installPlugin(new S3Plugin());
             Map<String, String> s3Properties = ImmutableMap.<String, String>builder()
                     .put("s3.s3SchemaFileLocationDir", "src/test/resources")
-                    .put("s3.s3Port", "9000")
-                    .put("s3.s3UserKey", "AKIAIOSFODNN7EXAMPLE")
-                    .put("s3.s3UserSecretKey", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")
+                    .put("s3.s3Port", "8000")
+                    .put("s3.s3UserKey", "accessKey1")
+                    .put("s3.s3UserSecretKey", "verySecretKey1")
                     .put("s3.s3Nodes", "127.0.0.1")
                     .put("s3.schemaRegistryServerIP", "127.0.0.1")
                     .put("s3.schemaRegistryPort", "9092")

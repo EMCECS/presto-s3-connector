@@ -49,8 +49,8 @@ public class S3QueryTest
     public void setUp()
             throws Exception {
     try {
-        String[] cmd = { "sh", "src/test/bin/minio_start.sh" };
-        System.out.println("Start minio server and load data");
+        String[] cmd = { "sh", "src/test/bin/s3_start.sh" };
+        System.out.println("Start s3 server and load data");
         this.p1 = Runtime.getRuntime().exec(cmd);
         Thread.sleep(20000);
         queryRunner = createQueryRunner();
@@ -61,7 +61,7 @@ public class S3QueryTest
                 cmdOut = output.readLine();
             }
         } catch (Exception e) {
-            System.out.println("Exception starting minio: " + e.toString());
+            System.out.println("Exception starting s3 server: " + e.toString());
             throw e;
         }
 
@@ -253,130 +253,101 @@ public class S3QueryTest
 
 
     @Test (dependsOnMethods = "testShowSchema")
-    public void testCreateDB() {
-        log.info("Test: testCreateDB");
+    public void testCreateSchema() {
+        log.info("Test: testCreateSchema");
 
-        int DBCountBefore =  queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount();
-        queryRunner.execute("CREATE SCHEMA s3.newdb");
+        int SchemaCountBefore =  queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount();
+        queryRunner.execute("CREATE SCHEMA s3.newschema");
         log.info(queryRunner.execute("SHOW SCHEMAS IN s3").getMaterializedRows().toString());
-        assertEquals(DBCountBefore + 1, queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount());
+        assertEquals(SchemaCountBefore + 1, queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount());
     }
 
     @Test (dependsOnMethods = "testDropTable")
-    public void testDropDB() {
-        log.info("Test: testDropDB");
+    public void testDropSchema() {
+        log.info("Test: testDropSchema");
 
-        int DBCountBefore =  queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount();
-        queryRunner.execute("DROP SCHEMA s3.newdb");
+        int SchemaCountBefore =  queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount();
+        queryRunner.execute("DROP SCHEMA s3.newschema");
         log.info(queryRunner.execute("SHOW SCHEMAS IN s3").getMaterializedRows().toString());
-        assertEquals(DBCountBefore - 1, queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount());
+        assertEquals(SchemaCountBefore - 1, queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount());
     }
 
-    @Test(dependsOnMethods = "testCreateDB")
+    @Test(dependsOnMethods = "testCreateSchema")
     public void testCreateTable() {
         log.info("Test: testCreateTable");
-        queryRunner.execute("CREATE TABLE s3.newdb.table123 (id123 bigint, name123 varchar, balance123 double) WITH (FORMAT='CSV', has_header_row = 'false', external_location='s3a://testbucket/TestData/')");
-        assertEquals(queryRunner.execute("DESCRIBE s3.newdb.table123").getMaterializedRows().size(), 3);
+        queryRunner.execute("CREATE TABLE s3.newschema.csvtable (id123 bigint, name123 varchar, balance123 double) WITH (FORMAT='CSV', has_header_row = 'false', external_location='s3a://testbucket/TestData/')");
+        assertEquals(queryRunner.execute("DESCRIBE s3.newschema.csvtable").getMaterializedRows().size(), 3);
     }
 
     @Test(dependsOnMethods = "testCreateTable")
     public void testInsertRow() {
         log.info("Test: testInsertRow");
-        queryRunner.execute("INSERT INTO s3.newdb.table123 VALUES (100, 'GEORGE', 20.0)");
-        assertEquals(queryRunner.execute("SELECT * FROM s3.newdb.table123").getMaterializedRows().size(), 1);
+        queryRunner.execute("INSERT INTO s3.newschema.csvtable VALUES (100, 'GEORGE', 20.0)");
+        assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.csvtable").getMaterializedRows().size(), 1);
     }
 
     @Test(dependsOnMethods = "testInsertRow")
     public void testCTASInsertRow() {
         log.info("Test: testCTASInsertRow");
-        queryRunner.execute("CREATE TABLE s3.newdb.table456 WITH (has_header_row='false', FORMAT='CSV', external_location='s3a://testbucket/TestData1') as select * from s3.newdb.table123");
-        assertEquals(queryRunner.execute("SELECT * FROM s3.newdb.table456").getMaterializedRows().size(), 1);
+        queryRunner.execute("CREATE TABLE s3.newschema.csvtable1 WITH (has_header_row='false', FORMAT='CSV', external_location='s3a://testbucket/TestData1') as select * from s3.newschema.csvtable");
+        assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.csvtable1").getMaterializedRows().size(), 1);
     }
 
     @Test (dependsOnMethods = "testCTASInsertRow")
     public void testDropTable() {
         log.info("Test: testDropTable");
-        queryRunner.execute("DROP TABLE s3.newdb.table123");
-        List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newdb").getMaterializedRows();
+        queryRunner.execute("DROP TABLE s3.newschema.csvtable1");
+        queryRunner.execute("DROP TABLE s3.newschema.csvtable");
+        List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newschema").getMaterializedRows();
         boolean foundTable = false;
         for (MaterializedRow row : rows) {
-            if (row.toString().contains("table123")) {
+            log.info("Test: testDropTable.  Found table: " + row.toString());
+            if (row.toString().contains("csvtable")) {
                 foundTable = true;
             }
         }
         assertFalse(foundTable);
     }
-    @Test (dependsOnMethods = "testShowSchema")
-    public void testCreateDBJson() {
-        log.info("Test: testCreateDBJson");
 
-        int DBCountBefore =  queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount();
-        queryRunner.execute("CREATE SCHEMA s3.newjsondb");
-        log.info(queryRunner.execute("SHOW SCHEMAS IN s3").getMaterializedRows().toString());
-        assertEquals(DBCountBefore + 1, queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount());
-    }
-
-    @Test (dependsOnMethods = "testDropTableJson")
-    public void testDropDBJson() {
-        log.info("Test: testDropDBJson");
-
-        int DBCountBefore =  queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount();
-        queryRunner.execute("DROP SCHEMA s3.newjsondb");
-        log.info(queryRunner.execute("SHOW SCHEMAS IN s3").getMaterializedRows().toString());
-        assertEquals(DBCountBefore - 1, queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount());
-    }
-
-    @Test(dependsOnMethods = "testCreateDBJson")
+    @Test(dependsOnMethods = "testCreateSchema")
     public void testCreateTableJson() {
         log.info("Test: testCreateTableJson");
-        queryRunner.execute("CREATE TABLE s3.newjsondb.table123 (id123 bigint, name123 varchar, balance123 double) WITH (FORMAT='JSON', has_header_row = 'false', external_location='s3a://testbucket/TestDataJson/')");
-        assertEquals(queryRunner.execute("DESCRIBE s3.newjsondb.table123").getMaterializedRows().size(), 3);
+        queryRunner.execute("CREATE TABLE s3.newschema.jsontable (id123 bigint, name123 varchar, balance123 double) WITH (FORMAT='JSON', has_header_row = 'false', external_location='s3a://testbucket/TestDataJson/')");
+        assertEquals(queryRunner.execute("DESCRIBE s3.newschema.jsontable").getMaterializedRows().size(), 3);
     }
 
     @Test(dependsOnMethods = "testCreateTableJson")
     public void testInsertRowJson() {
         log.info("Test: testInsertRowJson");
-        queryRunner.execute("INSERT INTO s3.newjsondb.table123 VALUES (100, 'GEORGE', 20.0)");
-        assertEquals(queryRunner.execute("SELECT * FROM s3.newjsondb.table123").getMaterializedRows().size(), 1);
+        queryRunner.execute("INSERT INTO s3.newschema.jsontable VALUES (100, 'GEORGE', 20.0)");
+        assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.jsontable").getMaterializedRows().size(), 1);
     }
 
     @Test(dependsOnMethods = "testInsertRowJson")
     public void testCTASInsertRowJson() {
         log.info("Test: testCTASInsertRowJson");
-        queryRunner.execute("CREATE TABLE s3.newjsondb.table456 WITH (has_header_row='false', FORMAT='JSON', external_location='s3a://testbucket/TestDataJson1') as select * from s3.newjsondb.table123");
-        assertEquals(queryRunner.execute("SELECT * FROM s3.newjsondb.table456").getMaterializedRows().size(), 1);
+        queryRunner.execute("CREATE TABLE s3.newschema.jsontable1 WITH (has_header_row='false', FORMAT='JSON', external_location='s3a://testbucket/TestDataJson1') as select * from s3.newschema.jsontable");
+        assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.jsontable1").getMaterializedRows().size(), 1);
     }
 
     @Test (dependsOnMethods = "testCTASInsertRowJson")
     public void testDropTableJson() {
         log.info("Test: testDropTableJson");
-        queryRunner.execute("DROP TABLE s3.newjsondb.table123");
-        List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newjsondb").getMaterializedRows();
+        queryRunner.execute("DROP TABLE s3.newschema.jsontable");
+        queryRunner.execute("DROP TABLE s3.newschema.jsontable1 ");
+        List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newschema").getMaterializedRows();
         boolean foundTable = false;
         for (MaterializedRow row : rows) {
-            if (row.toString().contains("table123")) {
+            log.info("Test: testDropTableJson.  Found table: " + row.toString());
+            if (row.toString().contains("jsontable")) {
                 foundTable = true;
             }
         }
         assertFalse(foundTable);
     }
 
-    @Test
-    public void testS3Select() throws Exception
-    {
-        // i think maybe there is some minio bug with s3 select where it always skips first line in file
-        // maybe it always assumes that there is a header row even though we send IGNORE?
-        // there are 3 records in this table here but only 2 would be returned
-        // this query here works but just a note for any future tests added
-        log.info("Test: testS3Select");
-        QueryRunner s3SelectRunner = createQueryRunner(true);
-        assertTrue(s3SelectEnabledForSession(s3SelectRunner.getDefaultSession()));
-        assertEquals(s3SelectRunner.execute("SELECT * FROM s3.studentdb.names where first = 'joe'").getRowCount(), 1);
-    }
-
-    //
     @Test (expectedExceptions = {RuntimeException.class},
-            expectedExceptionsMessageRegExp = ".*Error Code: 404 Not Found.*")
+            expectedExceptionsMessageRegExp = ".*Error Code: InvalidBucketName.*")
     public void testSchemaConfigBadBucket() {
         log.info("Test: testSchemaConfigBadBucket");
         queryRunner.execute("SELECT * FROM s3.bogusdb.bogusBucketTable");
@@ -421,7 +392,7 @@ public class S3QueryTest
     @AfterClass
     public void shutdown()
             throws Exception {
-        System.out.println("Stop query runners, schema registry and minio server");
+        System.out.println("Stop query runners, schema registry and s3 server");
         queryRunner.close();
         queryRunner= null;
         Process p3;
@@ -429,11 +400,11 @@ public class S3QueryTest
 
         if (p1 != null) {
             try {
-                String[] cmd = { "sh", "src/test/bin/minio_stop.sh" };
+                String[] cmd = { "sh", "src/test/bin/s3_stop.sh" };
                 p3 = Runtime.getRuntime().exec(cmd);
                 p3.waitFor();
             } catch (Exception e) {
-                System.out.println("Exception stopping query runner and minio: " + e.toString());
+                System.out.println("Exception stopping query runner and s3 server: " + e.toString());
                 throw e;
             }
         }

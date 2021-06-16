@@ -74,7 +74,7 @@ public class S3Const
             Arrays.asList(CSV, TEXT, AVRO, JSON, PARQUET)
     );
     private static final List<String> validFormatsInsert = new ArrayList<>(
-            Arrays.asList(CSV)
+            Arrays.asList(CSV, JSON)
     );
 
     public S3Const()
