@@ -47,7 +47,7 @@ jobs:
           path: ${{env.BUILD_CACHE_PATH}}
           key: ${{github.run_id}}
       - name: Integration Tests
-        run: ./gradlew -Pintegration test
+        run: ./gradlew --info -Pintegration test
 
   build_and_test_complete:
     name: CI Complete
