@@ -45,218 +45,61 @@ repositories {
 dependencies {
     compile 'org.glassfish.hk2.external:jakarta.inject:2.6.1'
     compile 'jakarta.validation:jakarta.validation-api:2.0.2'
-//    compile 'com.fasterxml.jackson.core:jackson-core:2.10.0'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.10.0'
     compile 'com.facebook.airlift:bootstrap:0.198'
-    implementation('javax.annotation:javax.annotation-api') {
-        version {
-            strictly '1.3.1'
-        }
-    }
-    implementation('javax.inject:javax.inject') {
-        version {
-            strictly '1'
-        }
-    }
+    compile 'javax.annotation:javax.annotation-api:1.3.1'
+    compile 'javax.inject:javax.inject:1'
     compile 'com.facebook.airlift:json:0.198'
-    implementation('com.fasterxml.jackson.core:jackson-core') {
-        version {
-            strictly '2.10.0'
-        }
-    }
-    implementation('com.fasterxml.jackson.datatype:jackson-datatype-jdk8') {
-        version {
-            strictly '2.10.0'
-        }
-    }
-    implementation('com.fasterxml.jackson.datatype:jackson-datatype-jsr310') {
-        version {
-            strictly '2.10.0'
-        }
-    }
-    implementation('com.fasterxml.jackson.datatype:jackson-datatype-guava') {
-        version {
-            strictly '2.10.0'
-        }
-    }
-    implementation('com.fasterxml.jackson.datatype:jackson-datatype-joda') {
-        version {
-            strictly '2.10.0'
-        }
-    }
-    implementation('com.fasterxml.jackson.module:jackson-module-parameter-names') {
-        version {
-            strictly '2.10.0'
-        }
-    }
+    compile 'com.fasterxml.jackson.core:jackson-core:2.10.0'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.10.0'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.0'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-guava:2.10.0'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.10.0'
+    compile 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.10.0'
     compile 'com.facebook.airlift:log:0.198'
     compile 'com.facebook.airlift:concurrent:0.198'
     compile 'com.facebook.airlift:configuration:0.198'
-    implementation('javax.validation:validation-api') {
-        version {
-            strictly '2.0.1.Final'
-        }
-    }
-    implementation('org.apache.bval:bval-jsr') {
-        version {
-            strictly '2.0.0'
-        }
-    }
-    implementation('cglib:cglib-nodep') {
-        version {
-            strictly '3.2.5'
-        }
-    }
+    compile 'javax.validation:validation-api:2.0.1.Final'
+    compile 'org.apache.bval:bval-jsr:2.0.0'
+    compile 'cglib:cglib-nodep:3.2.5'
     compile 'com.facebook.airlift:log-manager:0.198'
-    implementation('org.slf4j:slf4j-jdk14') {
-        version {
-            strictly '1.7.25'
-        }
-    }//runtime
-    implementation('org.slf4j:log4j-over-slf4j') {
-        version {
-            strictly '1.7.25'
-        }
-    }//runtime
-    implementation('org.slf4j:jcl-over-slf4j') {
-        version {
-            strictly '1.7.25'
-        }
-    }//runtime
-    implementation('ch.qos.logback:logback-core') {
-        version {
-            strictly '1.2.3'
-        }
-    }
+    compile 'org.slf4j:slf4j-jdk14:1.7.25'
+    compile 'org.slf4j:log4j-over-slf4j:1.7.25'
+    compile 'org.slf4j:jcl-over-slf4j:1.7.25'
+    compile 'ch.qos.logback:logback-core:1.2.3'
     compile 'com.google.guava:guava:26.0-jre'
-    implementation('com.google.code.findbugs:jsr305') {
-        version {
-            strictly '3.0.2'
-        }
-    }
-    implementation('org.checkerframework:checker-qual') {
-        version {
-            strictly '2.5.2'
-        }
-    }
-    implementation('com.google.errorprone:error_prone_annotations') {
-        version {
-            strictly '2.1.3'
-        }
-    }
-    implementation('com.google.j2objc:j2objc-annotations') {
-        version {
-            strictly '1.1'
-        }
-    }
-    implementation('org.codehaus.mojo:animal-sniffer-annotations') {
-        version {
-            strictly '1.14'
-        }
-    }
-//    compile 'com.facebook.airlift:jaxrs:0.198'
+    compile 'com.google.code.findbugs:jsr305:3.0.2'
+    compile 'org.checkerframework:checker-qual:2.5.2'
+    compile 'com.google.errorprone:error_prone_annotations:2.1.3'
+    compile 'com.google.j2objc:j2objc-annotations:1.1'
+    compile 'org.codehaus.mojo:animal-sniffer-annotations:1.14'
+    compile 'com.facebook.airlift:jaxrs:0.198'
     compile 'com.google.inject:guice:4.2.2'
-    implementation('aopalliance:aopalliance') {
-        version {
-            strictly '1.0'
-        }
-    }
-    compile 'com.amazonaws:aws-java-sdk-s3:1.11.697'
-    implementation('com.amazonaws:aws-java-sdk-kms') {
-        version {
-            strictly '1.11.697'
-        }
-    }
-    implementation('com.amazonaws:jmespath-java') {
-        version {
-            strictly '1.11.697'
-        }
-    }
+    compile 'aopalliance:aopalliance:1.0'
+    compile 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
+    compile 'com.amazonaws:aws-java-sdk-kms:1.11.1034'
+    compile 'com.amazonaws:jmespath-java:1.11.1034'
     compile 'com.facebook.drift:drift-api:1.32'
-    compile 'com.amazonaws:aws-java-sdk-core:1.11.697'
-    implementation('software.amazon.ion:ion-java') {
-        version {
-            strictly '1.0.2'
-        }
-    }
-    implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor') {
-        version {
-            strictly '2.6.7'
-        }
-    }
+    compile 'com.amazonaws:aws-java-sdk-core:1.11.1034'
+    compile 'software.amazon.ion:ion-java:1.0.2'
+    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.6.7'
     compile 'com.facebook.airlift:http-server:0.198'
     compile 'javax.ws.rs:javax.ws.rs-api:2.1'
     compile 'org.apache.avro:avro:1.8.1'
-    implementation('org.codehaus.jackson:jackson-core-asl') {
-        version {
-            strictly '1.9.13'
-        }
-    }
-    implementation('org.codehaus.jackson:jackson-mapper-asl') {
-        version {
-            strictly '1.9.13'
-        }
-    }
-    implementation('com.thoughtworks.paranamer:paranamer') {
-        version {
-            strictly '2.7'
-        }
-    }
-    implementation('org.xerial.snappy:snappy-java') {
-        version {
-            strictly '1.1.7.1'
-        }
-    }
-    implementation('org.xerial.snappy:snappy-java') {
-        version {
-            strictly '1.1.7.1'
-        }
-    }
-    implementation('org.apache.commons:commons-compress') {
-        version {
-            strictly '1.8.1'
-        }
-    }
-    implementation('org.tukaani:xz') {
-        version {
-            strictly '1.5'
-        }
-    }
-    implementation('org.slf4j:slf4j-api') {
-        version {
-            strictly '1.7.25'
-        }
-    }
+    compile 'org.codehaus.jackson:jackson-core-asl:1.9.13'
+    compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.13'
+    compile 'com.thoughtworks.paranamer:paranamer:2.7'
+    compile 'org.xerial.snappy:snappy-java:1.1.7.1'
+    compile 'org.apache.commons:commons-compress:1.8.1'
+    compile 'org.tukaani:xz:1.5'
+    compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'com.opencsv:opencsv:4.6'
-    implementation('org.apache.commons:commons-lang3') {
-        version {
-            strictly '3.8.1'
-        }
-    }
-    implementation('org.apache.commons:commons-text') {
-        version {
-            strictly '1.3'
-        }
-    }
-    implementation('commons-beanutils:commons-beanutils') {
-        version {
-            strictly '1.9.3'
-        }
-    }
-    implementation('commons-logging:commons-logging') {
-        version {
-            strictly '1.2'
-        }
-    }
-    implementation('commons-collections:commons-collections') {
-        version {
-            strictly '3.2.2'
-        }
-    }
-    implementation('org.apache.commons:commons-collections4') {
-        version {
-            strictly '4.2'
-        }
-    }
+    compile 'org.apache.commons:commons-lang3:3.8.1'
+    compile 'org.apache.commons:commons-text:1.3'
+    compile 'commons-beanutils:commons-beanutils:1.9.3'
+    compile 'commons-logging:commons-logging:1.2'
+    compile 'commons-collections:commons-collections:3.2.2'
+    compile 'org.apache.commons:commons-collections4:4.2'
     compile 'net.sf.opencsv:opencsv:2.3'
     compile 'com.facebook.presto:presto-spi:0.248'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.10.0'
@@ -269,338 +112,93 @@ dependencies {
     compile 'com.facebook.presto:presto-common:0.248'
     compile 'com.facebook.presto:presto-record-decoder:0.248'
     compile 'com.emc.ecs:object-client:3.1.3'
-    implementation('commons-codec:commons-codec') {
-        version {
-            strictly '1.10'
-        }
-    }
+    compile 'commons-codec:commons-codec:1.10'
     compile 'io.pravega:schemaregistry-client:0.2.0'
-    implementation('io.pravega:schemaregistry-auth') {
-        version {
-            strictly '0.2.0'
-        }
-    }//compile
+    compile 'io.pravega:schemaregistry-auth:0.2.0'
     compile 'io.pravega:schemaregistry-contract:0.2.0'
-    implementation('javax.servlet:javax.servlet-api') {
-        version {
-            strictly '3.1.0'
-        }
-    }//compile
-    implementation('io.swagger:swagger-jersey2-jaxrs') {
-        version {
-            strictly '1.5.22'
-        }
-    }//compile
-    implementation('io.swagger:swagger-jaxrs') {
-        version {
-            strictly '1.5.22'
-        }
-    }//compile
-    implementation('io.swagger:swagger-core') {
-        version {
-            strictly '1.5.22'
-        }
-    }//compile
-    implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml') {
-        version {
-            strictly '2.10.0'
-        }
-    }//compile
-    implementation('org.yaml:snakeyaml') {
-        version {
-            strictly '1.24'
-        }
-    }//compile
-    implementation('io.swagger:swagger-models') {
-        version {
-            strictly '1.5.22'
-        }
-    }//compile
-    implementation('io.swagger:swagger-annotations') {
-        version {
-            strictly '1.5.22'
-        }
-    }//compile
-    implementation('org.reflections:reflections') {
-        version {
-            strictly '0.9.11'
-        }
-    }//compile
-    implementation('org.glassfish.jersey.media:jersey-media-multipart') {
-        version {
-            strictly '2.25.1'
-        }
-    }//compile
-    implementation('org.jvnet.mimepull:mimepull') {
-        version {
-            strictly '1.9.6'
-        }
-    }//compile
-    implementation('org.glassfish.jersey.containers:jersey-container-grizzly2-http') {
-        version {
-            strictly '2.30'
-        }
-    }//compile
-    implementation('org.glassfish.grizzly:grizzly-http-server') {
-        version {
-            strictly '2.4.4'
-        }
-    }//compile
-    implementation('org.glassfish.grizzly:grizzly-http') {
-        version {
-            strictly '2.4.4'
-        }
-    }//compile
-    implementation('org.glassfish.grizzly:grizzly-framework') {
-        version {
-            strictly '2.4.4'
-        }
-    }//compile
-    implementation('org.glassfish.jersey.media:jersey-media-json-jackson') {
-        version {
-            strictly '2.30'
-        }
-    }//compile
-    implementation('org.glassfish.jersey.ext:jersey-entity-filtering') {
-        version {
-            strictly '2.30'
-        }
-    }//compile
-    implementation('com.fasterxml.jackson.module:jackson-module-jaxb-annotations') {
-        version {
-            strictly '2.9.9'
-        }
-    }//compile
-    implementation('org.glassfish.jaxb:jaxb-runtime') {
-        version {
-            strictly '2.3.1'
-        }
-    }//compile
-    implementation('org.glassfish.jaxb:txw2') {
-        version {
-            strictly '2.3.1'
-        }
-    }//compile
-    implementation('com.sun.istack:istack-commons-runtime') {
-        version {
-            strictly '3.0.7'
-        }
-    }//compile
-    implementation('org.jvnet.staxex:stax-ex') {
-        version {
-            strictly '1.8'
-        }
-    }//compile
-    implementation('com.sun.xml.fastinfoset:FastInfoset') {
-        version {
-            strictly '1.2.15'
-        }
-    }//compile
-    implementation('javax.activation:javax.activation-api') {
-        version {
-            strictly '1.2.0'
-        }
-    }//compile
+    compile 'javax.servlet:javax.servlet-api:3.1.0'
+    compile 'io.swagger:swagger-jersey2-jaxrs:1.5.22'
+    compile 'io.swagger:swagger-jaxrs:1.5.22'
+    compile 'io.swagger:swagger-core:1.5.22'
+    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.10.0'
+    compile 'org.yaml:snakeyaml:1.24'
+    compile 'io.swagger:swagger-models:1.5.22'
+    compile 'io.swagger:swagger-annotations:1.5.22'
+    compile 'org.reflections:reflections:0.9.11'
+    compile 'org.glassfish.jersey.media:jersey-media-multipart:2.25.1'
+    compile 'org.jvnet.mimepull:mimepull:1.9.6'
+    compile 'org.glassfish.jersey.containers:jersey-container-grizzly2-http:2.30'
+    compile 'org.glassfish.grizzly:grizzly-http-server:2.4.4'
+    compile 'org.glassfish.grizzly:grizzly-http:2.4.4'
+    compile 'org.glassfish.grizzly:grizzly-framework:2.4.4'
+    compile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.30'
+    compile 'org.glassfish.jersey.ext:jersey-entity-filtering:2.30'
+    compile 'com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.9.9'
+    compile 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+    compile 'org.glassfish.jaxb:txw2:2.3.1'
+    compile 'com.sun.istack:istack-commons-runtime:3.0.7'
+    compile 'org.jvnet.staxex:stax-ex:1.8'
+    compile 'com.sun.xml.fastinfoset:FastInfoset:1.2.15'
+    compile 'javax.activation:javax.activation-api:1.2.0'
     compile 'org.apache.parquet:parquet-hadoop:1.10.0'
-    implementation('org.apache.parquet:parquet-format') {
-        version {
-            strictly '2.4.0'
-        }
-    }//compile
-    implementation('org.apache.parquet:parquet-jackson') {
-        version {
-            strictly '1.10.0'
-        }
-    }//compile
-    implementation('commons-pool:commons-pool') {
-        version {
-            strictly '1.6'
-        }
-    }//compile
+    compile 'org.apache.parquet:parquet-format:2.4.0'
+    compile 'org.apache.parquet:parquet-jackson:1.10.0'
+    compile 'commons-pool:commons-pool:1.6'
     compile 'org.apache.parquet:parquet-column:1.10.0'
-    implementation('org.apache.parquet:parquet-common') {
-        version {
-            strictly '1.10.0'
-        }
-    }//compile
-    implementation('org.apache.parquet:parquet-encoding') {
-        version {
-            strictly '1.10.0'
-        }
-    }//compile
+    compile 'org.apache.parquet:parquet-common:1.10.0'
+    compile 'org.apache.parquet:parquet-encoding:1.10.0'
     compile 'org.weakref:jmxutils:1.19'
     compile 'com.facebook.presto:presto-parquet:0.248'
-    implementation('com.facebook.presto.hive:hive-apache') {
-        version {
-            strictly '1.2.2-2'
-        }
-    }//compile
+    compile 'com.facebook.presto.hive:hive-apache:1.2.2-2'
     compile 'com.facebook.presto:presto-memory-context:0.248'
     compile 'com.facebook.presto.hadoop:hadoop-apache2:2.7.4-8'
     compile 'com.facebook.presto:presto-main:0.248'
-
     runtime 'javax.xml.bind:jaxb-api:2.3.0'
     runtime 'io.airlift:joda-to-java-time-bridge:3'
     runtime 'org.slf4j:slf4j-simple:1.7.5'
     runtime 'com.emc.ecs:smart-client:2.2.1'
-    implementation('com.sun.jersey:jersey-client') {
-        version {
-            strictly '1.19.4'
-        }
-    }//runtime
-    implementation('com.sun.jersey:jersey-core') {
-        version {
-            strictly '1.19.4'
-        }
-    }//runtime
-    implementation('javax.ws.rs:jsr311-api') {
-        version {
-            strictly '1.1.1'
-        }
-    }//runtime
-    implementation('com.sun.jersey.contribs:jersey-apache-client4') {
-        version {
-            strictly '1.19.4'
-        }
-    }//runtime
-    implementation('org.codehaus.jackson:jackson-jaxrs') {
-        version {
-            strictly '1.9.13'
-        }
-    }//runtime
-    implementation('org.codehaus.jackson:jackson-xc') {
-        version {
-            strictly '1.9.13'
-        }
-    }//runtime
-    implementation('org.apache.httpcomponents:httpclient') {
-        version {
-            strictly '4.5.5'
-        }
-    }//runtime
-    implementation('org.apache.httpcomponents:httpcore') {
-        version {
-            strictly '4.4.9'
-        }
-    }//runtime
-    implementation('com.sun.jersey:jersey-json') {
-        version {
-            strictly '1.19.4'
-        }
-    }//runtime
-    implementation('org.codehaus.jettison:jettison') {
-        version {
-            strictly '1.1'
-        }
-    }//runtime
-    implementation('com.sun.xml.bind:jaxb-impl') {
-        version {
-            strictly '2.2.3-1'
-        }
-    }//runtime
-    implementation('org.slf4j:slf4j-log4j12') {
-        version {
-            strictly '1.7.5'
-        }
-    }//runtime
-    implementation('log4j:log4j') {
-        version {
-            strictly '1.2.17'
-        }
-    }//runtime
+    compile 'com.sun.jersey:jersey-client:1.19.4'
+    compile 'com.sun.jersey:jersey-core:1.19.4'
+    compile 'javax.ws.rs:jsr311-api:1.1.1'
+    compile 'com.sun.jersey.contribs:jersey-apache-client4:1.19.4'
+    compile 'org.codehaus.jackson:jackson-jaxrs:1.9.13'
+    compile 'org.codehaus.jackson:jackson-xc:1.9.13'
+    compile 'org.apache.httpcomponents:httpclient:4.5.5'
+    compile 'org.apache.httpcomponents:httpcore:4.4.9'
+    compile 'com.sun.jersey:jersey-json:1.19.4'
+    compile 'org.codehaus.jettison:jettison:1.1'
+    compile 'com.sun.xml.bind:jaxb-impl:2.2.3-1'
+    compile 'org.slf4j:slf4j-log4j12:1.7.5'
+    compile 'log4j:log4j:1.2.17'
     runtime 'com.emc.ecs:object-transform:1.1.0'
-    implementation('org.b1.pack:lzma-sdk-4j') {
-        version {
-            strictly '9.22.0'
-        }
-    }//runtime
+    compile 'org.b1.pack:lzma-sdk-4j:9.22.0'
     runtime 'org.jdom:jdom2:2.0.6'
     runtime 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.30'
-    implementation('org.glassfish.jersey.core:jersey-server') {
-        version {
-            strictly '2.30'
-        }
-    }//compile
-    implementation('org.glassfish.jersey.media:jersey-media-jaxb') {
-        version {
-            strictly '2.30'
-        }
-    }//compile
-    implementation('jakarta.xml.bind:jakarta.xml.bind-api') {
-        version {
-            strictly '2.3.2'
-        }
-    }//compile
-    implementation('jakarta.activation:jakarta.activation-api') {
-        version {
-            strictly '1.2.1'
-        }
-    }//compile
-    implementation('jakarta.ws.rs:jakarta.ws.rs-api') {
-        version {
-            strictly '2.1.6'
-        }
-    }//compile
+    compile 'org.glassfish.jersey.core:jersey-server:2.30'
+    compile 'org.glassfish.jersey.media:jersey-media-jaxb:2.30'
+    compile 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.2'
+    compile 'jakarta.activation:jakarta.activation-api:1.2.1'
+    compile 'jakarta.ws.rs:jakarta.ws.rs-api:2.1.6'
     runtime 'org.glassfish.jersey.core:jersey-common:2.30'
-    implementation('jakarta.annotation:jakarta.annotation-api') {
-        version {
-            strictly '1.3.5'
-        }
-    }//compile
-    implementation('org.glassfish.hk2:osgi-resource-locator') {
-        version {
-            strictly '1.0.3'
-        }
-    }//compile
-    implementation('com.sun.activation:jakarta.activation') {
-        version {
-            strictly '1.2.1'
-        }
-    }//runtime
+    compile 'jakarta.annotation:jakarta.annotation-api:1.3.5'
+    compile 'org.glassfish.hk2:osgi-resource-locator:1.0.3'
+    compile 'com.sun.activation:jakarta.activation:1.2.1'
     runtime 'org.glassfish.jersey.ext:jersey-proxy-client:2.30'
     runtime 'org.glassfish.jersey.core:jersey-client:2.30'
     runtime 'org.glassfish.jersey.inject:jersey-hk2:2.30'
-    implementation('org.glassfish.hk2:hk2-locator') {
-        version {
-            strictly '2.6.1'
-        }
-    }//runtime
-    implementation('org.glassfish.hk2.external:aopalliance-repackaged') {
-        version {
-            strictly '2.6.1'
-        }
-    }//runtime
-    implementation('org.glassfish.hk2:hk2-api') {
-        version {
-            strictly '2.6.1'
-        }
-    }//runtime
-    implementation('org.glassfish.hk2:hk2-utils') {
-        version {
-            strictly '2.6.1'
-        }
-    }//runtime
-    implementation('org.javassist:javassist') {
-        version {
-            strictly '3.22.0-GA'
-        }
-    }//compile
+    compile 'org.glassfish.hk2:hk2-locator:2.6.1'
+    compile 'org.glassfish.hk2.external:aopalliance-repackaged:2.6.1'
+    compile 'org.glassfish.hk2:hk2-api:2.6.1'
+    compile 'org.glassfish.hk2:hk2-utils:2.6.1'
+    compile 'org.javassist:javassist:3.22.0-GA'
     runtime 'io.pravega:schemaregistry-common:0.2.0'
-    implementation('commons-io:commons-io') {
-        version {
-            strictly '2.6'
-        }
-    }//runtime
-    implementation('javax.activation:activation') {
-        version {
-            strictly '1.1.1'
-        }
-    }//runtime
+    compile 'commons-io:commons-io:2.6'
+    compile 'javax.activation:activation:1.1.1'
     runtime 'io.pravega:pravega-common:0.9.0'
 
-//    compile 'com.sun.xml.bind:jaxb-core:2.3.0'
-//    compile 'com.sun.xml.bind:jaxb-impl:2.3.0'
-//    compile 'org.slf4j:slf4j-simple:1.7.5'
+    compile 'com.sun.xml.bind:jaxb-core:2.3.0'
+    compile 'com.sun.xml.bind:jaxb-impl:2.3.0'
+    compile 'org.slf4j:slf4j-simple:1.7.5'
 
     testImplementation 'com.facebook.presto:presto-tests:0.249'
     testImplementation 'org.eclipse.jetty:jetty-server:9.4.14.v20181114'

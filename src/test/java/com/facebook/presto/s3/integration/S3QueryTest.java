@@ -289,7 +289,7 @@ public class S3QueryTest
     @Test(dependsOnMethods = "testInsertRow")
     public void testCTASInsertRow() {
         log.info("Test: testCTASInsertRow");
-        queryRunner.execute("CREATE TABLE s3.newschema.csvtable1 WITH (has_header_row='false', FORMAT='CSV', external_location='s3a://testbucket/TestData1') as select * from s3.newschema.csvtable");
+        queryRunner.execute("CREATE TABLE s3.newschema.csvtable1 WITH (has_header_row='false', FORMAT='CSV', external_location='s3a://testbucket/TestData1/') as select * from s3.newschema.csvtable");
         assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.csvtable1").getMaterializedRows().size(), 1);
     }
 
@@ -326,7 +326,7 @@ public class S3QueryTest
     @Test(dependsOnMethods = "testInsertRowJson")
     public void testCTASInsertRowJson() {
         log.info("Test: testCTASInsertRowJson");
-        queryRunner.execute("CREATE TABLE s3.newschema.jsontable1 WITH (has_header_row='false', FORMAT='JSON', external_location='s3a://testbucket/TestDataJson1') as select * from s3.newschema.jsontable");
+        queryRunner.execute("CREATE TABLE s3.newschema.jsontable1 WITH (has_header_row='false', FORMAT='JSON', external_location='s3a://testbucket/TestDataJson1/') as select * from s3.newschema.jsontable");
         assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.jsontable1").getMaterializedRows().size(), 1);
     }
 

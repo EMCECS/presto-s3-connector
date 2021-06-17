@@ -109,7 +109,7 @@ public class S3SchemaRegistryManager {
             // Remember - a "schema" in Presto is a "group" in Schema Registry
             for (SchemaWithVersion version : client.getSchemas(tableHandle.getSchemaName())) {
                 if (version.getSchemaInfo().getType().equalsIgnoreCase(tableHandle.getTableName())) {
-                    log.info("Delete schema version : " + version.getVersionInfo().getVersion());
+                    log.info("Delete schema version : " + version.getVersionInfo().toString());
                     client.deleteSchemaVersion(tableHandle.getSchemaName(), version.getVersionInfo());
                 }
             }
