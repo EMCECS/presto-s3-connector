@@ -1,4 +1,7 @@
 #!/bin/sh
 
 echo "Starting pravega/schemaregistry docker container"
-docker run -d --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry:0.2.0-65.ba358e2-SNAPSHOT || exit 1
+docker pull pravega/schemaregistry
+docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry
+sleep 5
+docker ps
