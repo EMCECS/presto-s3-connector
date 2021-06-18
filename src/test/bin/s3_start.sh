@@ -31,6 +31,7 @@ EOF
 
 # Sleep a bit for the s3 server to become ready
 sleep 5
+docker ps
 
 echo "Creating bucket $S3_BUCKET"
 aws --profile s3connectortest --endpoint-url http://localhost:$S3_DOCKER_PORT s3 mb s3://$S3_BUCKET/
