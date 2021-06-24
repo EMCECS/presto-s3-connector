@@ -29,9 +29,21 @@ us-east-1
 json
 EOF
 
-# Sleep a bit for the s3 server to become ready
-sleep 5
-docker ps
+found=0
+set -B                  # enable brace expansion
+for i in {1..30}; do
+    curl -s localhost:$S3_DOCKER_PORT >/dev/null
+    if [ $? -eq 0 ]; then
+        found=1
+        break;
+    fi
+    sleep 1
+done
+
+if [ $found -eq 0 ]; then
+    echo "Image run failed: docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server"
+    exit 1
+fi
 
 echo "Creating bucket $S3_BUCKET"
 aws --profile s3connectortest --endpoint-url http://localhost:$S3_DOCKER_PORT s3 mb s3://$S3_BUCKET/
