@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export S3_DOCKER_NAME=test-s3
 export S3_DOCKER_PORT=8000

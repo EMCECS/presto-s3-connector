@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "Pulling and starting pravega/schemaregistry docker container"
 docker pull pravega/schemaregistry

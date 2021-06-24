@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 s3image=scality/s3server
 
