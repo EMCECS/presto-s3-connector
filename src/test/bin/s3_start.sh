@@ -27,12 +27,23 @@ else
 fi
 docker ps
 
+echo "TEST123A"
+
+aws help 2>/dev/null
+if [ $? -ne 0 ]; then
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+fi
+
 aws configure --profile s3connectortest << EOF > /dev/null
 $S3_ACCESS_KEY
 $S3_SECRET_KEY
 us-east-1
 json
 EOF
+
+echo "TEST123B"
 
 found=0
 set -B                  # enable brace expansion
@@ -45,10 +56,14 @@ for i in {1..30}; do
     sleep 1
 done
 
+echo "TEST123C"
+
 if [ $found -eq 0 ]; then
     echo "Image run failed: docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server"
     exit 1
 fi
+
+echo "TEST123D"
 
 echo "Creating bucket $S3_BUCKET"
 aws --profile s3connectortest --endpoint-url http://localhost:$S3_DOCKER_PORT s3 mb s3://$S3_BUCKET/
@@ -72,4 +87,3 @@ echo "Copy $TXTFILE to $S3_BUCKET"
 aws --profile s3connectortest --endpoint-url http://localhost:$S3_DOCKER_PORT s3 cp $TXTFILE s3://$S3_BUCKET/
 
 netstat -tunlp
-ufw status verbose

@@ -8,6 +8,8 @@ else
     rm -f /tmp/github.action.sr
 fi
 
+echo "TEST456A"
+
 docker ps
 
 found=0
@@ -21,9 +23,14 @@ for i in {1..30}; do
     sleep 1
 done
 
+echo "TEST456B"
+
 if [ $found -eq 0 ]; then
     echo "Image run failed: docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry"
     exit 1
 fi
+
+echo "TEST456C"
+
 netstat -tunlp
-ufw status verbose
+
