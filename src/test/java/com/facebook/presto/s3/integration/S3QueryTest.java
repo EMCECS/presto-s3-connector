@@ -55,34 +55,42 @@ public class S3QueryTest
         Thread.sleep(20000);
         queryRunner = createQueryRunner();
         BufferedReader output = new BufferedReader(new InputStreamReader(p1.getInputStream()));
-            String cmdOut = output.readLine();
-            while (cmdOut != null && cmdOut.length() > 0) {
-                System.out.println(cmdOut);
-                cmdOut = output.readLine();
-            }
-        } catch (Exception e) {
-            System.out.println("Exception starting s3 server: " + e.toString());
-            throw e;
+        String cmdOut = output.readLine();
+        while (cmdOut != null && cmdOut.length() > 0) {
+            System.out.println(cmdOut);
+            cmdOut = output.readLine();
         }
+    } catch (Exception e) {
+        System.out.println("Exception starting s3 server: " + e.toString());
+        throw e;
+    }
 
-        try {
-            String[] cmd = { "sh", "src/test/bin/schema_registry_start.sh" };
-            System.out.println("Start schema registry server");
-            this.p2 = Runtime.getRuntime().exec(cmd);
-            Thread.sleep(5000);
-            BufferedReader output = new BufferedReader(new InputStreamReader(p2.getInputStream()));
-            String cmdOut = output.readLine();
-            while (cmdOut != null && cmdOut.length() > 0) {
-                System.out.println(cmdOut);
-                cmdOut = output.readLine();
-            }
-        } catch (Exception e) {
-            System.out.println("Exception starting schema registry server: " + e.toString());
-            throw e;
+    try {
+        String[] cmd = { "sh", "src/test/bin/schema_registry_start.sh" };
+        System.out.println("Start schema registry server");
+        this.p2 = Runtime.getRuntime().exec(cmd);
+        Thread.sleep(5000);
+        BufferedReader output = new BufferedReader(new InputStreamReader(p2.getInputStream()));
+        String cmdOut = output.readLine();
+        while (cmdOut != null && cmdOut.length() > 0) {
+            System.out.println(cmdOut);
+            cmdOut = output.readLine();
         }
+    } catch (Exception e) {
+        System.out.println("Exception starting schema registry server: " + e.toString());
+        throw e;
+    }
 
     Logging logging = Logging.initialize();
     logging.setLevel("com.facebook.presto.s3", DEBUG);
+
+    try {
+        // Force a drop schema which causes a s3TableDescriptionSupplier.get() to reload the tables and schemas
+        queryRunner.execute("DROP SCHEMA s3.bogus");
+    } catch (Exception e) {
+        // Ignore this
+    }
+
     }
 
     @Test
