@@ -41,11 +41,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Build Output Cache
-        uses: actions/cache@v2.1.0
-        with:
-          path: ${{env.BUILD_CACHE_PATH}}
-          key: ${{github.run_id}}
       - name: Run S3 container
         run: |
           docker pull scality/s3server
@@ -62,10 +57,15 @@ jobs:
           netstat -tunlp
 
   integration:
-    name: Setup integration tests
+    name: Run integration tests
     needs: [build, setup]
     runs-on: ubuntu-latest
     steps:
+      - name: Build Output Cache
+        uses: actions/cache@v2.1.0
+        with:
+          path: ${{env.BUILD_CACHE_PATH}}
+          key: ${{github.run_id}}
       - name: Integration Test Gradle Run
         run: ./gradlew --info -Pintegration test
 
