@@ -57,8 +57,8 @@ jobs:
           docker ps
           netstat -tunlp
           ufw status verbose
-      - name: Integration Tests
-        ./gradlew --info -Pintegration test
+      - name: Integration Test Gradle Run
+        run: ./gradlew --info -Pintegration test
 
   build_and_test_complete:
     name: CI Complete
