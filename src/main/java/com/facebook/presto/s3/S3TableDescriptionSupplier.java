@@ -76,6 +76,7 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
                             put("tableBucketPrefix", "/").
                             toString()
             );
+            log.info("Adding bucket " + bucket.getName() + " to s3_buckets schema");
             builder.put(new SchemaTableName("s3_buckets", bucket.getName()), table);
         }
 

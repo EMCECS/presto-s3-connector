@@ -21,8 +21,8 @@ import com.facebook.airlift.log.Logging;
 import com.facebook.presto.Session;
 import com.facebook.presto.testing.MaterializedRow;
 import com.facebook.presto.testing.QueryRunner;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import com.facebook.presto.s3.*;
@@ -45,7 +45,7 @@ public class S3QueryTest
     private static final Logger log = Logger.get(S3QueryTest.class);
 
 
-    @BeforeClass
+    @BeforeSuite
     public void setUp()
             throws Exception {
     try {
@@ -86,6 +86,12 @@ public class S3QueryTest
     }
 
     @Test
+    public void simpleTest() {
+        log.info("Test: simpleTest");
+        assertEquals(true, true);
+    }
+
+    @Test (dependsOnMethods = "simpleTest")
     public void testShowSchema(){
         log.info("Test: testShowSchema");
         assertEquals(queryRunner.execute("SHOW SCHEMAS FROM s3").getRowCount(), 7);
@@ -272,21 +278,21 @@ public class S3QueryTest
         assertEquals(SchemaCountBefore - 1, queryRunner.execute("SHOW SCHEMAS IN s3").getRowCount());
     }
 
-    @Test(dependsOnMethods = "testCreateSchema")
+    @Test (dependsOnMethods = "testCreateSchema")
     public void testCreateTable() {
         log.info("Test: testCreateTable");
         queryRunner.execute("CREATE TABLE s3.newschema.csvtable (id123 bigint, name123 varchar, balance123 double) WITH (FORMAT='CSV', has_header_row = 'false', external_location='s3a://testbucket/TestData/')");
         assertEquals(queryRunner.execute("DESCRIBE s3.newschema.csvtable").getMaterializedRows().size(), 3);
     }
 
-    @Test(dependsOnMethods = "testCreateTable")
+    @Test (dependsOnMethods = "testCreateTable")
     public void testInsertRow() {
         log.info("Test: testInsertRow");
         queryRunner.execute("INSERT INTO s3.newschema.csvtable VALUES (100, 'GEORGE', 20.0)");
         assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.csvtable").getMaterializedRows().size(), 1);
     }
 
-    @Test(dependsOnMethods = "testInsertRow")
+    @Test (dependsOnMethods = "testInsertRow")
     public void testCTASInsertRow() {
         log.info("Test: testCTASInsertRow");
         queryRunner.execute("CREATE TABLE s3.newschema.csvtable1 WITH (has_header_row='false', FORMAT='CSV', external_location='s3a://testbucket/TestData1/') as select * from s3.newschema.csvtable");
@@ -309,21 +315,21 @@ public class S3QueryTest
         assertFalse(foundTable);
     }
 
-    @Test(dependsOnMethods = "testCreateSchema")
+    @Test (dependsOnMethods = "testCreateSchema")
     public void testCreateTableJson() {
         log.info("Test: testCreateTableJson");
         queryRunner.execute("CREATE TABLE s3.newschema.jsontable (id123 bigint, name123 varchar, balance123 double) WITH (FORMAT='JSON', has_header_row = 'false', external_location='s3a://testbucket/TestDataJson/')");
         assertEquals(queryRunner.execute("DESCRIBE s3.newschema.jsontable").getMaterializedRows().size(), 3);
     }
 
-    @Test(dependsOnMethods = "testCreateTableJson")
+    @Test (dependsOnMethods = "testCreateTableJson")
     public void testInsertRowJson() {
         log.info("Test: testInsertRowJson");
         queryRunner.execute("INSERT INTO s3.newschema.jsontable VALUES (100, 'GEORGE', 20.0)");
         assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.jsontable").getMaterializedRows().size(), 1);
     }
 
-    @Test(dependsOnMethods = "testInsertRowJson")
+    @Test (dependsOnMethods = "testInsertRowJson")
     public void testCTASInsertRowJson() {
         log.info("Test: testCTASInsertRowJson");
         queryRunner.execute("CREATE TABLE s3.newschema.jsontable1 WITH (has_header_row='false', FORMAT='JSON', external_location='s3a://testbucket/TestDataJson1/') as select * from s3.newschema.jsontable");
@@ -367,7 +373,7 @@ public class S3QueryTest
         assertEquals(queryRunner.execute("SHOW tables in s3.s3_buckets").getRowCount(), 1);
     }
 
-    @Test(expectedExceptions = {RuntimeException.class},
+    @Test (expectedExceptions = {RuntimeException.class},
             expectedExceptionsMessageRegExp = "MetaData Search is not Enabled for this Bucket")
     public void getSelectStarFromS3Buckets() {
         log.info("Test: getSelectStarFromS3Buckets");
@@ -389,7 +395,7 @@ public class S3QueryTest
         return session.getUnprocessedCatalogProperties().get("s3");
     }
 
-    @AfterClass
+    @AfterSuite
     public void shutdown()
             throws Exception {
         System.out.println("Stop query runners, schema registry and s3 server");
