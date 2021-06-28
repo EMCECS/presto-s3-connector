@@ -60,7 +60,6 @@ jobs:
           touch /tmp/github.action.sr
           docker ps
           netstat -tunlp
-          ufw status verbose
       - name: Integration Test Gradle Run
         run: ./gradlew --info -Pintegration test
 
