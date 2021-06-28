@@ -47,9 +47,13 @@ jobs:
           path: ${{env.BUILD_CACHE_PATH}}
           key: ${{github.run_id}}
       - name: Run S3 container
-        uses: docker://scality/s3server:latest
+        run: |
+          docker pull scality/s3server
+          docker run -d --name s3server -p 8000:8000 scality/s3server
       - name: Run SR container
-        uses: docker://pravega/schemaregistry:latest
+        run: |
+          docker pull pravega/schemaregistry
+          docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry
       - name: Integration Test Info
         run: |
           touch /tmp/github.action.s3
