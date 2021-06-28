@@ -47,6 +47,12 @@ jobs:
           path: ${{env.BUILD_CACHE_PATH}}
           key: ${{github.run_id}}
       - name: Integration Tests
+        uses docker://scality/s3server:latest
+        uses docker://pravega/schemaregistry:latest
+        run: touch /tmp/github.action.s3
+        run: touch /tmp/github.action.sr
+        run: netstat -tunlp
+        run: ufw status verbose
         run: ./gradlew --info -Pintegration test
 
   build_and_test_complete:

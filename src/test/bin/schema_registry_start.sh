@@ -1,8 +1,13 @@
 #!/bin/bash
 
-echo "Pulling and starting pravega/schemaregistry docker container"
-docker pull pravega/schemaregistry
-docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry
+if [ ! -f /tmp/github.action.sr ]; then
+    echo "Pulling and starting pravega/schemaregistry docker container"
+    docker pull pravega/schemaregistry
+    docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry
+else
+    rm -f /tmp/github.action.sr
+fi
+
 docker ps
 
 found=0
@@ -21,4 +26,4 @@ if [ $found -eq 0 ]; then
     exit 1
 fi
 netstat -tunlp
-grep -i ubuntu && ufw status verbose
+ufw status verbose

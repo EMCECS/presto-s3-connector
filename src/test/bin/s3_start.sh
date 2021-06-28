@@ -18,9 +18,13 @@ export PARQUET=$(readlink --canonicalize $SCRIPTDIR/../resources/customerfile)
 export PARQUET1=$(readlink --canonicalize $SCRIPTDIR/../resources/storefile)
 export CSVDIR=$(dirname $CSV)
 
-echo "Starting s3 docker container"
-docker pull scality/s3server
-docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server || exit 1
+if [ ! -f /tmp/github.action.s3 ]; then
+    echo "Starting s3 docker container"
+    docker pull scality/s3server
+    docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server || exit 1
+else
+    rm -f /tmp/github.action.s3
+fi
 docker ps
 
 aws configure --profile s3connectortest << EOF > /dev/null
@@ -68,4 +72,4 @@ echo "Copy $TXTFILE to $S3_BUCKET"
 aws --profile s3connectortest --endpoint-url http://localhost:$S3_DOCKER_PORT s3 cp $TXTFILE s3://$S3_BUCKET/
 
 netstat -tunlp
-grep -i ubuntu && ufw status verbose
+ufw status verbose
