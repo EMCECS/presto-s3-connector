@@ -36,8 +36,8 @@ jobs:
       - name: Compile
         run: ./gradlew build
 
-  integration:
-    name: Integration tests
+  setup:
+    name: Setup integration tests
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -60,12 +60,18 @@ jobs:
           touch /tmp/github.action.sr
           docker ps
           netstat -tunlp
+
+  integration:
+    name: Setup integration tests
+    needs: [build, setup]
+    runs-on: ubuntu-latest
+    steps:
       - name: Integration Test Gradle Run
         run: ./gradlew --info -Pintegration test
 
   build_and_test_complete:
     name: CI Complete
-    needs: [build, integration]
+    needs: [build, setup, integration]
     runs-on: ubuntu-latest
     steps:
       - name: Check Build Status
