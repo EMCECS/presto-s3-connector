@@ -21,6 +21,7 @@ export CSVDIR=$(dirname $CSV)
 echo "Starting s3 docker container"
 docker pull scality/s3server
 docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server || exit 1
+docker ps
 
 aws configure --profile s3connectortest << EOF > /dev/null
 $S3_ACCESS_KEY
@@ -65,3 +66,6 @@ echo "Copy $PARQUET1 to $S3_BUCKET"
 aws --profile s3connectortest --endpoint-url http://localhost:$S3_DOCKER_PORT s3 cp $PARQUET1 s3://$S3_BUCKET/store/storefile
 echo "Copy $TXTFILE to $S3_BUCKET"
 aws --profile s3connectortest --endpoint-url http://localhost:$S3_DOCKER_PORT s3 cp $TXTFILE s3://$S3_BUCKET/
+
+netstat -tunlp
+grep -i ubuntu && ufw status verbose

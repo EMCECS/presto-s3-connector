@@ -3,6 +3,8 @@
 echo "Pulling and starting pravega/schemaregistry docker container"
 docker pull pravega/schemaregistry
 docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry
+docker ps
+
 found=0
 set -B                  # enable brace expansion
 for i in {1..30}; do
@@ -18,3 +20,5 @@ if [ $found -eq 0 ]; then
     echo "Image run failed: docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry"
     exit 1
 fi
+netstat -tunlp
+grep -i ubuntu && ufw status verbose
