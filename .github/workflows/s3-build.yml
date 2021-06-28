@@ -46,8 +46,9 @@ jobs:
         with:
           path: ${{env.BUILD_CACHE_PATH}}
           key: ${{github.run_id}}
-      - name: Run containers
+      - name: Run S3 container
         uses: docker://scality/s3server:latest
+      - name: Run SR container
         uses: docker://pravega/schemaregistry:latest
       - name: Integration Tests
         run: touch /tmp/github.action.s3
