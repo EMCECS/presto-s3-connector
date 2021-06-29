@@ -36,29 +36,9 @@ jobs:
       - name: Compile
         run: ./gradlew build
 
-  setup:
-    name: Setup integration tests
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run S3 container
-        run: |
-          docker pull scality/s3server
-          docker run -d --name s3server -p 8000:8000 scality/s3server
-      - name: Run SR container
-        run: |
-          docker pull pravega/schemaregistry
-          docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry
-      - name: Integration Test Info
-        run: |
-          touch /tmp/github.action.s3
-          touch /tmp/github.action.sr
-          docker ps
-          netstat -tunlp
-
   integration:
     name: Run integration tests
-    needs: [build, setup]
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Build Output Cache
@@ -71,7 +51,7 @@ jobs:
 
   build_and_test_complete:
     name: CI Complete
-    needs: [build, setup, integration]
+    needs: [build, integration]
     runs-on: ubuntu-latest
     steps:
       - name: Check Build Status
