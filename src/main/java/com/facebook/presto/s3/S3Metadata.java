@@ -138,6 +138,8 @@ public class S3Metadata
         if (!schemaRegistryManager.schemaExists(schemaName)) {
             // Idempotent - not an error
             log.debug("Drop schema for DB/group/schema " + schemaName + " does not exist");
+            // Force a schema refresh
+            this.tableDescriptions = s3TableDescriptionSupplier.get();
             return;
         }
         schemaRegistryManager.dropGroup(schemaName);
@@ -200,6 +202,8 @@ public class S3Metadata
             // Idempotent - not an error
             log.debug("Drop table for table" + s3TableHandle.getTableName()
                     + " in DB/group/schema " + s3TableHandle.getSchemaName() + " does not exist");
+            // Force a schema refresh
+            this.tableDescriptions = s3TableDescriptionSupplier.get();
             return;
         }
         schemaRegistryManager.dropTable(s3TableHandle);

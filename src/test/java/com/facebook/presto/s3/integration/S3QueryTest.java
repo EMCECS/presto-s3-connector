@@ -90,7 +90,7 @@ public class S3QueryTest
     public void resetSchema() {
         log.info("Test: resetSchema");
         try {
-            // Force a drop schema which causes a s3TableDescriptionSupplier.get() to reload the tables and schemas
+            // Drop a bogus schema - this will cause a reset of the s3 catalog schemas
             queryRunner.execute("DROP SCHEMA s3.bogus");
         } catch (Exception e) {
             // Ignore this
