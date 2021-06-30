@@ -18,32 +18,39 @@ export TXTFILE=$(readlink --canonicalize $SCRIPTDIR/../resources/datafile.txt)
 export PARQUET=$(readlink --canonicalize $SCRIPTDIR/../resources/customerfile)
 export PARQUET1=$(readlink --canonicalize $SCRIPTDIR/../resources/storefile)
 export CSVDIR=$(dirname $CSV)
+
+
 echo "Starting s3 docker container"
 docker pull scality/s3server
 docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server 
 
+echo "TEST123A"
+
 found=0
-set -B                  # enable brace expansion
-for i in {1..30}; do
+for i in 1 2 3 4 5 6 7 8 9 10; do
     curl -s localhost:$S3_DOCKER_PORT >/dev/null
     if [ $? -eq 0 ]; then
         found=1
         break;
     fi
-    sleep 1
+    sleep 3
 done
+echo "TEST123B"
 
 if [ $found -eq 0 ]; then
     echo "Image run failed: docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server"
     exit 1
 fi
+echo "TEST123C"
 
 if [ ! -f /tmp/s3curl/s3curl.pl ]; then
-    pushd /tmp
+    DIR=`pwd`
+    cd  /tmp
     git clone https://github.com/EMCECS/s3curl.git
     chmod +x /tmp/s3curl/s3curl.pl
-    popd
+    cd $DIR
 fi
+echo "TEST123D"
 
 if [ -f ~/.s3curl ]; then
     mv ~/.s3curl ~/.s3curl.bak.$$
@@ -66,6 +73,8 @@ push @endpoints , (
 EOF
 
 chmod 600  ~/.s3curl
+
+echo "TEST123E"
 
 # Sleep a bit for the s3 server to become ready
 
@@ -93,3 +102,5 @@ echo "Copy $TXTFILE to $S3_BUCKET"
 if [ -f ~/.s3curl.bak.$$ ]; then
     mv ~/.s3curl.bak.$$ ~/.s3curl
 fi
+
+echo "TEST123F"
