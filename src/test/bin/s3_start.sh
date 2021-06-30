@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -x
 export S3_DOCKER_NAME=test-s3
 export S3_DOCKER_PORT=8000
 export S3_ACCESS_KEY="accessKey1"

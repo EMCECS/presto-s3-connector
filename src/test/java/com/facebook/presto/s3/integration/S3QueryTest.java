@@ -84,34 +84,35 @@ public class S3QueryTest
     Logging logging = Logging.initialize();
     logging.setLevel("com.facebook.presto.s3", DEBUG);
 
-    try {
-        // Force a drop schema which causes a s3TableDescriptionSupplier.get() to reload the tables and schemas
-        queryRunner.execute("DROP SCHEMA s3.bogus");
-    } catch (Exception e) {
-        // Ignore this
-    }
-
     }
 
     @Test
-    public void simpleTest() {
-        log.info("Test: simpleTest");
+    public void resetSchema() {
+        log.info("Test: resetSchema");
+        try {
+            // Force a drop schema which causes a s3TableDescriptionSupplier.get() to reload the tables and schemas
+            queryRunner.execute("DROP SCHEMA s3.bogus");
+        } catch (Exception e) {
+            // Ignore this
+        }
+
         assertEquals(true, true);
     }
 
-    @Test (dependsOnMethods = "simpleTest")
+    @Test (dependsOnMethods = "resetSchema")
     public void testShowSchema(){
         log.info("Test: testShowSchema");
         assertEquals(queryRunner.execute("SHOW SCHEMAS FROM s3").getRowCount(), 7);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testDescribeTable(){
         log.info("Test: testDescribeTable");
         assertEquals(queryRunner.execute("DESCRIBE s3.studentdb.medical").getRowCount(), 3);
     }
 
-    @Test (expectedExceptions = { RuntimeException.class},
+    @Test (dependsOnMethods = "resetSchema",
+            expectedExceptions = { RuntimeException.class},
             expectedExceptionsMessageRegExp = ".*MetaData Search is not Enabled for this Bucket.*")
     public void testDescribeBucketTable(){
         log.info("Test: testDescribeBucketTable");
@@ -119,14 +120,14 @@ public class S3QueryTest
         assertEquals(queryRunner.execute("DESCRIBE s3.s3_buckets.testbucket").getRowCount(), 3);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testShowTables()
     {
         log.info("Test: testShowTables");
         assertEquals(queryRunner.execute("SHOW TABLES FROM s3.studentdb").getRowCount(), 3);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectStarFromCsvTable()
     {
         log.info("Test: testSelectStarFromCsvTable");
@@ -141,61 +142,61 @@ public class S3QueryTest
         assertEquals(queryRunner.execute("SELECT * FROM s3.cartoondb.addressTable").getRowCount(), 3);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectStarFromAvroTable()
     {
         log.info("Test: testSelectStarFromAvroTable");
         assertEquals(queryRunner.execute("SELECT * FROM s3.olympicdb.medaldatatable").getRowCount(), 100);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectStarFromParquetTable()
     {
         log.info("Test: testSelectStarFromParquetTable");
         assertEquals(queryRunner.execute("SELECT * FROM s3.parquetdata.customer").getRowCount(), 144000);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testIndividualColumnParquetTable()
     {
         log.info("Test: testIndividualColumnParquetTable");
         assertEquals(queryRunner.execute("SELECT s_tax_percentage FROM s3.parquetdata.store").getRowCount(), 22);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testShowTablesParquet()
     {
         log.info("Test: testShowTablesParquet");
         assertEquals(queryRunner.execute("SHOW tables FROM s3.parquetdata").getRowCount(), 2);
     }
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testDescribeTablesParquet()
     {
         log.info("Test: testDescribeTablesParquet");
         assertEquals(queryRunner.execute("DESCRIBE s3.parquetdata.customer").getRowCount(), 18);
     }
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectStarWhereClauseParquet()
     {
         log.info("Test: testSelectStarWhereClauseParquet");
         assertEquals(queryRunner.execute("SELECT * FROM s3.parquetdata.store where s_rec_start_date=9933").getRowCount(), 12);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectWhereClauseSingleColumnsParquet()
     {
         log.info("Test: testSelectWhereClauseSingleColumnsParquet");
         assertEquals(queryRunner.execute("SELECT s_store_id FROM s3.parquetdata.store where s_rec_start_date=9933").getRowCount(), 12);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectWhereClauseMultipleColumnsParquet()
     {
         log.info("Test: testSelectWhereClauseMultipleColumnsParquet");
         assertEquals(queryRunner.execute("SELECT s_store_id,s_rec_start_date FROM s3.parquetdata.store where s_rec_start_date=9933").getRowCount(), 12);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectStarMultipleWhereClausesParquet()
     {
         log.info("Test: testSelectStarMultipleWhereClausesParquet");
@@ -209,56 +210,56 @@ public class S3QueryTest
         assertEquals(queryRunner.execute("SELECT s_store_id FROM s3.parquetdata.store where s_rec_start_date=9933 and s_rec_end_date=11028").getRowCount(), 4);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectMultipleWhereClausesMultipleColumnsParquet()
     {
         log.info("Test: testSelectMultipleWhereClausesSingleColumnParquet");
         assertEquals(queryRunner.execute("SELECT s_store_id,s_rec_start_date,s_rec_end_date FROM s3.parquetdata.store where s_rec_start_date=9933 and s_rec_end_date=11028").getRowCount(), 4);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectStarWhereClauseWithOperatorsParquet()
     {
         log.info("Test: testSelectStarWhereClauseWithOperatorsParquet");
         assertEquals(queryRunner.execute("SELECT * FROM s3.parquetdata.store where s_rec_start_date>10000").getRowCount(), 10);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectWhereClauseWithOperatorsParquet()
     {
         log.info("Test: testSelectWhereClauseWithOperatorsParquet");
         assertEquals(queryRunner.execute("SELECT s_store_id FROM s3.parquetdata.store where s_rec_start_date>10000").getRowCount(), 10);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectWhereClauseWithOperatorsMultipleColumnsParquet()
     {
         log.info("Test: testSelectWhereClauseWithOperatorsParquet");
         assertEquals(queryRunner.execute("SELECT s_store_id,s_rec_start_date FROM s3.parquetdata.store where s_rec_start_date>10000").getRowCount(), 10);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectMultipleWhereClauseWithOperatorsMultipleColumnsParquet()
     {
         log.info("Test: testSelectMultipleWhereClauseWithOperatorsMultipleColumnsParquet");
         assertEquals(queryRunner.execute("SELECT s_store_id,s_rec_start_date FROM s3.parquetdata.store where s_rec_start_date>10000 and s_rec_end_date>10664").getRowCount(), 3);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectStarWithNoEntriesParquet()
     {
         log.info("Test: testSelectStarWithNoEntriesParquet");
         assertEquals(queryRunner.execute("SELECT * FROM s3.parquetdata.store where s_rec_start_date>100000").getRowCount(), 0);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectSingleColumnWithNoEntriesParquet()
     {
         log.info("Test: testSelectSingleColumnWithNoEntriesParquet");
         assertEquals(queryRunner.execute("SELECT s_store_id FROM s3.parquetdata.store where s_rec_start_date>100000").getRowCount(), 0);
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testSelectMultipleColumnsWithNoEntriesParquet()
     {
         log.info("Test: testSelectMultipleColumnsWithNoEntriesParquet");
@@ -360,7 +361,8 @@ public class S3QueryTest
         assertFalse(foundTable);
     }
 
-    @Test (expectedExceptions = {RuntimeException.class},
+    @Test (dependsOnMethods = "resetSchema",
+            expectedExceptions = {RuntimeException.class},
             expectedExceptionsMessageRegExp = ".*Error Code: InvalidBucketName.*")
     public void testSchemaConfigBadBucket() {
         log.info("Test: testSchemaConfigBadBucket");
@@ -368,20 +370,22 @@ public class S3QueryTest
 
     }
 
-    @Test (expectedExceptions = {RuntimeException.class},
+    @Test (dependsOnMethods = "resetSchema",
+            expectedExceptions = {RuntimeException.class},
             expectedExceptionsMessageRegExp = ".*Error Code: 404 Not Found.*")
     public void testSchemaConfigBadObject() {
         log.info("Test: testSchemaConfigBadObject");
         queryRunner.execute("SELECT * FROM s3.bogusdb.bogusObjectTable");
     }
 
-    @Test
+    @Test (dependsOnMethods = "resetSchema")
     public void testS3BucketsShowTables() {
         log.info("Test: testS3BucketsShowTables");
         assertEquals(queryRunner.execute("SHOW tables in s3.s3_buckets").getRowCount(), 1);
     }
 
-    @Test (expectedExceptions = {RuntimeException.class},
+    @Test (dependsOnMethods = "resetSchema",
+            expectedExceptions = {RuntimeException.class},
             expectedExceptionsMessageRegExp = "MetaData Search is not Enabled for this Bucket")
     public void getSelectStarFromS3Buckets() {
         log.info("Test: getSelectStarFromS3Buckets");
