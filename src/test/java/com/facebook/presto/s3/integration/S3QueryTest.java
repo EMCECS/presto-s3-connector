@@ -52,7 +52,7 @@ public class S3QueryTest
         String[] cmd = { "sh", "src/test/bin/s3_start.sh" };
         System.out.println("Start s3 server and load data");
         this.p1 = Runtime.getRuntime().exec(cmd);
-        Thread.sleep(20000);
+
         queryRunner = createQueryRunner();
         BufferedReader output = new BufferedReader(new InputStreamReader(p1.getInputStream()));
         String cmdOut = output.readLine();
@@ -64,12 +64,13 @@ public class S3QueryTest
         System.out.println("Exception starting s3 server: " + e.toString());
         throw e;
     }
+    p1.waitFor();
+    System.out.println("CFM: s3 server started and data loaded");
 
     try {
         String[] cmd = { "sh", "src/test/bin/schema_registry_start.sh" };
         System.out.println("Start schema registry server");
         this.p2 = Runtime.getRuntime().exec(cmd);
-        Thread.sleep(5000);
         BufferedReader output = new BufferedReader(new InputStreamReader(p2.getInputStream()));
         String cmdOut = output.readLine();
         while (cmdOut != null && cmdOut.length() > 0) {
@@ -80,8 +81,11 @@ public class S3QueryTest
         System.out.println("Exception starting schema registry server: " + e.toString());
         throw e;
     }
+    p2.waitFor();
+    System.out.println("CFM: schema registry server started");
 
-    Logging logging = Logging.initialize();
+
+        Logging logging = Logging.initialize();
     logging.setLevel("com.facebook.presto.s3", DEBUG);
 
     }
