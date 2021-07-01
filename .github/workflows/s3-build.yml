@@ -49,11 +49,11 @@ jobs:
       - name: Run S3 container
         run: |
           docker pull scality/s3server
-          docker run -d --name s3server --network=host --bind=127.0.0.1 scality/s3server
+          docker run -d --name s3server --network=host scality/s3server
       - name: Run SR container
         run: |
           docker pull pravega/schemaregistry
-          docker run -d --name schemaregistry --env STORE_TYPE=InMemory --network=host --bind=127.0.0.1 pravega/schemaregistry
+          docker run -d --name schemaregistry --env STORE_TYPE=InMemory --network=host pravega/schemaregistry
       - name: Github Integration Test Ready
         run: |
           touch /tmp/github.action.s3
