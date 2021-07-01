@@ -100,6 +100,8 @@ echo "Copy $PARQUET1 to $S3_BUCKET"
 /tmp/s3curl/s3curl.pl --id=scality --put=$PARQUET1 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/store/storefile
 echo "Copy $TXTFILE to $S3_BUCKET"
 /tmp/s3curl/s3curl.pl --id=scality --put=$TXTFILE -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $TXTFILE`
+echo "Get $S3_BUCKET"
+/tmp/s3curl/s3curl.pl --id=scality -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/
 
 if [ -f ~/.s3curl.bak.$$ ]; then
     mv ~/.s3curl.bak.$$ ~/.s3curl
