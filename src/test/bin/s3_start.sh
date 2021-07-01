@@ -18,9 +18,14 @@ export PARQUET=$(readlink --canonicalize $SCRIPTDIR/../resources/customerfile)
 export PARQUET1=$(readlink --canonicalize $SCRIPTDIR/../resources/storefile)
 export CSVDIR=$(dirname $CSV)
 
-echo "Starting s3 docker container"
-docker pull scality/s3server
-docker run -d --name s3server -p 8000:8000 scality/s3server || exit 1
+if [ ! -f /tmp/github.action.s3 ]; then
+    echo "Starting s3 docker container"
+    docker pull scality/s3server
+    docker run -d --name s3server -p 8000:8000 scality/s3server || exit 1
+else
+    echo "S3 docker container started by github action"
+    rm -f /tmp/github.action.s3 
+fi
 
 # Wait for container to listen on port 8000
 found=0
@@ -52,8 +57,6 @@ fi
 
 cat > ~/.s3curl << EOF
 %awsSecretAccessKeys = (
-    # personal account
-    # personal is a [friendly-name] . It can be named anything & is used in given s3curl commands.
     scality => {
         id => '$S3_ACCESS_KEY',
         key => '$S3_SECRET_KEY',
@@ -72,7 +75,7 @@ chmod 600  ~/.s3curl
 found=0
 /tmp/s3curl/s3curl.pl --id=scality --createBucket -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET
 for i in 1 2 3 4 5 6 7 8 9 10; do
-    /tmp/s3curl/s3curl.pl --id=scality -- http://127.0.0.1:$S3_DOCKER_PORT/ | grep $S3_BUCKET
+    /tmp/s3curl/s3curl.pl --id=scality -- http://127.0.0.1:$S3_DOCKER_PORT/ | grep $S3_BUCKET >/dev/null
     if [ $? -eq 0 ]; then
         found=1
         break;

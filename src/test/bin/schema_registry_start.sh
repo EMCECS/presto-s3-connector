@@ -5,6 +5,7 @@ if [ ! -f /tmp/github.action.sr ]; then
     docker pull pravega/schemaregistry
     docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry
 else
+    echo "Schema registry docker container started by github action"
     rm -f /tmp/github.action.sr
 fi
 
