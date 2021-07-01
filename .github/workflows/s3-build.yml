@@ -48,7 +48,7 @@ jobs:
           key: ${{github.run_id}}
       - name: Get network config
         run: ip a
-     - name: Setup Docker Proxy
+      - name: Setup Docker Proxy
         run: |
           mkdir -p ~/.docker
           echo '{ "proxies": { "default": { "httpProxy": "http://127.0.0.1:8000", "httpsProxy": "http://127.0.0.1:8000" } } }' > ~/.docker/config.json
