@@ -46,6 +46,8 @@ jobs:
         with:
           path: ${{env.BUILD_CACHE_PATH}}
           key: ${{github.run_id}}
+      - name: Get network config
+        run: ip a
       - name: Run S3 container
         run: |
           docker pull scality/s3server
