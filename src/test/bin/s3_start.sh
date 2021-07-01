@@ -30,7 +30,7 @@ echo "TEST123A"
 
 found=0
 for i in 1 2 3 4 5 6 7 8 9 10; do
-    curl -s localhost:$S3_DOCKER_PORT >/dev/null
+    curl -s 127.0.0.1:$S3_DOCKER_PORT >/dev/null
     if [ $? -eq 0 ]; then
         found=1
         break;
@@ -69,7 +69,7 @@ cat > ~/.s3curl << EOF
 );
 
 push @endpoints , (
-    'localhost',
+    '127.0.0.1',
 );
 
 EOF
@@ -81,27 +81,27 @@ echo "TEST123E"
 # Sleep a bit for the s3 server to become ready
 
 echo "Creating bucket $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --createBucket -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET
+/tmp/s3curl/s3curl.pl --id=scality --createBucket -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET
 echo "Copy $CSV to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$CSV -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/`basename $CSV`
+/tmp/s3curl/s3curl.pl --id=scality --put=$CSV -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $CSV`
 echo "Copy $CSV1 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$CSV1 -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/`basename $CSV1`
+/tmp/s3curl/s3curl.pl --id=scality --put=$CSV1 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $CSV1`
 echo "Copy $CSV2 to $S3_BUCKET/grades"
-/tmp/s3curl/s3curl.pl --id=scality --put=$CSV2 -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/grades/grades.csv
+/tmp/s3curl/s3curl.pl --id=scality --put=$CSV2 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/grades/grades.csv
 echo "Copy $AVRODATA1 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$AVRODATA1 -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/`basename $AVRODATA1`
+/tmp/s3curl/s3curl.pl --id=scality --put=$AVRODATA1 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $AVRODATA1`
 echo "Copy $JSON1 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$JSON1 -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/cartoondb/cartoon_table.json
+/tmp/s3curl/s3curl.pl --id=scality --put=$JSON1 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/cartoondb/cartoon_table.json
 echo "Copy $JSON2 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$JSON2 -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/jsondata/json_datafile
+/tmp/s3curl/s3curl.pl --id=scality --put=$JSON2 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/jsondata/json_datafile
 echo "Copy $PARQUET to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$PARQUET -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/customer/customerfile
+/tmp/s3curl/s3curl.pl --id=scality --put=$PARQUET -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/customer/customerfile
 echo "Copy $PARQUET1 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$PARQUET1 -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/store/storefile
+/tmp/s3curl/s3curl.pl --id=scality --put=$PARQUET1 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/store/storefile
 echo "Copy $TXTFILE to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$TXTFILE -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/`basename $TXTFILE`
+/tmp/s3curl/s3curl.pl --id=scality --put=$TXTFILE -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $TXTFILE`
 echo "Get $S3_BUCKET contents"
-/tmp/s3curl/s3curl.pl --id=scality -- http://localhost:$S3_DOCKER_PORT/$S3_BUCKET/
+/tmp/s3curl/s3curl.pl --id=scality -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/
 
 if [ -f ~/.s3curl.bak.$$ ]; then
     mv ~/.s3curl.bak.$$ ~/.s3curl
