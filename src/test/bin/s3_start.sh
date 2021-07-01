@@ -81,6 +81,7 @@ echo "TEST123E"
 # Sleep a bit for the s3 server to become ready
 
 echo "Creating bucket $S3_BUCKET"
+sleep 2
 /tmp/s3curl/s3curl.pl --id=scality --createBucket -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET
 sleep 2
 echo "Copy $CSV to $S3_BUCKET"
