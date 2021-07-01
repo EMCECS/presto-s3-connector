@@ -18,10 +18,13 @@ export PARQUET=$(readlink --canonicalize $SCRIPTDIR/../resources/customerfile)
 export PARQUET1=$(readlink --canonicalize $SCRIPTDIR/../resources/storefile)
 export CSVDIR=$(dirname $CSV)
 
-
-echo "Starting s3 docker container"
-docker pull scality/s3server
-docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server 
+if [ ! -f /tmp/github.action.s3 ]; then
+    echo "Starting s3 docker container"
+    docker pull scality/s3server
+    docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server || exit 1
+else
+    rm -f /tmp/github.action.s3
+fi
 
 echo "TEST123A"
 

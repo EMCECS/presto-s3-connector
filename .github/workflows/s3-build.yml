@@ -24,10 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 11
+      - name: Set up JDK 8
         uses: actions/setup-java@v1
         with:
-          java-version: 11
+          java-version: 8
       - name: Build Output Cache
         uses: actions/cache@v2.1.0
         with:
@@ -36,9 +36,29 @@ jobs:
       - name: Compile
         run: ./gradlew build
 
+  setup:
+    name: Setup integration tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run S3 container
+        run: |
+          docker pull scality/s3server
+          docker run -d --name s3server -p 8000:8000 scality/s3server
+      - name: Run SR container
+        run: |
+          docker pull pravega/schemaregistry
+          docker run -d --name schemaregistry --env STORE_TYPE=InMemory -p 9092:9092 pravega/schemaregistry
+      - name: Github Integration Test Ready
+        run: |
+          touch /tmp/github.action.s3
+          touch /tmp/github.action.sr
+          docker ps
+          netstat -tunlp
+
   integration:
     name: Run integration tests
-    needs: build
+    needs: [build, setup]
     runs-on: ubuntu-latest
     steps:
       - name: Build Output Cache
