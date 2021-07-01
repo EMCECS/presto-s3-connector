@@ -52,6 +52,7 @@ import java.io.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.ConnectException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -250,7 +251,12 @@ public class S3AccessObject
     }
 
     public List<Bucket> listBuckets() {
-        return amazonS3Client.listBuckets();
+        try {
+            List<Bucket> bucketList = amazonS3Client.listBuckets();
+            return bucketList;
+        } catch (Exception e) {
+            return Collections.EMPTY_LIST;
+        }
     }
 
     public List<Map<String, Object>> listObjectMetadata(String bucket){

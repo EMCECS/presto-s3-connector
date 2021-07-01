@@ -61,11 +61,14 @@ public class S3QueryTest
             cmdOut = output.readLine();
         }
     } catch (Exception e) {
-        System.out.println("Exception starting s3 server: " + e.toString());
-        throw e;
+        throw new Exception("Exception starting s3 server: " + e.toString());
     }
     p1.waitFor();
-    System.out.println("CFM: s3 server started and data loaded");
+    if (p1.exitValue() != 0 ) {
+        System.out.println("CFM: s3 server started and data loaded");
+    } else {
+        throw new Exception("CFM: s3 server failed to start");
+    }
 
     try {
         String[] cmd = { "sh", "src/test/bin/schema_registry_start.sh" };
