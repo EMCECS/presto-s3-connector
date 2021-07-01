@@ -46,20 +46,6 @@ jobs:
         with:
           path: ${{env.BUILD_CACHE_PATH}}
           key: ${{github.run_id}}
-      - name: Run S3 container
-        run: |
-          docker pull scality/s3server
-          docker run -d --name s3server --network=host scality/s3server
-      - name: Run SR container
-        run: |
-          docker pull pravega/schemaregistry
-          docker run -d --name schemaregistry --env STORE_TYPE=InMemory --network=host pravega/schemaregistry
-      - name: Github Integration Test Ready
-        run: |
-          touch /tmp/github.action.s3
-          touch /tmp/github.action.sr
-          docker ps
-          netstat -tunalp
       - name: Integration Test Gradle Run
         run: ./gradlew --info -Pintegration test
 

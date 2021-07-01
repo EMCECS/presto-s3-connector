@@ -21,7 +21,7 @@ export CSVDIR=$(dirname $CSV)
 if [ ! -f /tmp/github.action.s3 ]; then
     echo "Starting s3 docker container"
     docker pull scality/s3server
-    docker run -d --name s3server -p $S3_DOCKER_PORT:$S3_DOCKER_PORT scality/s3server || exit 1
+    docker run -d --name s3server -p 8000:8000 -p 9990:9990 -p 9991:9991 scality/s3server || exit 1
 else
     rm -f /tmp/github.action.s3
 fi
@@ -30,7 +30,7 @@ echo "TEST123A"
 
 found=0
 for i in 1 2 3 4 5 6 7 8 9 10; do
-    curl -s 127.0.0.1:$S3_DOCKER_PORT >/dev/null
+    curl -s 127.0.0.1:8000 >/dev/null
     if [ $? -eq 0 ]; then
         found=1
         break;
@@ -82,6 +82,7 @@ echo "TEST123E"
 
 echo "Creating bucket $S3_BUCKET"
 /tmp/s3curl/s3curl.pl --id=scality --createBucket -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET
+sleep 2
 echo "Copy $CSV to $S3_BUCKET"
 /tmp/s3curl/s3curl.pl --id=scality --put=$CSV -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $CSV`
 echo "Copy $CSV1 to $S3_BUCKET"
@@ -108,3 +109,5 @@ if [ -f ~/.s3curl.bak.$$ ]; then
 fi
 
 echo "TEST123F"
+
+docker logs s3server
