@@ -29,13 +29,13 @@ fi
 
 # Wait for container to listen on port 8000
 found=0
-for i in 1 2 3 4 5 6 7 8 9 10; do
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
     curl -s 127.0.0.1:8000 >/dev/null
     if [ $? -eq 0 ]; then
         found=1
         break;
     fi
-    sleep 3
+    sleep 10
 done
 
 if [ $found -eq 0 ]; then
@@ -74,13 +74,13 @@ chmod 600  ~/.s3curl
 # Wait for bucket to get created
 found=0
 /tmp/s3curl/s3curl.pl --id=scality --createBucket -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET
-for i in 1 2 3 4 5 6 7 8 9 10; do
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
     /tmp/s3curl/s3curl.pl --id=scality -- http://127.0.0.1:$S3_DOCKER_PORT/ | grep $S3_BUCKET >/dev/null
     if [ $? -eq 0 ]; then
         found=1
         break;
     fi
-    sleep 3
+    sleep 10
 done
 
 if [ $found -eq 0 ]; then
@@ -109,13 +109,13 @@ echo "Copy $TXTFILE to $S3_BUCKET"
 
 # Wait for last object loaded to be in bucket
 found=0
-for i in 1 2 3 4 5 6 7 8 9 10; do
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
     /tmp/s3curl/s3curl.pl --id=scality -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/ | grep $TXTFILE
     if [ $? -eq 0 ]; then
         found=1
         break;
     fi
-    sleep 3
+    sleep 10
 done
 
 if [ $found -eq 0 ]; then

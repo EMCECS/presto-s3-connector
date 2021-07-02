@@ -65,9 +65,9 @@ public class S3QueryTest
     }
     p1.waitFor();
     if (p1.exitValue() != 0 ) {
-        System.out.println("CFM: s3 server started and data loaded");
+        System.out.println("s3 server started and data loaded");
     } else {
-        throw new Exception("CFM: s3 server failed to start");
+        throw new Exception("s3 server failed to start");
     }
 
     try {
@@ -85,7 +85,7 @@ public class S3QueryTest
         throw e;
     }
     p2.waitFor();
-    System.out.println("CFM: schema registry server started");
+    System.out.println("schema registry server started");
 
 
         Logging logging = Logging.initialize();
