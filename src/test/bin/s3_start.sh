@@ -18,24 +18,19 @@ export PARQUET=$(readlink --canonicalize $SCRIPTDIR/../resources/customerfile)
 export PARQUET1=$(readlink --canonicalize $SCRIPTDIR/../resources/storefile)
 export CSVDIR=$(dirname $CSV)
 
-if [ ! -f /tmp/github.action.s3 ]; then
-    echo "Starting s3 docker container"
-    docker pull scality/s3server
-    docker run -d --name s3server -p 8000:8000 scality/s3server  2>&1
-else
-    echo "S3 docker container started by github action"
-    rm -f /tmp/github.action.s3 
-fi
+echo "Starting s3 docker container"
+docker pull scality/s3server
+docker run -d --name s3server -p 8000:8000 scality/s3server || exit 1
 
 # Wait for container to listen on port 8000
 found=0
-for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+for i in `seq 20`; do
     curl -s 127.0.0.1:8000 >/dev/null
     if [ $? -eq 0 ]; then
         found=1
         break;
     fi
-    sleep 15
+    sleep 10
 done
 
 if [ $found -eq 0 ]; then
@@ -48,7 +43,7 @@ if [ ! -f /tmp/s3curl/s3curl.pl ]; then
     cd  /tmp
     git clone https://github.com/EMCECS/s3curl.git
     chmod +x /tmp/s3curl/s3curl.pl
-    sudo apt-get install -y libdigest-hmac-perl 2>&1
+    apt-get install -y libdigest-hmac-perl 2>&1
     cd $DIR
 fi
 
@@ -72,64 +67,77 @@ EOF
 
 chmod 600  ~/.s3curl
 
-# Wait for bucket to get created
-found=0
-/tmp/s3curl/s3curl.pl --id=scality --createBucket -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET 2>&1
-for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-    /tmp/s3curl/s3curl.pl --id=scality -- http://127.0.0.1:$S3_DOCKER_PORT/ | grep $S3_BUCKET >/dev/null
-    if [ $? -eq 0 ]; then
-        found=1
-        break;
+rv=1
+createBucket() {
+    echo "create bucket $1"
+    /tmp/s3curl/s3curl.pl --id=scality --createBucket -- http://127.0.0.1:$S3_DOCKER_PORT/$1 -w "%{http_code}" 2>/dev/null | grep 200
+    rv=$?
+    if [[ $rv -ne 0 ]]; then
+        echo "put of bucket $1 failed"
     fi
-    sleep 15
+}
+
+put() {
+    bucket=$1
+    f=$2
+    key=$3
+    echo "putting $f to $bucket/$key ($4)"
+    /tmp/s3curl/s3curl.pl --id=scality --put=$f -- http://127.0.0.1:$S3_DOCKER_PORT/$bucket/$key -w "%{http_code}" 2>/dev/null | grep 200
+    rv=$?
+    if [[ $rv -ne 0 ]]; then
+        echo "putting $f to $bucket/$key ($4) failed"
+        if [[ "$4" != "ok_to_fail" ]]; then
+            exit 1
+        fi
+    fi
+}
+
+head() {
+    bucket=$1
+    key=$2
+    echo "head $bucket/$key"
+    /tmp/s3curl/s3curl.pl --id=scality --head -- http://127.0.0.1:$S3_DOCKER_PORT/$bucket/$key -w "%{http_code}" 2>/dev/null | grep 200
+    rv=$?
+    if [[ $rv -ne 0 ]]; then    
+        echo "head of $bucket/$key failed"
+        exit 1
+    fi        
+}
+
+# Wait for bucket+file to get created
+found=0
+for i in `seq 20`; do
+    createBucket "$S3_BUCKET"
+    if [[ $rv -eq 0 ]]; then
+        echo "bucket success"
+        put "$S3_BUCKET" "$CSV" "`basename $CSV`" "ok_to_fail"
+        if [[ $rv -eq 0 ]]; then
+            echo "file success"
+            found=1
+            break
+        fi
+    fi
+    sleep 5
 done
 
 if [ $found -eq 0 ]; then
     echo "Bucket never got created"
-    docker logs s3server 2>&1
+    docker logs s3server
     exit 1
 fi
 
-echo "Copy $CSV to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$CSV -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $CSV` 2>&1
-echo "Copy $CSV1 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$CSV1 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $CSV1` 2>&1
-echo "Copy $CSV2 to $S3_BUCKET/grades"
-/tmp/s3curl/s3curl.pl --id=scality --put=$CSV2 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/grades/grades.csv 2>&1
-echo "Copy $AVRODATA1 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$AVRODATA1 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $AVRODATA1` 2>&1
-echo "Copy $JSON1 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$JSON1 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/cartoondb/cartoon_table.json 2>&1
-echo "Copy $JSON2 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$JSON2 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/jsondata/json_datafile 2>&1
-echo "Copy $PARQUET to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$PARQUET -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/customer/customerfile 2>&1
-echo "Copy $PARQUET1 to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$PARQUET1 -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/store/storefile 2>&1
-echo "Copy $TXTFILE to $S3_BUCKET"
-/tmp/s3curl/s3curl.pl --id=scality --put=$TXTFILE -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/`basename $TXTFILE` 2>&1
+put "$S3_BUCKET" "$CSV1" "`basename $CSV1`"
+put "$S3_BUCKET" "$CSV2" "grades/grades.csv"
+put "$S3_BUCKET" "$AVRODATA1" "`basename $AVRODATA1`"
+put "$S3_BUCKET" "$JSON1" "cartoondb/cartoon_table.json"
+put "$S3_BUCKET" "$JSON2" "jsondata/json_datafile"
+put "$S3_BUCKET" "$PARQUET" "customer/customerfile"
+put "$S3_BUCKET" "$PARQUET1" "store/storefile"
+put "$S3_BUCKET" "$TXTFILE" "`basename $TXTFILE`"
 
-# Wait for last object loaded to be in bucket
-found=0
-for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-    /tmp/s3curl/s3curl.pl --id=scality -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/ | grep datafile.txt >/dev/null
-    if [ $? -eq 0 ]; then
-        found=1
-        break;
-    fi
-    echo "Waiting for objects to load..."
-    sleep 15
-done
-
-if [ $found -eq 0 ]; then
-    echo "Objects never got loaded to bucket"
-    docker logs s3server 2>&1
-    exit 1
-fi
-
-echo "Get $S3_BUCKET contents"
-/tmp/s3curl/s3curl.pl --id=scality -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET/ 2>&1
+head "$S3_BUCKET" "customer/customerfile"
 
 if [ -f ~/.s3curl.bak.$$ ]; then
     mv ~/.s3curl.bak.$$ ~/.s3curl
 fi
+
