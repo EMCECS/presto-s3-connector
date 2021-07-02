@@ -48,6 +48,7 @@ if [ ! -f /tmp/s3curl/s3curl.pl ]; then
     cd  /tmp
     git clone https://github.com/EMCECS/s3curl.git
     chmod +x /tmp/s3curl/s3curl.pl
+    sudo apt-get install -y libdigest-hmac-perl 2>&1
     cd $DIR
 fi
 
