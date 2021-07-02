@@ -30,7 +30,7 @@ for i in `seq 20`; do
         found=1
         break;
     fi
-    sleep 10
+    sleep 15
 done
 
 if [ $found -eq 0 ]; then
@@ -43,7 +43,6 @@ if [ ! -f /tmp/s3curl/s3curl.pl ]; then
     cd  /tmp
     git clone https://github.com/EMCECS/s3curl.git
     chmod +x /tmp/s3curl/s3curl.pl
-    apt-get install -y libdigest-hmac-perl 2>&1
     cd $DIR
 fi
 
@@ -117,7 +116,7 @@ for i in `seq 20`; do
             break
         fi
     fi
-    sleep 5
+    sleep 15
 done
 
 if [ $found -eq 0 ]; then

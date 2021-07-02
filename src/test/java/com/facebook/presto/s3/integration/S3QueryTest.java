@@ -49,7 +49,7 @@ public class S3QueryTest
     public void setUp()
             throws Exception {
     try {
-        String[] cmd = { "sh", "src/test/bin/s3_start.sh" };
+        String[] cmd = { "bash", "src/test/bin/s3_start.sh" };
         System.out.println("Start s3 server and load data");
         this.p1 = Runtime.getRuntime().exec(cmd);
 
@@ -71,7 +71,7 @@ public class S3QueryTest
     }
 
     try {
-        String[] cmd = { "sh", "src/test/bin/schema_registry_start.sh" };
+        String[] cmd = { "bash", "src/test/bin/schema_registry_start.sh" };
         System.out.println("Start schema registry server");
         this.p2 = Runtime.getRuntime().exec(cmd);
         BufferedReader output = new BufferedReader(new InputStreamReader(p2.getInputStream()));
@@ -425,7 +425,7 @@ public class S3QueryTest
 
         if (p1 != null) {
             try {
-                String[] cmd = { "sh", "src/test/bin/s3_stop.sh" };
+                String[] cmd = { "bash", "src/test/bin/s3_stop.sh" };
                 p3 = Runtime.getRuntime().exec(cmd);
                 p3.waitFor();
             } catch (Exception e) {
@@ -435,7 +435,7 @@ public class S3QueryTest
         }
         if (p2 != null) {
             try {
-                String[] cmd = { "sh", "src/test/bin/schema_registry_stop.sh" };
+                String[] cmd = { "bash", "src/test/bin/schema_registry_stop.sh" };
                 p4 = Runtime.getRuntime().exec(cmd);
                 p4.waitFor();
             } catch (Exception e) {
