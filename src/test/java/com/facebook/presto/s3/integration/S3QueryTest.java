@@ -56,7 +56,7 @@ public class S3QueryTest
         queryRunner = createQueryRunner();
         BufferedReader output = new BufferedReader(new InputStreamReader(p1.getInputStream()));
         String cmdOut = output.readLine();
-        while (cmdOut != null && cmdOut.length() > 0) {
+        while (cmdOut != null) {
             System.out.println(cmdOut);
             cmdOut = output.readLine();
         }
@@ -64,7 +64,7 @@ public class S3QueryTest
         throw new Exception("Exception starting s3 server: " + e.toString());
     }
     p1.waitFor();
-    if (p1.exitValue() != 0 ) {
+    if (p1.exitValue() == 0) {
         System.out.println("s3 server started and data loaded");
     } else {
         throw new Exception("s3 server failed to start");
@@ -76,7 +76,7 @@ public class S3QueryTest
         this.p2 = Runtime.getRuntime().exec(cmd);
         BufferedReader output = new BufferedReader(new InputStreamReader(p2.getInputStream()));
         String cmdOut = output.readLine();
-        while (cmdOut != null && cmdOut.length() > 0) {
+        while (cmdOut != null) {
             System.out.println(cmdOut);
             cmdOut = output.readLine();
         }
