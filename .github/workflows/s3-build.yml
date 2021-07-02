@@ -47,7 +47,7 @@ jobs:
           path: ${{env.BUILD_CACHE_PATH}}
           key: ${{github.run_id}}
       - name: Install libdigest-hmac-perl
-        run: sudo apt-get install -y libdigest-hmac-perl
+        run: apt-get install -y libdigest-hmac-perl
       - name: Integration Test Gradle Run
         run: ./gradlew --info -Pintegration test
 
