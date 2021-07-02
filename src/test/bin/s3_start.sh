@@ -81,10 +81,12 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
         break;
     fi
     sleep 10
+    /tmp/s3curl/s3curl.pl --id=scality --createBucket -- http://127.0.0.1:$S3_DOCKER_PORT/$S3_BUCKET
 done
 
 if [ $found -eq 0 ]; then
     echo "Bucket never got created"
+    docker logs s3server
     exit 1
 fi
 
