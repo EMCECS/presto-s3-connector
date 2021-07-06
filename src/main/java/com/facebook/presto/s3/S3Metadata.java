@@ -310,7 +310,8 @@ public class S3Metadata
         ImmutableMap.Builder<SchemaTableName, List<ColumnMetadata>> columns = ImmutableMap.builder();
         List<SchemaTableName> tableNames;
         if (prefix.getTableName() == null) {
-            tableNames = listTables(session, prefix.getSchemaName());
+            tableNames = listTables(session, Optional.of(requireNonNull(prefix.getSchemaName(),
+                    "schemaName is null")));
         }
         else {
             tableNames = ImmutableList.of(new SchemaTableName(prefix.getSchemaName(), prefix.getTableName()));
@@ -323,21 +324,8 @@ public class S3Metadata
         }
         return columns.build();
     }
-    @Override
-    public List<SchemaTableName> listTables(ConnectorSession session, String schemaNameOrNull)
-    {
-        ImmutableList.Builder<SchemaTableName> builder = ImmutableList.builder();
-        for (SchemaTableName tableName : tableDescriptions.keySet()) {
-            if (schemaNameOrNull == null || tableName.getSchemaName().equals(schemaNameOrNull)) {
-                builder.add(tableName);
-            }
-        }
 
-        return builder.build();
-    }
     private ConnectorTableMetadata getTableMetadata(SchemaTableName tableName) {
-
-
         S3Table table = tableDescriptions.get(tableName);
         if (table == null) {
             return null;

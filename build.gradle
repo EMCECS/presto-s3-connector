@@ -22,7 +22,6 @@ plugins {
     id 'java'
     id 'distribution'
     id 'maven'
-    id "nebula.lint" version "16.9.0"
 }
 
 apply from: "$rootDir/gradle/checkstyle.gradle"
@@ -40,13 +39,6 @@ repositories {
 
     maven {
         url = uri('https://repo.maven.apache.org/maven2')
-    }
-}
-
-allprojects {
-    apply plugin :"nebula.lint"
-    gradleLint {
-        rules=['unused-dependency']
     }
 }
 
@@ -89,6 +81,7 @@ dependencies {
     compile "com.facebook.presto.hive:hive-apache:${prestoHiveVersion}"
     compile "com.facebook.presto.hadoop:hadoop-apache2:${prestoHadoopVersion}"
     compile "jakarta.ws.rs:jakarta.ws.rs-api:${jakartaRSVersion}"
+    compile "com.facebook.presto:presto-main:${prestoVersion}"
 
     runtime "javax.xml.bind:jaxb-api:${javaxXMLBindVersion}"
     runtime "io.airlift:joda-to-java-time-bridge:${airliftJodaVersion}"
@@ -109,7 +102,6 @@ dependencies {
     runtimeOnly "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
     runtimeOnly "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
 
-    testImplementation "com.facebook.presto:presto-main:${prestoVersion}"
     testImplementation "com.facebook.airlift:log-manager:${airliftVersion}"
     testImplementation "com.facebook.presto:presto-tests:${prestoVersion}"
     testImplementation "org.testng:testng:${testNGVersion}"

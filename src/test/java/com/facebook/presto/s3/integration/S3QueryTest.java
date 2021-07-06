@@ -318,8 +318,8 @@ public class S3QueryTest
     @Test (dependsOnMethods = "testCTASInsertRow")
     public void testDropTable() {
         log.info("Test: testDropTable");
-        queryRunner.execute("DROP TABLE s3.newschema.csvtable1");
         queryRunner.execute("DROP TABLE s3.newschema.csvtable");
+        queryRunner.execute("DROP TABLE s3.newschema.csvtable1");
         List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newschema").getMaterializedRows();
         boolean foundTable = false;
         for (MaterializedRow row : rows) {
