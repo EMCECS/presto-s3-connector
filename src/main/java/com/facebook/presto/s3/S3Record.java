@@ -19,7 +19,7 @@ package com.facebook.presto.s3;
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 
-// TODO: parse these from bytes vs. string
+// TODO: https://github.com/EMCECS/presto-s3-connector/issues/27
 public class S3Record
 {
     int len;

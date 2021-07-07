@@ -93,8 +93,4 @@ public class S3OutputTableHandle
     {
         return "s3:" + schemaTableName.getSchemaName() + "." + schemaTableName.getTableName();
     }
-
-
-
-
 }

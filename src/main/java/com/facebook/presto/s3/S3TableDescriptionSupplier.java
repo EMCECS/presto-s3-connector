@@ -64,7 +64,8 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
         for(Bucket bucket: listOfBuckets){
             JSONObject sources = new JSONObject();
             // TODO: https://github.com/pravega/pravega-sql/issues/59
-//            sources.put(bucket.getName(), accessObject.listObjects(bucket.getName()));
+            // In sources, it used to add all the objects of the bucket - very bad
+            // Eventually we need to replace with real metadata search
             S3Table table = this.objectDescriptionCodec.fromJson(
                     this.accessObject.getMetaData(bucket.getName()).
                             put("sources", sources).
@@ -81,13 +82,8 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
         }
 
         JSONObject objSchema = schemaRegistryManager.getSchemaRegistryConfig();
-        Set<String> schemaNameSet = new HashSet<>();
         if (!objSchema.isEmpty()) {
             log.debug("Including Schema Registry JSON schema: " + objSchema.toString());
-//            Map<SchemaTableName, S3Table> schemaRegistryMap = getSchema(objSchema).build();
-//            for(SchemaTableName st:schemaRegistryMap.keySet()){
-//                schemaNameSet.add(st.getSchemaName());
-//            }
             builder.putAll(getSchema(objSchema).build());
         }
         File schemaDir = new File(s3SchemaFileLocationDir);
@@ -100,13 +96,6 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
                 log.info("Including Schema file " + jsonFile.getAbsolutePath()
                         + " with JSON schema: " + fileObjSchema.toString());
                 if (fileObjSchema.has("schemas")) {
-//                    Map<SchemaTableName, S3Table> staticJsonMap = getSchema(fileObjSchema).build();
-//                    for(SchemaTableName st1:staticJsonMap.keySet()){
-//                        String name = st1.getSchemaName();
-//                        if(!schemaNameSet.contains(name)){
-//                            schemaRegistryManager.createGroup(name, "propogatedSchema");
-//                        }
-//                    }
                     builder.putAll(getSchema(fileObjSchema).build());
                 }
             }

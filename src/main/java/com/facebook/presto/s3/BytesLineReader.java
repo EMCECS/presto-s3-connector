@@ -43,7 +43,7 @@ public class BytesLineReader
         this(inputStream, bufSizeBytes, 0L, Long.MAX_VALUE);
     }
 
-    // TODO: if record exceeds bufSizeBytes
+    // TODO: https://github.com/EMCECS/presto-s3-connector/issues/26
     public BytesLineReader(InputStream inputStream, int bufSizeBytes, long start, long end)
     {
         this.inputStream = inputStream;
@@ -56,8 +56,7 @@ public class BytesLineReader
 
         if (start != 0) {
             // seek to first record
-            // TODO: what if non-zero offset and first byte is start of a record?
-            //       do we need to look back?
+            // TODO: https://github.com/EMCECS/presto-s3-connector/issues/26
             byte[] tmp = new byte[Math.max(65536, bufSizeBytes)];
             read(tmp);
             absPos += bufPos;

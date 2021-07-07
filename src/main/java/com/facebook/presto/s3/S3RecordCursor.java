@@ -110,8 +110,6 @@ public class S3RecordCursor
         if(this.schemaname.equals("s3_buckets")) {
             this.lines = accessObject.listObjectMetadata(s3TableLayoutHandle.getTable().getTableName()).iterator();
         }
-        // Fix to not read entire objects into memory
-        // TODO: https://github.com/pravega/pravega-sql/issues/63
         else if(s3TableHandle.getObjectDataFormat().equals(CSV) ||
                 s3TableHandle.getObjectDataFormat().equals(TEXT)) {
             if (s3SelectPushdownEnabled) {
@@ -287,9 +285,7 @@ public class S3RecordCursor
         }
 
         if (!columnHandleFieldValueProviderMap.isPresent()) {
-            // could not decode row for whatever reason, probably invalid csv.
-            // TODO how to handle, throw ex. and stop entirely, or silently ignore + continue with next line or ..
-            // https://github.com/pravega/pravega-sql/issues/78
+            // TODO: https://github.com/EMCECS/presto-s3-connector/issues/25
             return false;
         }
 

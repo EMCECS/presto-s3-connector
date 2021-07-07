@@ -74,11 +74,7 @@ public class S3SplitSource
     @Override
     public CompletableFuture<ConnectorSplitBatch> getNextBatch(ConnectorPartitionHandle partitionHandle, int maxSize)
     {
-        // TODO: we can list buckets + figure out ranges here instead of in S3ObjectManager
-        //       pass bucket name / param ando listing here
-
-        // TODO: delaying the return of splits is for later testing large number of splits, and processing right away
-
+        // TODO: https://github.com/EMCECS/presto-s3-connector/issues/29
         ListenableScheduledFuture<ConnectorSplitBatch> future = tp.schedule(() -> {
             List<ConnectorSplit> results = new ArrayList<>();
             int size = Math.min(max, maxSize);

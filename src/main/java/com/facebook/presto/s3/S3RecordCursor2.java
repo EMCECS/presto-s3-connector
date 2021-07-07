@@ -137,7 +137,7 @@ public class S3RecordCursor2
     @Override
     public long getCompletedBytes()
     {
-        // TODO: do we need feedback from s3select?  or only consider bytes we have read here?
+        // TODO: https://github.com/EMCECS/presto-s3-connector/issues/28
         return lineReader.bytesProcessed();
     }
 

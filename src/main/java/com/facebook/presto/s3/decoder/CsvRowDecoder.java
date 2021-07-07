@@ -62,8 +62,7 @@ public class CsvRowDecoder
     {
         String[] tokens;
         try {
-            // TODO - There is no reason why the row can't have a formatHint and it could be used
-            // to set the charset here.
+            // TODO: https://github.com/EMCECS/presto-s3-connector/issues/30
             String line = new String(data, StandardCharsets.UTF_8);
             tokens = parser.parseLine(line);
         }

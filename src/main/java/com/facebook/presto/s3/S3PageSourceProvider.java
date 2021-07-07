@@ -227,7 +227,6 @@ public class S3PageSourceProvider
             return columnMappings.build();
         }
 
-
         public static List<S3ColumnHandle> toColumnHandles(List<ColumnMapping> regularColumnMappings)
         {
             return regularColumnMappings.stream()
