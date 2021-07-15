@@ -1,0 +1,36 @@
+{
+  "schemas": [
+    {
+      "schemaTableName": {
+        "schema_name": "jsondata",
+        "table_name": "records"
+      },
+      "ecsTable": {
+        "name": "records",
+        "columns": [
+          {
+            "name": "first_name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "last_name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "address",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "num_of_patents",
+            "type": "integer"
+          }
+        ],
+        "sources": {"testbucket": ["jsondata/json_data_file"] },
+        "objectDataFormat": "json",
+        "hasHeaderRow": "false",
+        "recordDelimiter": "\n",
+        "fieldDelimiter": ","
+      }
+    }
+  ]
+}

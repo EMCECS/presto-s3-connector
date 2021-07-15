@@ -1,0 +1,27 @@
+{
+  "schemas": [
+    {
+      "schemaTableName": {
+        "schema_name": "cartoondb",
+        "table_name": "addressTable"
+      },
+      "s3Table": {
+        "name": "addressTable",
+        "columns": [
+          {
+            "name": "Name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Address",
+            "type": "VARCHAR"
+          }
+        ],
+        "sources": {"testbucket": ["cartoondb/cartoon_table.json"] },
+        "objectDataFormat": "json",
+        "hasHeaderRow": "false",
+        "recordDelimiter": "\n"
+      }
+    }
+  ]
+}

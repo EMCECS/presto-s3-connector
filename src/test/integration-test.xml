@@ -1,0 +1,10 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="integration">
+    <test name="integration-test">
+        <packages>
+            <package name="com.facebook.presto.s3select"/>
+            <package name="com.facebook.presto.s3.integration"/>
+        </packages>
+    </test>
+</suite>
+

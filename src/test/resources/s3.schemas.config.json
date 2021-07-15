@@ -1,0 +1,156 @@
+{
+  "schemas": [
+    {
+      "schemaTableName": {
+        "schema_name": "studentdb",
+        "table_name": "medical"
+      },
+      "s3Table": {
+        "name": "medical",
+        "columns": [
+          {
+            "name": "Name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Age",
+            "type": "INTEGER"
+          },
+          {
+            "name": "Weight",
+            "type": "DOUBLE"
+          }
+        ],
+        "sources": {"testbucket": ["medical.csv"] },
+        "objectDataFormat": "csv",
+        "hasHeaderRow": "true",
+        "recordDelimiter": "\n"
+      }
+    },
+    {
+      "schemaTableName": {
+        "schema_name": "studentdb",
+        "table_name": "grades"
+      },
+      "s3Table": {
+        "name": "grades",
+        "columns": [
+          {
+            "name": "Name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Class",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Grade",
+            "type": "DOUBLE"
+          }
+        ],
+        "sources": {"testbucket": ["grades"] },
+        "objectDataFormat": "csv",
+        "hasHeaderRow": "true",
+        "recordDelimiter": "\n"
+      }
+    },
+    {
+      "schemaTableName": {
+        "schema_name": "studentdb",
+        "table_name": "names"
+      },
+      "s3Table": {
+        "name": "names",
+        "columns": [
+          {
+            "name": "last",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "first",
+            "type": "VARCHAR"
+          }
+        ],
+        "sources": {"testbucket": ["names.csv"] },
+        "objectDataFormat": "csv",
+        "hasHeaderRow": "false",
+        "recordDelimiter": "\n"
+      }
+    },
+    {
+      "s3Table": {
+        "columns": [
+          {
+            "name": "ID",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Sex",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Age",
+            "type": "BIGINT"
+          },
+          {
+            "name": "Height",
+            "type": "BIGINT"
+          },
+          {
+            "name": "Weight",
+            "type": "BIGINT"
+          },
+          {
+            "name": "Team",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "NOC",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Games",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Year",
+            "type": "BIGINT"
+          },
+          {
+            "name": "Season",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "City",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Sport",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Event",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "Medal",
+            "type": "VARCHAR"
+          }
+        ],
+        "name": "medaldatatable",
+        "objectDataFormat": "avro",
+        "hasHeaderRow": "false",
+        "recordDelimiter": "\r",
+        "sources": { "testbucket": [ "avro_datafile" ] }
+      },
+      "schemaTableName": {
+        "schema_name": "olympicdb",
+        "table_name": "medaldatatable"
+      }
+    }
+  ]
+}

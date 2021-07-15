@@ -1,0 +1,174 @@
+/*
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Build gradle file for the Pravega connector
+ */
+
+plugins {
+    id 'java'
+    id 'distribution'
+    id 'maven'
+}
+
+apply from: "$rootDir/gradle/checkstyle.gradle"
+
+repositories {
+    mavenLocal()
+
+    maven {
+        url = uri('https://oss.jfrog.org/jfrog-dependencies')
+    }
+
+    maven {
+        url = uri('https://jitpack.io')
+    }
+
+    maven {
+        url = uri('https://repo.maven.apache.org/maven2')
+    }
+}
+
+dependencies {
+    compile "org.glassfish.hk2.external:jakarta.inject:${glassfishJakartaInjectVersion}"
+    compile "org.glassfish.hk2.external:javax.inject:${glassfishJavaxInjectVersion}"
+    compile "jakarta.validation:jakarta.validation-api:${jakartaValidationVersion}"
+    compile "com.facebook.airlift:bootstrap:${airliftVersion}"
+    compile "javax.inject:javax.inject:${javaxInjectVersion}"
+    compile "com.facebook.airlift:json:${airliftVersion}"
+    compile "com.facebook.airlift:log:${airliftVersion}"
+    compile "com.facebook.airlift:concurrent:${airliftVersion}"
+    compile "com.facebook.airlift:configuration:${airliftVersion}"
+    compile "javax.validation:validation-api:${javaxValidationVersion}"
+    compile "com.google.guava:guava:${guavaVersion}"
+    compile "com.google.inject:guice:${guiceVersion}"
+    compile "com.amazonaws:aws-java-sdk-s3:${awsSDKVersion}"
+    compile "com.amazonaws:aws-java-sdk-core:${awsSDKVersion}"
+    compile "javax.ws.rs:javax.ws.rs-api:${javaxWSRSVersion}"
+    compile "org.apache.avro:avro:${avroVersion}"
+    compile "com.opencsv:opencsv:${openCSVVer}"
+    compile "net.sf.opencsv:opencsv:${netOpenCSVVer}"
+    compile "com.facebook.presto:presto-spi:${prestoVersion}"
+    compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    compile "io.airlift:slice:${airliftSliceVersion}"
+    compile "io.airlift:units:${airliftUnitsVersion}"
+    compile "org.json:json:${jsonVersion}"
+    compile "joda-time:joda-time:${jodaTimeVersion}"
+    compile "com.facebook.presto:presto-common:${prestoVersion}"
+    compile "com.facebook.presto:presto-record-decoder:${prestoVersion}"
+    compile "com.emc.ecs:object-client:${emcObjectClientVersion}"
+    compile "io.pravega:schemaregistry-client:${pravegaSchemaRegistryVersion}"
+    compile "io.pravega:schemaregistry-contract:${pravegaSchemaRegistryVersion}"
+    compile "org.apache.parquet:parquet-hadoop:${apacheParquetVersion}"
+    compile "org.apache.parquet:parquet-column:${apacheParquetVersion}"
+    compile "org.weakref:jmxutils:${jmxVersion}"
+    compile "com.facebook.presto:presto-parquet:${prestoVersion}"
+    compile "com.facebook.presto:presto-memory-context:${prestoVersion}"
+    compile "com.facebook.presto.hive:hive-apache:${prestoHiveVersion}"
+    compile "com.facebook.presto.hadoop:hadoop-apache2:${prestoHadoopVersion}"
+    compile "jakarta.ws.rs:jakarta.ws.rs-api:${jakartaRSVersion}"
+    compile "com.facebook.presto:presto-main:${prestoVersion}"
+
+    runtime "javax.xml.bind:jaxb-api:${javaxXMLBindVersion}"
+    runtime "io.airlift:joda-to-java-time-bridge:${airliftJodaVersion}"
+    runtime "org.slf4j:slf4j-simple:${slf4Version}"
+    runtime "com.emc.ecs:smart-client:${emcSmartClientVersion}"
+    runtime "com.emc.ecs:object-transform:${emcObjectTransformVersion}"
+    runtime "org.jdom:jdom2:${JDOMVersion}"
+    runtime "org.glassfish.jersey.containers:jersey-container-servlet-core:${glassfishJerseyVersion}"
+    runtime "org.glassfish.jersey.core:jersey-common:${glassfishJerseyVersion}"
+    runtime "org.glassfish.jersey.ext:jersey-proxy-client:${glassfishJerseyVersion}"
+    runtime "org.glassfish.jersey.core:jersey-client:${glassfishJerseyVersion}"
+    runtime "org.glassfish.jersey.inject:jersey-hk2:${glassfishJerseyVersion}"
+    runtime "io.pravega:schemaregistry-common:${pravegaSchemaRegistryVersion}"
+    runtime "io.pravega:pravega-common:${pravegaVersion}"
+
+    runtimeOnly "org.apache.bval:bval-jsr:${apacheBvalJSRVersion}"
+    runtimeOnly "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+    runtimeOnly "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    runtimeOnly "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
+
+    testImplementation "com.facebook.airlift:log-manager:${airliftVersion}"
+    testImplementation "com.facebook.presto:presto-tests:${prestoVersion}"
+    testImplementation "org.testng:testng:${testNGVersion}"
+    testImplementation "com.facebook.airlift:testing:${airliftVersion}"
+}
+
+/*
+    testImplementation "io.pravega:schemaregistry-common:${pravegaSchemaRegistryVersion}"
+*/
+
+group = 'com.facebook.presto'
+version = '0.1.0'
+description = 'S3 PrestoDB Connector'
+sourceCompatibility = '1.8'
+
+compileJava {
+options.debug = true
+options.debugOptions.debugLevel = 'lines,source'
+options.deprecation = true
+}
+
+task copyDependentJars(type: Copy) {
+    println configurations.compile
+    from configurations.runtime
+    into "$buildDir/plugin/libs/s3"
+}
+
+jar {
+    baseName = 's3-connector'
+    destinationDir = file("$buildDir/plugin/libs/s3")
+    manifest {
+        attributes "Main-Class": "com.facebook.presto.s3"
+    }
+}
+
+plugins.withType(DistributionPlugin) {
+    distTar {
+        compression = Compression.GZIP
+        extension = 'tar.gz'
+    }
+}
+
+distributions {
+    main {
+        contents {
+            distributionBaseName = 's3-presto-connector'
+            from(project.configurations.runtime)
+            from jar
+        }
+    }
+}
+
+task zip(type: Zip) {
+    into "$buildDir/plugin/libs/s3"
+    into (project.name + '-' + project.version)
+}
+
+def integration = project.hasProperty("integration")
+
+test {
+    maxHeapSize = "2048m"
+    useTestNG() {
+        suites "src/test/unit-test.xml"
+        if (integration) {
+            suites "src/test/integration-test.xml"
+        }
+    }
+}
+
+jar.dependsOn(copyDependentJars)
