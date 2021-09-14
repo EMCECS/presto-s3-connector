@@ -300,117 +300,42 @@ public class S3RecordCursor
             fields = null;
         }
 
-        for (Map.Entry<DecoderColumnHandle, FieldValueProvider> entry : columnHandleFieldValueProviderMap.get().entrySet()) {
-            if (entry.getKey().getClass() == S3ColumnHandle.class) {
-
-                S3ColumnHandle handle = (S3ColumnHandle) entry.getKey();
-                Class<?> columnType = handle.getType().getJavaType();
-                Object value;
-
-                if (columnType == boolean.class) {
-                    try {
-                        value = entry.getValue().getBoolean();
-                    } catch (Exception e) {
-                        value = null;
-                    }
-
-                }
-                else if(columnType == long.class) {
-                    try {
-                        value = entry.getValue().getLong();
-                    } catch (Exception e) {
-                        value = null;
-                    }
-                }
-                else if(columnType == int.class) {
-                    try {
-                        value = entry.getValue().getLong();
-                    } catch (Exception e) {
-                        value = null;
-                    }
-                }
-                else if(columnType == double.class) {
-                    try {
-                        value = entry.getValue().getDouble();
-                    } catch (Exception e) {
-                        value = null;
-                    }
-                }
-                else if(columnType == Slice.class) {
-                    try {
-                        value = new String(entry.getValue().getSlice().getBytes());
-                    } catch (Exception e) {
-                        value = null;
-                    }
-                }
-                else if(columnType == Block.class) {
-                    try {
-                        value = entry.getValue().getBlock();
-                    } catch (Exception e) {
-                        value = null;
-                    }
-                }
-                else {
-                    value = null;
-                }
-                fields[handle.getOrdinalPosition()] = value;
-            }
+        for (int i = 0; i < columnHandles.size(); i++) {
+            currentRowValues[i] = columnHandleFieldValueProviderMap.get().get(columnHandles.get(i));
         }
 
         return true;
     }
 
-    private Object getFieldValue(int field) {
-        checkState(fields != null, "Cursor has not been advanced yet");
-
-        int columnIndex = fieldToColumnIndex[field];
-        return fields[columnIndex];
-    }
-
     @Override
     public boolean getBoolean(int field) {
-        checkFieldType(field, BOOLEAN);
-        return (Boolean) (getFieldValue(field));
+        return currentRowValues[field].getBoolean();
     }
 
     @Override
     public long getLong(int field) {
-        checkFieldType2(field, BIGINT, INTEGER);
-        return (Long) getFieldValue(field);
+        return currentRowValues[field].getLong();
     }
 
     @Override
     public double getDouble(int field) {
-        checkFieldType(field, DOUBLE);
-        return (Double) (getFieldValue(field));
+        return currentRowValues[field].getDouble();
     }
 
     @Override
     public Slice getSlice(int field) {
-        checkFieldType(field, createUnboundedVarcharType());
-        return Slices.utf8Slice((String) getFieldValue(field));
+        return currentRowValues[field].getSlice();
     }
 
     @Override
     public Object getObject(int field) {
-        return getFieldValue(field);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isNull(int field) {
         checkArgument(field < columnHandles.size(), "Invalid field index");
-        return getFieldValue(field) == null;
-    }
-
-    private void checkFieldType(int field, Type expected) {
-        Type actual = getType(field);
-        checkArgument(actual.equals(expected), "Expected field %s to be type %s but is %s", field, expected, actual);
-    }
-
-    private void checkFieldType2(int field, Type expected1, Type expected2) {
-        Type actual = getType(field);
-        checkArgument(actual.equals(expected1) || actual.equals(expected2),
-                "Expected field %s to be type %s or %s, but is %s", field, expected1, expected2, actual);
+        return currentRowValues[field] == null || currentRowValues[field].isNull();
     }
 
     @Override

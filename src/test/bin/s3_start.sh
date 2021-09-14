@@ -32,6 +32,7 @@ export CSV1=$(readlink --canonicalize $SCRIPTDIR/../resources/names.csv)
 export CSV2=$(readlink --canonicalize $SCRIPTDIR/../resources/grades.csv)
 export JSON1=$(readlink --canonicalize $SCRIPTDIR/../resources/json_datafile)
 export JSON2=$(readlink --canonicalize $SCRIPTDIR/../resources/json_datafile)
+export JSON3=$(readlink --canonicalize $SCRIPTDIR/../resources/types.json)
 export AVRODATA1=$(readlink --canonicalize $SCRIPTDIR/../resources/avro_datafile)
 export TXTFILE=$(readlink --canonicalize $SCRIPTDIR/../resources/datafile.txt)
 export PARQUET=$(readlink --canonicalize $SCRIPTDIR/../resources/customerfile)
@@ -150,6 +151,7 @@ put "$S3_BUCKET" "$CSV2" "grades/grades.csv"
 put "$S3_BUCKET" "$AVRODATA1" "`basename $AVRODATA1`"
 put "$S3_BUCKET" "$JSON1" "cartoondb/cartoon_table.json"
 put "$S3_BUCKET" "$JSON2" "jsondata/json_datafile"
+put "$S3_BUCKET" "$JSON3" "`basename $JSON3`"
 put "$S3_BUCKET" "$PARQUET" "customer/customerfile"
 put "$S3_BUCKET" "$PARQUET1" "store/storefile"
 put "$S3_BUCKET" "$TXTFILE" "`basename $TXTFILE`"

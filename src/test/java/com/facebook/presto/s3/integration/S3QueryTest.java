@@ -19,6 +19,8 @@ package com.facebook.presto.s3.integration;
 import com.facebook.airlift.log.Logger;
 import com.facebook.airlift.log.Logging;
 import com.facebook.presto.Session;
+import com.facebook.presto.common.type.DateType;
+import com.facebook.presto.testing.MaterializedResult;
 import com.facebook.presto.testing.MaterializedRow;
 import com.facebook.presto.testing.QueryRunner;
 import org.testng.annotations.AfterSuite;
@@ -397,6 +399,14 @@ public class S3QueryTest
     public void getSelectStarFromS3Buckets() {
         log.info("Test: getSelectStarFromS3Buckets");
         queryRunner.execute("select * from s3.s3_buckets.testbucket");
+    }
+
+    @Test (dependsOnMethods = "resetSchema")
+    public void testJsonDate() {
+        MaterializedResult result = queryRunner.execute("select dateCol from s3.types.typesTable where nameCol = 'andrew'");
+        assertEquals(result.getRowCount(), 1);
+        assertEquals(result.getTypes().get(0), DateType.DATE);
+        assertEquals(result.getMaterializedRows().get(0).getField(0).toString(), "2021-05-25");
     }
 
     static boolean s3SelectEnabledForSession(Session session)

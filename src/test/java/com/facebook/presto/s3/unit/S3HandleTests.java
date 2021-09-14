@@ -158,8 +158,8 @@ public class S3HandleTests {
         String value1 = "value1";
         SchemaTableName stn = new SchemaTableName(schemaName, tableName);
         List<S3Column> s3Columns = new ArrayList<>();
-        S3Column col1 = new S3Column("Col1", BIGINT);
-        S3Column col2 = new S3Column("Col2", BIGINT);
+        S3Column col1 = new S3Column("Col1", BIGINT, null);
+        S3Column col2 = new S3Column("Col2", BIGINT, null);
         s3Columns.add(col1);
         s3Columns.add(col2);
         Map<String, Object> properties = new HashMap<>();
