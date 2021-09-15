@@ -167,7 +167,7 @@ public class S3Metadata
 
         ImmutableList.Builder<S3Column> s3columns = ImmutableList.builder();
         for (ColumnMetadata column : tableMetadata.getColumns()) {
-            s3columns.add(new S3Column(column.getName(), column.getType()));
+            s3columns.add(new S3Column(column.getName(), column.getType(), null));
         }
 
         return new S3OutputTableHandle(
@@ -255,7 +255,6 @@ public class S3Metadata
 
     @Override
     public Map<String, ColumnHandle> getColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle) {
-        final String dataFormat = null;
         final String formatHint = null;
         final boolean keyDecoder = true;
         final boolean hidden = false;
@@ -279,7 +278,7 @@ public class S3Metadata
                         column.getName(),
                         column.getType(),
                         column.getName(),
-                        dataFormat,
+                        column.getDataFormat(),
                         formatHint,
                         keyDecoder,
                         hidden,
@@ -292,7 +291,7 @@ public class S3Metadata
                         column.getName(),
                         column.getType(),
                         String.valueOf(index),
-                        dataFormat,
+                        column.getDataFormat(),
                         formatHint,
                         keyDecoder,
                         hidden,

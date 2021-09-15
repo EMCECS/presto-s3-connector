@@ -34,22 +34,27 @@ public class S3ColumnTest {
 
     private final S3Column column1 = new S3Column (
             "column1Name",
-            BIGINT
+            BIGINT,
+            null
+
     );
 
     private final S3Column column2 = new S3Column (
             "column2Name",
-            VARCHAR
+            VARCHAR,
+            null
     );
 
     private final S3Column column3 = new S3Column (
             "column3Name",
-            DATE
+            DATE,
+            null
     );
 
     private final S3Column column4 = new S3Column (
         "column1Name",
-        BIGINT
+        BIGINT,
+            null
     );
 
     // for use in S3TableTest

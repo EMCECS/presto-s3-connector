@@ -3,6 +3,7 @@
     <test name="unit-test">
         <packages>
             <package name="com.facebook.presto.s3.unit"/>
+            <package name="com.facebook.presto.s3.decoder"/>
         </packages>
     </test>
 </suite>
