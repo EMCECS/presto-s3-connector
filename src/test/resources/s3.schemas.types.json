@@ -17,6 +17,12 @@
             "mapping": "dateCol",
             "type": "DATE",
             "dataFormat": "iso8601"
+          },
+          {
+            "name": "timestampCol",
+            "mapping": "timestampCol",
+            "type": "TIMESTAMP",
+            "dataFormat": "iso8601"
           }
         ],
         "sources": {"testbucket": ["types.json"] },

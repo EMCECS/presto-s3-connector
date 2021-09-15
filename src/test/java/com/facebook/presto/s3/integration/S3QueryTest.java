@@ -20,6 +20,7 @@ import com.facebook.airlift.log.Logger;
 import com.facebook.airlift.log.Logging;
 import com.facebook.presto.Session;
 import com.facebook.presto.common.type.DateType;
+import com.facebook.presto.common.type.TimestampType;
 import com.facebook.presto.testing.MaterializedResult;
 import com.facebook.presto.testing.MaterializedRow;
 import com.facebook.presto.testing.QueryRunner;
@@ -403,10 +404,12 @@ public class S3QueryTest
 
     @Test (dependsOnMethods = "resetSchema")
     public void testJsonDate() {
-        MaterializedResult result = queryRunner.execute("select dateCol from s3.types.typesTable where nameCol = 'andrew'");
+        MaterializedResult result = queryRunner.execute("select dateCol, timestampCol from s3.types.typesTable where nameCol = 'andrew'");
         assertEquals(result.getRowCount(), 1);
         assertEquals(result.getTypes().get(0), DateType.DATE);
+        assertEquals(result.getTypes().get(1), TimestampType.TIMESTAMP);
         assertEquals(result.getMaterializedRows().get(0).getField(0).toString(), "2021-05-25");
+        assertEquals(result.getMaterializedRows().get(0).getField(1).toString(), "2021-05-25T16:05:15.123");
     }
 
     static boolean s3SelectEnabledForSession(Session session)
