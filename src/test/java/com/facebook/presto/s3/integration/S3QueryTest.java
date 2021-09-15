@@ -111,7 +111,7 @@ public class S3QueryTest
     @Test (dependsOnMethods = "resetSchema")
     public void testShowSchema(){
         log.info("Test: testShowSchema");
-        assertEquals(queryRunner.execute("SHOW SCHEMAS FROM s3").getRowCount(), 7);
+        assertEquals(queryRunner.execute("SHOW SCHEMAS FROM s3").getRowCount(), 8);
     }
 
     @Test (dependsOnMethods = "resetSchema")

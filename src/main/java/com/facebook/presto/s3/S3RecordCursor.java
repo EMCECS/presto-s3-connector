@@ -17,20 +17,18 @@
 package com.facebook.presto.s3;
 
 import com.facebook.airlift.log.Logger;
-import com.facebook.presto.common.block.Block;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.decoder.RowDecoder;
 
 import com.facebook.presto.decoder.avro.AvroColumnDecoder;
-import com.facebook.presto.s3.IonSqlQueryBuilder;
+import com.facebook.presto.s3.decoder.MetadataFieldValueProvider;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.RecordCursor;
 
 import io.airlift.slice.Slice;
-import io.airlift.slice.Slices;
 
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericRecord;
@@ -44,15 +42,9 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.*;
 
-import static com.facebook.presto.common.type.BigintType.BIGINT;
-import static com.facebook.presto.common.type.BooleanType.BOOLEAN;
-import static com.facebook.presto.common.type.DoubleType.DOUBLE;
-import static com.facebook.presto.common.type.IntegerType.INTEGER;
-import static com.facebook.presto.common.type.VarcharType.createUnboundedVarcharType;
 import static com.facebook.presto.s3.S3Const.*;
 import static com.facebook.presto.s3.S3ErrorCode.S3_UNSUPPORTED_FORMAT;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Functions.identity;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.lang.String.format;
@@ -63,7 +55,6 @@ public class S3RecordCursor
 
     protected List<S3ColumnHandle> columnHandles;
     protected final int[] fieldToColumnIndex;
-    protected Object[] fields;
     protected final RowDecoder rowDecoder;
     protected final FieldValueProvider[] currentRowValues;
     protected final S3ObjectRange objectRange;
@@ -214,64 +205,32 @@ public class S3RecordCursor
 
 
     private boolean bucketAdvanceNext() {
-        if(!lines.hasNext())
+        if(!lines.hasNext()) {
             return false;
-        Map<String,Object> cur = lines.next();
-        if(columnHandles.size()!=0){
-            fields = new Object[columnHandles.
-                    stream().
-                    max(Comparator.comparing(S3ColumnHandle::getOrdinalPosition)).
-                    get().
-                    getOrdinalPosition() + 1];
-        }
-        else {
-            fields = null;
         }
 
-        for (S3ColumnHandle col : this.columnHandles) {
-            String colName = col.getName().toLowerCase();
-            Object mapVal = cur.get(colName);
-            Class<?> colType = col.getType().getJavaType();
-            if(colType == long.class){
-                if(mapVal != null){
-                    fields[col.getOrdinalPosition()] = new Long(mapVal.toString());
-                }
-                else {
-                    fields[col.getOrdinalPosition()] = null;
-                }
-            }
-            else if(colType == Slice.class){
-                if(mapVal != null) {
-                    fields[col.getOrdinalPosition()] = mapVal.toString();
-                }
-                else {
-                    fields[col.getOrdinalPosition()] = "";
-                }
-            }
-            else if(colType == double.class){
-                if(mapVal != null) {
-                    fields[col.getOrdinalPosition()] = new Double(mapVal.toString());
-                }
-                else {
-                    fields[col.getOrdinalPosition()] = null;
-                }
-            }
-            else {
-                fields[col.getOrdinalPosition()] = mapVal;
-            }
+        Map<String,Object> values = lines.next();
+
+        for (int i = 0; i < columnHandles.size(); i++) {
+            final S3ColumnHandle col = this.columnHandles.get(i);
+            currentRowValues[i] = new MetadataFieldValueProvider(col, values);
         }
+
         return true;
-
     }
+
     private boolean objectAdvanceNext() {
-        if(lineIterator != null && !lineIterator.hasNext())
+        if(lineIterator != null && !lineIterator.hasNext()) {
             return false;
+        }
 
-        if(byteReader != null && !byteReader.hasNext())
+        if(byteReader != null && !byteReader.hasNext()) {
             return false;
+        }
 
-        if (lineIterator == null && byteReader == null)
+        if (lineIterator == null && byteReader == null) {
             return false;
+        }
 
         Optional<Map<DecoderColumnHandle, FieldValueProvider>> columnHandleFieldValueProviderMap;
         if (lineIterator != null) {
@@ -287,17 +246,6 @@ public class S3RecordCursor
         if (!columnHandleFieldValueProviderMap.isPresent()) {
             // TODO: https://github.com/EMCECS/presto-s3-connector/issues/25
             return false;
-        }
-
-        if(columnHandles.size()!=0){
-            fields = new Object[columnHandles.
-                    stream().
-                    max(Comparator.comparing(S3ColumnHandle::getOrdinalPosition)).
-                    get().
-                    getOrdinalPosition() + 1];
-        }
-        else {
-            fields = null;
         }
 
         for (int i = 0; i < columnHandles.size(); i++) {
