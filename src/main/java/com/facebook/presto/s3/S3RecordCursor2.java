@@ -20,33 +20,26 @@ import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.common.type.VarcharType;
 import com.facebook.presto.decoder.DecoderErrorCode;
-import com.facebook.presto.s3.IonSqlQueryBuilder;
+import com.facebook.presto.s3.reader.CsvRecordReader;
+import com.facebook.presto.s3.reader.RecordReader;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.RecordCursor;
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 
-import java.io.InputStream;
 import java.util.List;
 
 import static com.facebook.presto.common.type.Varchars.truncateToLength;
-import static com.facebook.presto.s3.S3Const.CSV;
-import static com.facebook.presto.s3.S3Const.LC_TRUE;
-import static com.facebook.presto.s3.S3Const.TEXT;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class S3RecordCursor2
         implements RecordCursor
 {
-    private static final Logger log = Logger.get(com.facebook.presto.s3.S3RecordCursor2.class);
+    private static final Logger log = Logger.get(S3RecordCursor2.class);
 
-    private final S3AccessObject accessObject;
-    private final S3ObjectRange objectRange;
-    private final S3ReaderProps readerProps;
-    private final S3TableLayoutHandle s3TableLayoutHandle;
+    private S3Record record;
 
-    private BytesLineReader lineReader = null;
-    private final S3Record record;
+    private final RecordReader recordReader;
 
     private final List<S3ColumnHandle> columnHandles;
     private final int[] fieldToColumnIndex;
@@ -58,79 +51,17 @@ public class S3RecordCursor2
             S3ObjectRange objectRange,
             S3ReaderProps readerProps)
     {
-
-        if (readerProps.getS3SelectEnabled()) {
-            // setting s3SelectPushdownEnabled currently checks format = csv - sanity check that here
-            if (!s3TableLayoutHandle.getTable().getObjectDataFormat().equals(CSV) &&
-                    !s3TableLayoutHandle.getTable().getObjectDataFormat().equals(TEXT)) {
-                throw new IllegalArgumentException("s3SelectPushdownEnabled for non delim file");
-            }
-        }
-
         this.columnHandles = columnHandles;
-        this.accessObject = accessObject;
-        this.objectRange = objectRange;
-        this.readerProps = readerProps;
-        this.s3TableLayoutHandle= s3TableLayoutHandle;
 
-        String fieldDelim = s3TableLayoutHandle.getTable().getFieldDelimiter();
-        if (fieldDelim.length() != 1) {
-            throw new IllegalArgumentException(fieldDelim);
-        }
-        this.record = new S3Record(fieldDelim.charAt(0));
+        this.recordReader = new CsvRecordReader(columnHandles,
+                accessObject,
+                objectRange,
+                s3TableLayoutHandle,
+                readerProps);
 
         this.fieldToColumnIndex = new int[columnHandles.size()];
-
         for (int i = 0; i < columnHandles.size(); i++) {
-            S3ColumnHandle columnHandle = columnHandles.get(i);
-            this.fieldToColumnIndex[i] = columnHandle.getOrdinalPosition();
-        }
-    }
-
-    private void init()
-    {
-        long end = objectRange.getLength() == -1L
-                ? Long.MAX_VALUE
-                : objectRange.getOffset() + objectRange.getLength();
-
-        long start = objectRange.getOffset();
-        if (readerProps.getS3SelectEnabled() && objectRange.getLength() > 0) {
-            // if using scan range with s3 select there is no seeking/spillover here
-            start = 0;
-            end = Long.MAX_VALUE;
-        }
-
-        lineReader = new BytesLineReader(
-                objectStream(),
-                readerProps.getBufferSizeBytes(),
-                start, end);
-
-        if(!readerProps.getS3SelectEnabled() &&
-                objectRange.getOffset() == 0 &&
-                s3TableLayoutHandle.getTable().getHasHeaderRow().equals(LC_TRUE)) {
-            // eat the header
-            lineReader.read(record.value);
-        }
-    }
-
-    private InputStream objectStream()
-    {
-        if (readerProps.getS3SelectEnabled()) {
-            String sql = new IonSqlQueryBuilder()
-                    .buildSql(S3RecordCursor::s3SelectColumnMapper,
-                            S3RecordCursor::s3SelectTypeMapper,
-                            columnHandles,
-                            s3TableLayoutHandle.getConstraints());
-            log.info("s3select " + objectRange + ", " + sql);
-            final boolean hasHeaderRow = s3TableLayoutHandle.getTable().getHasHeaderRow().equals(LC_TRUE);
-            final String recordDelimiter = s3TableLayoutHandle.getTable().getRecordDelimiter();
-            final String fieldDelimiter = s3TableLayoutHandle.getTable().getFieldDelimiter();
-
-            return accessObject.selectObjectContent(objectRange, sql,
-                    new S3SelectProps(hasHeaderRow, recordDelimiter, fieldDelimiter));
-        }
-        else {
-            return accessObject.getObject(objectRange.getBucket(), objectRange.getKey(), objectRange.getOffset());
+            this.fieldToColumnIndex[i] = columnHandles.get(i).getOrdinalPosition();
         }
     }
 
@@ -157,20 +88,15 @@ public class S3RecordCursor2
     @Override
     public boolean advanceNextPosition()
     {
-        if (lineReader == null) {
-            init();
-        }
-
-        record.len = lineReader.read(record.value);
-        record.decoded = false;
-        return record.len >= 0;
+        record = recordReader.advance();
+        return record != null;
     }
 
     @Override
     public boolean getBoolean(int field)
     {
         if (!record.decoded) {
-            record.decode();
+            record.decode(); // move to s3record impl
         }
         return record.getBoolean(fieldToColumnIndex[field]);
     }
@@ -220,8 +146,6 @@ public class S3RecordCursor2
     @Override
     public void close()
     {
-        if (lineReader != null) {
-            lineReader.close();
-        }
+        recordReader.close();
     }
 }

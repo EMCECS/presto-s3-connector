@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.presto.s3;
+package com.facebook.presto.s3.reader;
 
-import io.airlift.slice.Slice;
+import com.facebook.presto.decoder.DecoderColumnHandle;
+import com.facebook.presto.decoder.FieldValueProvider;
 
-public interface S3Record
+import java.util.Map;
+
+public interface RecordReader
 {
-    void decode();
+    boolean hasNext();
 
-    boolean isNull(int field);
+    Map<DecoderColumnHandle, FieldValueProvider> next();
 
-    Long getLong(int field);
-
-    Double getDouble(int field);
-
-    Boolean getBoolean(int field);
-
-    Slice getSlice(int field);
+    void close();
 }
