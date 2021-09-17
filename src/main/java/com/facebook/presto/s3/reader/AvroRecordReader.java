@@ -18,14 +18,17 @@ package com.facebook.presto.s3.reader;
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.decoder.avro.AvroColumnDecoder;
+import com.facebook.presto.s3.S3ColumnHandle;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificDatumReader;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Functions.identity;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
@@ -35,12 +38,14 @@ public class AvroRecordReader
 {
     private final Map<DecoderColumnHandle, AvroColumnDecoder> columnDecoders;
 
-    private final DataFileStream<GenericRecord> reader;
+    private final Supplier<InputStream> inputStream;
 
-    public AvroRecordReader(Set<DecoderColumnHandle> columnHandles, final InputStream inputStream) throws IOException
+    private DataFileStream<GenericRecord> reader = null;
+
+    public AvroRecordReader(List<S3ColumnHandle> columnHandles, final Supplier<InputStream> inputStream)
     {
         this.columnDecoders = columnHandles.stream().collect(toImmutableMap(identity(), this::createColumnDecoder));
-        this.reader = new DataFileStream<>(inputStream, new SpecificDatumReader<>());
+        this.inputStream = inputStream;
     }
 
     private AvroColumnDecoder createColumnDecoder(DecoderColumnHandle columnHandle)
@@ -48,15 +53,33 @@ public class AvroRecordReader
         return new AvroColumnDecoder(columnHandle);
     }
 
+    private void init()
+    {
+        try {
+            this.reader = new DataFileStream<>(inputStream.get(), new SpecificDatumReader<>());
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     @Override
     public boolean hasNext()
     {
+        if (reader == null) {
+            init();
+        }
+
         return reader.hasNext();
     }
 
     @Override
     public Map<DecoderColumnHandle, FieldValueProvider> next()
     {
+        if (reader == null) {
+            init();
+        }
+
         final GenericRecord record = reader.next();
 
         return columnDecoders.entrySet().stream()
@@ -66,5 +89,11 @@ public class AvroRecordReader
     @Override
     public void close()
     {
+        if (reader != null) {
+            try {
+                reader.close();
+            }
+            catch (IOException ignore) {}
+        }
     }
 }

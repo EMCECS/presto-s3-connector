@@ -16,19 +16,18 @@
 package com.facebook.presto.s3.reader;
 
 import com.facebook.airlift.log.Logger;
-import com.facebook.presto.common.type.Type;
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.s3.*;
 import com.facebook.presto.s3.decoder.CsvFieldValueProvider;
 import com.facebook.presto.s3.decoder.CsvRecord;
-import com.facebook.presto.spi.ColumnHandle;
 
 import java.io.Closeable;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.facebook.presto.s3.S3Const.*;
 
@@ -37,15 +36,11 @@ public class CsvRecordReader
 {
     private static final Logger log = Logger.get(CsvRecordReader.class);
 
-    private final List<S3ColumnHandle> columnHandles;
-
-    private final S3AccessObject accessObject;
+    private final S3ReaderProps readerProps;
 
     private final S3ObjectRange objectRange;
 
     private final S3TableLayoutHandle table;
-
-    private final S3ReaderProps readerProps;
 
     private final CsvRecord record;
 
@@ -55,30 +50,22 @@ public class CsvRecordReader
 
     private final Map<DecoderColumnHandle, FieldValueProvider> row;
 
-    // TODO: make sure we eat header row properly
+    private final Supplier<InputStream> inputStreamSupplier;
+
     public CsvRecordReader(List<S3ColumnHandle> columnHandles,
-                           S3AccessObject accessObject,
                            S3ObjectRange objectRange,
                            S3TableLayoutHandle table,
-                           S3ReaderProps readerProps)
+                           S3ReaderProps readerProps,
+                           Supplier<InputStream> inputStreamSupplier)
     {
-        if (readerProps.getS3SelectEnabled()) {
-            // setting s3SelectPushdownEnabled currently checks format = csv - sanity check that here
-            if (!table.getTable().getObjectDataFormat().equals(CSV) &&
-                    !table.getTable().getObjectDataFormat().equals(TEXT)) {
-                throw new IllegalArgumentException("s3SelectPushdownEnabled for non delim file");
-            }
-        }
-
         if (table.getTable().getFieldDelimiter().length() != 1) {
             throw new IllegalArgumentException(table.getTable().getFieldDelimiter());
         }
 
-        this.columnHandles = columnHandles;
-        this.accessObject = accessObject;
+        this.readerProps = readerProps;
         this.objectRange = objectRange;
         this.table = table;
-        this.readerProps = readerProps;
+        this.inputStreamSupplier = inputStreamSupplier;
 
         this.record = new CsvRecord(table.getTable().getFieldDelimiter().charAt(0));
 
@@ -103,36 +90,15 @@ public class CsvRecordReader
         }
 
         lineReader = new BytesLineReader(
-                objectStream(),
+                inputStreamSupplier.get(),
                 readerProps.getBufferSizeBytes(),
                 start, end);
 
-        if(!readerProps.getS3SelectEnabled() &&
+        if(readerProps.getS3SelectEnabled() &&
                 objectRange.getOffset() == 0 &&
                 table.getTable().getHasHeaderRow().equals(LC_TRUE)) {
             // eat the header
             lineReader.read(record.value);
-        }
-    }
-
-    private InputStream objectStream()
-    {
-        if (readerProps.getS3SelectEnabled()) {
-            String sql = new IonSqlQueryBuilder()
-                    .buildSql(CsvRecordReader::s3SelectColumnMapper,
-                            CsvRecordReader::s3SelectTypeMapper,
-                            columnHandles,
-                            table.getConstraints());
-            log.info("s3select " + objectRange + ", " + sql);
-            final boolean hasHeaderRow = table.getTable().getHasHeaderRow().equals(LC_TRUE);
-            final String recordDelimiter = table.getTable().getRecordDelimiter();
-            final String fieldDelimiter = table.getTable().getFieldDelimiter();
-
-            return accessObject.selectObjectContent(objectRange, sql,
-                    new S3SelectProps(hasHeaderRow, recordDelimiter, fieldDelimiter));
-        }
-        else {
-            return accessObject.getObject(objectRange.getBucket(), objectRange.getKey(), objectRange.getOffset());
         }
     }
 
@@ -167,16 +133,6 @@ public class CsvRecordReader
         }
         haveRow = false;
         return row;
-    }
-
-    static Integer s3SelectColumnMapper(ColumnHandle columnHandle)
-    {
-        return ((S3ColumnHandle) columnHandle).getAbsoluteSchemaPosition();
-    }
-
-    static Type s3SelectTypeMapper(ColumnHandle columnHandle)
-    {
-        return ((S3ColumnHandle) columnHandle).getType();
     }
 
     @Override

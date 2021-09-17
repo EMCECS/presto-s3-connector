@@ -58,9 +58,8 @@ public class S3RecordCursor
 
     @Override
     public long getCompletedBytes() {
-        return objectInputStream == null
-                ? totalBytes // bucket
-                : objectInputStream.getTotalBytes();
+        // TODO; make record reader abstract, return bytesRead ?
+        return 0;
     }
 
     @Override

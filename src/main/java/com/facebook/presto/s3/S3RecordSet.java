@@ -16,29 +16,35 @@
 
 package com.facebook.presto.s3;
 
+import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.decoder.RowDecoder;
+import com.facebook.presto.s3.reader.AvroRecordReader;
+import com.facebook.presto.s3.reader.CsvRecordReader;
+import com.facebook.presto.s3.reader.JsonRecordReader;
+import com.facebook.presto.s3.reader.RecordReader;
+import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.RecordSet;
 import com.google.common.collect.ImmutableList;
 
+import java.io.InputStream;
 import java.util.List;
+import java.util.function.Supplier;
 
-import static com.facebook.presto.s3.S3Const.CSV;
-import static com.facebook.presto.s3.S3Const.SESSION_PROP_NEW_RECORD_CURSOR;
-import static com.facebook.presto.s3.S3Util.boolProp;
+import static com.facebook.presto.s3.S3Const.*;
 import static com.facebook.presto.s3.S3Util.constructReaderProps;
 import static java.util.Objects.requireNonNull;
 
 public class S3RecordSet
         implements RecordSet {
+    private static final Logger log = Logger.get(S3RecordSet.class);
+
     private final ConnectorSession session;
     private final S3Split split;
     private final List<S3ColumnHandle> columnHandles;
     private final List<Type> columnTypes;
-    private final String tablename;
-    private final String schemaname;
     private final S3AccessObject accessObject;
     private final RowDecoder objectDecoder;
     private final S3ObjectRange objectRange;
@@ -49,9 +55,7 @@ public class S3RecordSet
                        List<S3ColumnHandle> columnHandles,
                        S3AccessObject accessObject,
                        RowDecoder objectDecoder,
-                       S3TableHandle s3TableHandle)
-
-    {
+                       S3TableHandle s3TableHandle) {
         this.session = requireNonNull(session, "session is null");
         this.split = requireNonNull(split, "split is null");
         requireNonNull(accessObject, "s3Helper is null");
@@ -69,8 +73,6 @@ public class S3RecordSet
         }
 
         this.columnTypes = types.build();
-        this.tablename = split.getS3TableHandle().getTableName();
-        this.schemaname = split.getS3TableHandle().getSchemaName();
     }
 
     @Override
@@ -80,27 +82,60 @@ public class S3RecordSet
 
     @Override
     public RecordCursor cursor() {
-        try {
-                boolean isCSV = s3TableHandle.getObjectDataFormat().equals(CSV);
-                if (boolProp(session, SESSION_PROP_NEW_RECORD_CURSOR, false) && isCSV) {
-                return new S3RecordCursor2(columnHandles,
-                        split.getS3TableLayoutHandle(),
-                        accessObject,
+        RecordReader recordReader;
+        final S3ReaderProps readerProps = constructReaderProps(session);
+        Supplier<InputStream> inputStreamSupplier = () -> objectStream(readerProps);
+
+        switch (s3TableHandle.getObjectDataFormat()) {
+            case CSV:
+            case TEXT:
+                recordReader = new CsvRecordReader(columnHandles,
                         objectRange,
-                        constructReaderProps(session));
-            }
-            else {
-                return new S3RecordCursor(columnHandles,
                         split.getS3TableLayoutHandle(),
-                        accessObject,
-                        objectDecoder,
-                        objectRange,
-                        split.getS3SelectPushdownEnabled(),
-                        s3TableHandle);
-            }
+                        readerProps,
+                        inputStreamSupplier);
+                break;
+            case JSON:
+                recordReader = new JsonRecordReader(objectDecoder, inputStreamSupplier);
+                break;
+            case AVRO:
+                recordReader = new AvroRecordReader(columnHandles, inputStreamSupplier);
+                break;
+            default:
+                throw new IllegalArgumentException("unhandled type " + s3TableHandle.getObjectDataFormat());
         }
-        catch (Exception e) {
-            throw new RuntimeException(e);
+
+        return new S3RecordCursor(recordReader, columnHandles);
+    }
+
+    private InputStream objectStream(S3ReaderProps readerProps)
+    {
+        if (readerProps.getS3SelectEnabled()) {
+            String sql = new IonSqlQueryBuilder()
+                    .buildSql(S3RecordSet::s3SelectColumnMapper,
+                            S3RecordSet::s3SelectTypeMapper,
+                            columnHandles,
+                            split.getS3TableLayoutHandle().getConstraints());
+            log.info("s3select " + objectRange + ", " + sql);
+            final boolean hasHeaderRow = s3TableHandle.getHasHeaderRow().equals(LC_TRUE);
+            final String recordDelimiter = s3TableHandle.getRecordDelimiter();
+            final String fieldDelimiter = s3TableHandle.getFieldDelimiter();
+
+            return accessObject.selectObjectContent(objectRange, sql,
+                    new S3SelectProps(hasHeaderRow, recordDelimiter, fieldDelimiter));
         }
+        else {
+            return accessObject.getObject(objectRange.getBucket(), objectRange.getKey(), objectRange.getOffset());
+        }
+    }
+
+    static Integer s3SelectColumnMapper(ColumnHandle columnHandle)
+    {
+        return ((S3ColumnHandle) columnHandle).getAbsoluteSchemaPosition();
+    }
+
+    static Type s3SelectTypeMapper(ColumnHandle columnHandle)
+    {
+        return ((S3ColumnHandle) columnHandle).getType();
     }
 }
