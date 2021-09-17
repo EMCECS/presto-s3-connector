@@ -94,7 +94,7 @@ public class CsvRecordReader
                 readerProps.getBufferSizeBytes(),
                 start, end);
 
-        if(readerProps.getS3SelectEnabled() &&
+        if(!readerProps.getS3SelectEnabled() &&
                 objectRange.getOffset() == 0 &&
                 table.getTable().getHasHeaderRow().equals(LC_TRUE)) {
             // eat the header
