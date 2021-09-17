@@ -25,7 +25,6 @@ import com.facebook.presto.spi.RecordCursor;
 
 import io.airlift.slice.Slice;
 
-import java.io.IOException;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -36,8 +35,6 @@ public class S3RecordCursor
 
     private final List<S3ColumnHandle> columnHandles;
     private final FieldValueProvider[] currentRowValues;
-
-    private CountingInputStream objectInputStream;
 
     private final RecordReader recordReader;
 
@@ -114,12 +111,5 @@ public class S3RecordCursor
     @Override
     public void close()
     {
-        if (objectInputStream != null) {
-            try {
-                objectInputStream.close();
-                objectInputStream = null;
-            }
-            catch (IOException ignore) {}
-        }
     }
 }
