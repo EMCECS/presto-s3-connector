@@ -16,7 +16,6 @@
 package com.facebook.presto.s3.decoder;
 
 import com.facebook.presto.decoder.FieldValueProvider;
-import com.facebook.presto.s3.S3RecordImpl;
 import io.airlift.slice.Slice;
 
 public class CsvFieldValueProvider
@@ -24,9 +23,9 @@ public class CsvFieldValueProvider
 {
     public final int field;
 
-    private final S3RecordImpl record;
+    private final CsvRecord record;
 
-    public CsvFieldValueProvider(S3RecordImpl record, int field)
+    public CsvFieldValueProvider(CsvRecord record, int field)
     {
         this.record = record;
         this.field = field;

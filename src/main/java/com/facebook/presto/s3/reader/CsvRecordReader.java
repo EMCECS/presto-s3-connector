@@ -21,6 +21,7 @@ import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.s3.*;
 import com.facebook.presto.s3.decoder.CsvFieldValueProvider;
+import com.facebook.presto.s3.decoder.CsvRecord;
 import com.facebook.presto.spi.ColumnHandle;
 
 import java.io.Closeable;
@@ -46,7 +47,7 @@ public class CsvRecordReader
 
     private final S3ReaderProps readerProps;
 
-    private final S3RecordImpl record;
+    private final CsvRecord record;
 
     private BytesLineReader lineReader = null;
 
@@ -79,7 +80,7 @@ public class CsvRecordReader
         this.table = table;
         this.readerProps = readerProps;
 
-        this.record = new S3RecordImpl(table.getTable().getFieldDelimiter().charAt(0));
+        this.record = new CsvRecord(table.getTable().getFieldDelimiter().charAt(0));
 
         // create col->value provider objects once as all the same underlying objects are used (i.e. record)
         this.row = new HashMap<>();

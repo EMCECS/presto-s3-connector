@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.facebook.presto.s3;
+package com.facebook.presto.s3.decoder;
 
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 
 // TODO: https://github.com/EMCECS/presto-s3-connector/issues/27
-public class S3RecordImpl
-        implements S3Record
+public class CsvRecord
 {
     public int len;
     public byte[] value;
@@ -33,7 +32,7 @@ public class S3RecordImpl
 
     public boolean decoded = false;
 
-    public S3RecordImpl(char fieldSep)
+    public CsvRecord(char fieldSep)
     {
         this.fieldSep = fieldSep;
 
