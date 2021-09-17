@@ -22,6 +22,8 @@ import java.util.Map;
 
 public interface RecordReader
 {
+    long getTotalBytes();
+
     boolean hasNext();
 
     Map<DecoderColumnHandle, FieldValueProvider> next();

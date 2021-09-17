@@ -50,13 +50,15 @@ public class CsvRecordReader
 
     private final Map<DecoderColumnHandle, FieldValueProvider> row;
 
-    private final Supplier<InputStream> inputStreamSupplier;
+    private final Supplier<CountingInputStream> inputStreamSupplier;
+
+    private CountingInputStream inputStream;
 
     public CsvRecordReader(List<S3ColumnHandle> columnHandles,
                            S3ObjectRange objectRange,
                            S3TableLayoutHandle table,
                            S3ReaderProps readerProps,
-                           Supplier<InputStream> inputStreamSupplier)
+                           Supplier<CountingInputStream> inputStreamSupplier)
     {
         if (table.getTable().getFieldDelimiter().length() != 1) {
             throw new IllegalArgumentException(table.getTable().getFieldDelimiter());
@@ -89,8 +91,10 @@ public class CsvRecordReader
             end = Long.MAX_VALUE;
         }
 
+        inputStream = inputStreamSupplier.get();
+
         lineReader = new BytesLineReader(
-                inputStreamSupplier.get(),
+                inputStream,
                 readerProps.getBufferSizeBytes(),
                 start, end);
 
@@ -100,6 +104,14 @@ public class CsvRecordReader
             // eat the header
             lineReader.read(record.value);
         }
+    }
+
+    @Override
+    public long getTotalBytes()
+    {
+        return inputStream == null
+                ? 0
+                : inputStream.getTotalBytes();
     }
 
     @Override

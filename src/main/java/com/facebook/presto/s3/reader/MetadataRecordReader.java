@@ -41,6 +41,12 @@ public class MetadataRecordReader
     }
 
     @Override
+    public long getTotalBytes()
+    {
+        return 0;
+    }
+
+    @Override
     public boolean hasNext()
     {
         return lines.hasNext();

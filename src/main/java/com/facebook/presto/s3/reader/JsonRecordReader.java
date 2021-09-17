@@ -18,6 +18,7 @@ package com.facebook.presto.s3.reader;
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.decoder.RowDecoder;
+import com.facebook.presto.s3.CountingInputStream;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -31,16 +32,27 @@ public class JsonRecordReader
 
     private Iterator<String> lineIterator;
 
-    private final Supplier<InputStream> inputStream;
+    private final Supplier<CountingInputStream> inputStreamSupplier;
 
-    public JsonRecordReader(RowDecoder rowDecoder, final Supplier<InputStream> inputStream)
+    private CountingInputStream inputStream;
+
+    public JsonRecordReader(RowDecoder rowDecoder, final Supplier<CountingInputStream> inputStreamSupplier)
     {
         this.rowDecoder = rowDecoder;
-        this.inputStream = inputStream;
+        this.inputStreamSupplier = inputStreamSupplier;
     }
 
     private void init() {
-        this.lineIterator = tempS3ObjectToStringObjectList(inputStream.get()).iterator();
+        this.inputStream = inputStreamSupplier.get();
+        this.lineIterator = tempS3ObjectToStringObjectList(inputStream).iterator();
+    }
+
+    @Override
+    public long getTotalBytes()
+    {
+        return inputStream == null
+                ? 0
+                : inputStream.getTotalBytes();
     }
 
     @Override
@@ -68,6 +80,10 @@ public class JsonRecordReader
     @Override
     public void close()
     {
+        try {
+            inputStream.close();
+        }
+        catch (IOException ignore) {}
     }
 
     private ArrayList<String> tempS3ObjectToStringObjectList(InputStream inputStream)

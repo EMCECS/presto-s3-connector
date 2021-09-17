@@ -85,7 +85,7 @@ public class S3RecordSet
     public RecordCursor cursor() {
         RecordReader recordReader;
         final S3ReaderProps readerProps = constructReaderProps(session);
-        Supplier<InputStream> inputStreamSupplier = () -> objectStream(readerProps);
+        Supplier<CountingInputStream> inputStreamSupplier = () -> objectStream(readerProps);
 
         switch (s3TableHandle.getObjectDataFormat()) {
             case CSV:
@@ -109,7 +109,7 @@ public class S3RecordSet
         return new S3RecordCursor(recordReader, columnHandles);
     }
 
-    private InputStream objectStream(S3ReaderProps readerProps)
+    private CountingInputStream objectStream(S3ReaderProps readerProps)
     {
         if (readerProps.getS3SelectEnabled() && delimitedFormat(s3TableHandle.getObjectDataFormat())) {
             String sql = new IonSqlQueryBuilder()
@@ -122,11 +122,11 @@ public class S3RecordSet
             final String recordDelimiter = s3TableHandle.getRecordDelimiter();
             final String fieldDelimiter = s3TableHandle.getFieldDelimiter();
 
-            return accessObject.selectObjectContent(objectRange, sql,
-                    new S3SelectProps(hasHeaderRow, recordDelimiter, fieldDelimiter));
+            return new CountingInputStream(accessObject.selectObjectContent(objectRange, sql,
+                    new S3SelectProps(hasHeaderRow, recordDelimiter, fieldDelimiter)));
         }
         else {
-            return accessObject.getObject(objectRange.getBucket(), objectRange.getKey(), objectRange.getOffset());
+            return new CountingInputStream(accessObject.getObject(objectRange.getBucket(), objectRange.getKey(), objectRange.getOffset()));
         }
     }
 

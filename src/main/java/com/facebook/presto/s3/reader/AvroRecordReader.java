@@ -18,13 +18,13 @@ package com.facebook.presto.s3.reader;
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.decoder.avro.AvroColumnDecoder;
+import com.facebook.presto.s3.CountingInputStream;
 import com.facebook.presto.s3.S3ColumnHandle;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificDatumReader;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
@@ -38,14 +38,16 @@ public class AvroRecordReader
 {
     private final Map<DecoderColumnHandle, AvroColumnDecoder> columnDecoders;
 
-    private final Supplier<InputStream> inputStream;
+    private final Supplier<CountingInputStream> inputStreamSupplier;
 
     private DataFileStream<GenericRecord> reader = null;
 
-    public AvroRecordReader(List<S3ColumnHandle> columnHandles, final Supplier<InputStream> inputStream)
+    private CountingInputStream inputStream;
+
+    public AvroRecordReader(List<S3ColumnHandle> columnHandles, final Supplier<CountingInputStream> inputStreamSupplier)
     {
         this.columnDecoders = columnHandles.stream().collect(toImmutableMap(identity(), this::createColumnDecoder));
-        this.inputStream = inputStream;
+        this.inputStreamSupplier = inputStreamSupplier;
     }
 
     private AvroColumnDecoder createColumnDecoder(DecoderColumnHandle columnHandle)
@@ -56,11 +58,20 @@ public class AvroRecordReader
     private void init()
     {
         try {
-            this.reader = new DataFileStream<>(inputStream.get(), new SpecificDatumReader<>());
+            this.inputStream = inputStreamSupplier.get();
+            this.reader = new DataFileStream<>(inputStream, new SpecificDatumReader<>());
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    @Override
+    public long getTotalBytes()
+    {
+        return inputStream == null
+                ? 0
+                : inputStream.getTotalBytes();
     }
 
     @Override
