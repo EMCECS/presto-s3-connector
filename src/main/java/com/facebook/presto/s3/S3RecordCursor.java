@@ -65,7 +65,7 @@ public class S3RecordCursor
 
     @Override
     public boolean advanceNextPosition() {
-        if (recordReader.hasNext()) {
+        if (!recordReader.hasNext()) {
             return false;
         }
 

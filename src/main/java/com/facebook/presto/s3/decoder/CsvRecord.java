@@ -65,6 +65,9 @@ public class CsvRecord
 
     public boolean isNull(int field)
     {
+        if (!decoded) {
+            decode();
+        }
         return field >= positions || fieldLen(field) == 0;
     }
 

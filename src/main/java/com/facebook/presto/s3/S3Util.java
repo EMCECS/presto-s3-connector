@@ -187,4 +187,10 @@ public class S3Util
             return false;
         }
     }
+
+    static boolean delimitedFormat(String format)
+    {
+        return format.equals(CSV) ||
+                format.equals(TEXT);
+    }
 }

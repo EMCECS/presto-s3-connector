@@ -35,6 +35,7 @@ import java.util.function.Supplier;
 
 import static com.facebook.presto.s3.S3Const.*;
 import static com.facebook.presto.s3.S3Util.constructReaderProps;
+import static com.facebook.presto.s3.S3Util.delimitedFormat;
 import static java.util.Objects.requireNonNull;
 
 public class S3RecordSet
@@ -110,7 +111,7 @@ public class S3RecordSet
 
     private InputStream objectStream(S3ReaderProps readerProps)
     {
-        if (readerProps.getS3SelectEnabled()) {
+        if (readerProps.getS3SelectEnabled() && delimitedFormat(s3TableHandle.getObjectDataFormat())) {
             String sql = new IonSqlQueryBuilder()
                     .buildSql(S3RecordSet::s3SelectColumnMapper,
                             S3RecordSet::s3SelectTypeMapper,
