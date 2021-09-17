@@ -26,7 +26,6 @@ import com.facebook.presto.spi.RecordCursor;
 import io.airlift.slice.Slice;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -39,7 +38,6 @@ public class S3RecordCursor
     private final FieldValueProvider[] currentRowValues;
 
     private CountingInputStream objectInputStream;
-    private long totalBytes = 0;
 
     private final RecordReader recordReader;
 
@@ -51,15 +49,10 @@ public class S3RecordCursor
         this.currentRowValues = new FieldValueProvider[columnHandles.size()];
     }
 
-    private InputStream ObjectStream_get()
-    {
-        return null;
-    }
-
     @Override
-    public long getCompletedBytes() {
-        // TODO; make record reader abstract, return bytesRead ?
-        return 0;
+    public long getCompletedBytes()
+    {
+        return 0; // TODO: need this from each reader
     }
 
     @Override
