@@ -69,34 +69,34 @@ public class S3RecordImpl
         return field >= positions || fieldLen(field) == 0;
     }
 
-    public Long getLong(int field)
+    public long getLong(int field)
     {
-        if (isNull(field)) {
-            return null;
+        if (!decoded) {
+            decode();
         }
         return Long.parseLong(new String(value, position[field], fieldLen(field)));
     }
 
-    public Double getDouble(int field)
+    public double getDouble(int field)
     {
-        if (isNull(field)) {
-            return null;
+        if (!decoded) {
+            decode();
         }
         return Double.parseDouble(new String(value, position[field], fieldLen(field)));
     }
 
-    public Boolean getBoolean(int field)
+    public boolean getBoolean(int field)
     {
-        if (isNull(field)) {
-            return null;
+        if (!decoded) {
+            decode();
         }
         return Boolean.getBoolean(new String(value, position[field], fieldLen(field)));
     }
 
     public Slice getSlice(int field)
     {
-        if (isNull(field)) {
-            return null;
+        if (!decoded) {
+            decode();
         }
         return Slices.wrappedBuffer(value, position[field], fieldLen(field));
     }

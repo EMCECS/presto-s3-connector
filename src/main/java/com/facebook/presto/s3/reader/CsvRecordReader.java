@@ -1,20 +1,39 @@
+/*
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.facebook.presto.s3.reader;
 
 import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.type.Type;
+import com.facebook.presto.decoder.DecoderColumnHandle;
+import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.s3.*;
+import com.facebook.presto.s3.decoder.CsvFieldValueProvider;
 import com.facebook.presto.spi.ColumnHandle;
 
 import java.io.Closeable;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.facebook.presto.s3.S3Const.*;
 
 public class CsvRecordReader
         implements RecordReader, Closeable
 {
-
     private static final Logger log = Logger.get(CsvRecordReader.class);
 
     private final List<S3ColumnHandle> columnHandles;
@@ -31,6 +50,11 @@ public class CsvRecordReader
 
     private BytesLineReader lineReader = null;
 
+    private boolean haveRow = false;
+
+    private final Map<DecoderColumnHandle, FieldValueProvider> row;
+
+    // TODO: make sure we eat header row properly
     public CsvRecordReader(List<S3ColumnHandle> columnHandles,
                            S3AccessObject accessObject,
                            S3ObjectRange objectRange,
@@ -45,16 +69,23 @@ public class CsvRecordReader
             }
         }
 
+        if (table.getTable().getFieldDelimiter().length() != 1) {
+            throw new IllegalArgumentException(table.getTable().getFieldDelimiter());
+        }
+
         this.columnHandles = columnHandles;
         this.accessObject = accessObject;
         this.objectRange = objectRange;
         this.table = table;
         this.readerProps = readerProps;
 
-        if (table.getTable().getFieldDelimiter().length() != 1) {
-            throw new IllegalArgumentException(table.getTable().getFieldDelimiter());
-        }
         this.record = new S3RecordImpl(table.getTable().getFieldDelimiter().charAt(0));
+
+        // create col->value provider objects once as all the same underlying objects are used (i.e. record)
+        this.row = new HashMap<>();
+        for (S3ColumnHandle columnHandle : columnHandles) {
+            this.row.put(columnHandle, new CsvFieldValueProvider(record, columnHandle.getOrdinalPosition()));
+        }
     }
 
     private void init()
@@ -105,7 +136,15 @@ public class CsvRecordReader
     }
 
     @Override
-    public S3Record advance()
+    public boolean hasNext()
+    {
+        if (haveRow) {
+            return true;
+        }
+        return advance();
+    }
+
+    private boolean advance()
     {
         if (lineReader == null) {
             init();
@@ -113,7 +152,20 @@ public class CsvRecordReader
 
         record.len = lineReader.read(record.value);
         record.decoded = false;
-        return record.len >= 0 ? record : null;
+        haveRow = record.len > 0;
+        return haveRow;
+    }
+
+    @Override
+    public Map<DecoderColumnHandle, FieldValueProvider> next()
+    {
+        if (!haveRow) {
+            if (!advance()) {
+                return null;
+            }
+        }
+        haveRow = false;
+        return row;
     }
 
     static Integer s3SelectColumnMapper(ColumnHandle columnHandle)

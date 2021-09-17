@@ -23,11 +23,11 @@ public interface S3Record
 
     boolean isNull(int field);
 
-    Long getLong(int field);
+    long getLong(int field);
 
-    Double getDouble(int field);
+    double getDouble(int field);
 
-    Boolean getBoolean(int field);
+    boolean getBoolean(int field);
 
     Slice getSlice(int field);
 }

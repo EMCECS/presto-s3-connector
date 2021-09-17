@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.facebook.presto.s3;
 
 import com.facebook.airlift.log.Logger;
@@ -37,7 +36,6 @@ public class S3RecordCursor
     private static final Logger log = Logger.get(S3RecordCursor.class);
 
     private final List<S3ColumnHandle> columnHandles;
-    private final int[] fieldToColumnIndex;
     private final FieldValueProvider[] currentRowValues;
 
     private CountingInputStream objectInputStream;
@@ -51,12 +49,6 @@ public class S3RecordCursor
         this.recordReader = recordReader;
         this.columnHandles = columnHandles;
         this.currentRowValues = new FieldValueProvider[columnHandles.size()];
-        this.fieldToColumnIndex = new int[columnHandles.size()];
-
-        for (int i = 0; i < columnHandles.size(); i++) {
-            S3ColumnHandle columnHandle = columnHandles.get(i);
-            fieldToColumnIndex[i] = columnHandle.getOrdinalPosition();
-        }
     }
 
     private InputStream ObjectStream_get()
@@ -84,10 +76,6 @@ public class S3RecordCursor
 
     @Override
     public boolean advanceNextPosition() {
-        if (objectInputStream == null) {
-            objectInputStream = new CountingInputStream(ObjectStream_get());
-        }
-
         if (recordReader.hasNext()) {
             return false;
         }

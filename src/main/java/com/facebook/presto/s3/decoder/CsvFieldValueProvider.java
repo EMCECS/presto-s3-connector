@@ -16,57 +16,49 @@
 package com.facebook.presto.s3.decoder;
 
 import com.facebook.presto.decoder.FieldValueProvider;
-import com.facebook.presto.s3.S3ColumnHandle;
+import com.facebook.presto.s3.S3RecordImpl;
 import io.airlift.slice.Slice;
-import io.airlift.slice.Slices;
 
-import java.util.Map;
-
-public class MetadataFieldValueProvider
+public class CsvFieldValueProvider
         extends FieldValueProvider
 {
-    private final S3ColumnHandle column;
+    public final int field;
 
-    private final Map<String, Object> valueMap;
+    private final S3RecordImpl record;
 
-    public MetadataFieldValueProvider(S3ColumnHandle column, Map<String, Object> valueMap)
+    public CsvFieldValueProvider(S3RecordImpl record, int field)
     {
-        this.column = column;
-        this.valueMap = valueMap;
+        this.record = record;
+        this.field = field;
     }
 
     @Override
     public boolean getBoolean()
     {
-        return Boolean.parseBoolean(String.valueOf(value()));
+        return record.getBoolean(field);
     }
 
     @Override
     public long getLong()
     {
-        return Long.parseLong(String.valueOf(value()));
+        return record.getLong(field);
     }
 
     @Override
     public double getDouble()
     {
-        return Double.parseDouble(String.valueOf(value()));
+        return record.getDouble(field);
     }
 
     @Override
     public Slice getSlice()
     {
-        return Slices.utf8Slice(String.valueOf(value()));
+        return record.getSlice(field);
     }
 
     @Override
     public boolean isNull()
     {
-        return value() == null;
-    }
-
-    private Object value()
-    {
-        return valueMap.get(column.getName().toLowerCase());
+        return record.isNull(field);
     }
 }
