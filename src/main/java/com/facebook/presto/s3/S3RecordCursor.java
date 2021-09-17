@@ -49,7 +49,7 @@ public class S3RecordCursor
     @Override
     public long getCompletedBytes()
     {
-        return 0; // TODO: need this from each reader
+        return recordReader.getTotalBytes();
     }
 
     @Override
@@ -111,5 +111,6 @@ public class S3RecordCursor
     @Override
     public void close()
     {
+        recordReader.close();
     }
 }
