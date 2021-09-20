@@ -103,6 +103,8 @@ dependencies {
     testImplementation "com.facebook.presto:presto-tests:${prestoVersion}"
     testImplementation "org.testng:testng:${testNGVersion}"
     testImplementation "com.facebook.airlift:testing:${airliftVersion}"
+
+    testCompile "io.pravega:schemaregistry-server:${pravegaSchemaRegistryVersion}"
 }
 
 /*

@@ -205,8 +205,11 @@ public class S3SchemaRegistryManager {
                 columnType = "integer";
             } else if (column.getType().getDisplayName().equalsIgnoreCase("BOOLEAN")) {
                 columnType = "boolean";
-            }  else if(column.getType().getDisplayName().equalsIgnoreCase("integer")){
+            } else if(column.getType().getDisplayName().equalsIgnoreCase("integer")){
                 columnType = "integer";
+            } else if(column.getType().getDisplayName().equalsIgnoreCase("DATE")){
+                columnType = "string";
+                columnObjectNode.put("format", "date-time");
             }
             columnObjectNode.put("type", columnType);
             propertyString += "\"" + column.getName() + "\":" + columnObjectNode;
@@ -379,7 +382,18 @@ public class S3SchemaRegistryManager {
                     newObject.put("name", propertyKey);
                     String propertyValue = properties.getJSONObject(propertyKey).getString("type");
                     if (propertyValue.equalsIgnoreCase("string")) {
-                        newObject.put("type", "VARCHAR");
+                        if (properties.getJSONObject(propertyKey).has("format")) {
+                            switch (properties.getJSONObject(propertyKey).getString("format")) {
+                                case "date-time":
+                                    newObject.put("type", "DATE");
+                                    break;
+                                default:
+                                    newObject.put("type", "VARCHAR");
+                                    break;
+                            }
+                        } else {
+                            newObject.put("type", "VARCHAR");
+                        }
                     } else if (propertyValue.equalsIgnoreCase("number")) {
                         newObject.put("type", "DOUBLE");
                     } else if (propertyValue.equalsIgnoreCase("integer")) {
