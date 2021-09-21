@@ -20,6 +20,7 @@ import com.facebook.airlift.log.Logger;
 import com.facebook.airlift.log.Logging;
 import com.facebook.presto.Session;
 import com.facebook.presto.common.type.DateType;
+import com.facebook.presto.common.type.TimeType;
 import com.facebook.presto.common.type.TimestampType;
 import com.facebook.presto.s3.services.EmbeddedSchemaRegistry;
 import com.facebook.presto.testing.MaterializedResult;
@@ -330,14 +331,17 @@ public class S3QueryTest
     @Test (dependsOnMethods = "testCreateSchema")
     public void testCreateTableJson() {
         log.info("Test: testCreateTableJson");
-        queryRunner.execute("CREATE TABLE s3.newschema.jsontable (id123 bigint, name123 varchar, balance123 double) WITH (FORMAT='JSON', has_header_row = 'false', external_location='s3a://testbucket/TestDataJson/')");
-        assertEquals(queryRunner.execute("DESCRIBE s3.newschema.jsontable").getMaterializedRows().size(), 3);
+        queryRunner.execute("CREATE TABLE s3.newschema.jsontable (id123 bigint, name123 varchar, balance123 double, date123 date, time123 time) WITH (FORMAT='JSON', has_header_row = 'false', external_location='s3a://testbucket/TestDataJson/')");
+        MaterializedResult result = queryRunner.execute("DESCRIBE s3.newschema.jsontable");
+        assertEquals(result.getMaterializedRows().size(), 5);
+        assertEquals(result.getMaterializedRows().get(3).getField(1), "date");
+        assertEquals(result.getMaterializedRows().get(4).getField(1), "time");
     }
 
     @Test (dependsOnMethods = "testCreateTableJson")
     public void testInsertRowJson() {
         log.info("Test: testInsertRowJson");
-        queryRunner.execute("INSERT INTO s3.newschema.jsontable VALUES (100, 'GEORGE', 20.0)");
+        queryRunner.execute("INSERT INTO s3.newschema.jsontable VALUES (100, 'GEORGE', 20.0, date '2021-09-20', time '07:00:00.000')");
         assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.jsontable").getMaterializedRows().size(), 1);
     }
 

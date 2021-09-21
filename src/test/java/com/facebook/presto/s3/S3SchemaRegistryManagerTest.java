@@ -16,6 +16,8 @@
 package com.facebook.presto.s3;
 
 import com.facebook.presto.common.type.DateType;
+import com.facebook.presto.common.type.TimeType;
+import com.facebook.presto.common.type.TimestampType;
 import com.facebook.presto.s3.services.EmbeddedSchemaRegistry;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorTableMetadata;
@@ -62,8 +64,7 @@ public class S3SchemaRegistryManagerTest {
     }
 
     @Test
-    public void testCreateSchemaWithDate()
-    {
+    public void testCreateSchemaWithDate() {
         // create new table in presto will create schema in Schema Registry
         // SR will validate this schema when persisted.  ensures date fields formatted correctly
 
@@ -71,6 +72,8 @@ public class S3SchemaRegistryManagerTest {
 
         List<ColumnMetadata> columns = new ArrayList<>();
         columns.add(new ColumnMetadata("dateField", DateType.DATE));
+        columns.add(new ColumnMetadata("timeField", TimeType.TIME));
+        columns.add(new ColumnMetadata("timestampField", TimestampType.TIMESTAMP));
 
         Map<String, Object> properties =
                 ImmutableMap.<String, Object>builder()
@@ -83,11 +86,21 @@ public class S3SchemaRegistryManagerTest {
 
         // get schema directly from SR
         JSONArray cols = columns("test", "date");
-        assertEquals(cols.length(), 1);
+        assertEquals(cols.length(), 3);
 
         JSONObject field = cols.getJSONObject(0);
         assertEquals(field.getString("name"), "datefield");
         assertEquals(field.getString("type"), "DATE");
+        assertEquals(field.getString("dataFormat"), "iso8601");
+
+        field = cols.getJSONObject(1);
+        assertEquals(field.getString("name"), "timefield");
+        assertEquals(field.getString("type"), "TIME");
+        assertEquals(field.getString("dataFormat"), "iso8601");
+
+        field = cols.getJSONObject(2);
+        assertEquals(field.getString("name"), "timestampfield");
+        assertEquals(field.getString("type"), "TIMESTAMP");
         assertEquals(field.getString("dataFormat"), "iso8601");
     }
 
@@ -103,19 +116,22 @@ public class S3SchemaRegistryManagerTest {
         setDataType(out,"field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_STRING)
                         .put(JSON_PROP_FORMAT, FORMAT_VALUE_DATE_TIME));
-        assertDate(out);
+        assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_TIMESTAMP);
+        assertEquals(out.getString(JSON_PROP_DATA_FORMAT), JSON_VALUE_DATE_ISO);
 
         out = new JSONObject();
         setDataType(out,"field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_STRING)
                         .put(JSON_PROP_FORMAT, FORMAT_VALUE_DATE));
-        assertDate(out);
+        assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_DATE);
+        assertEquals(out.getString(JSON_PROP_DATA_FORMAT), JSON_VALUE_DATE_ISO);
 
         out = new JSONObject();
         setDataType(out,"field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_STRING)
                         .put(JSON_PROP_FORMAT, FORMAT_VALUE_TIME));
-        assertDate(out);
+        assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_TIME);
+        assertEquals(out.getString(JSON_PROP_DATA_FORMAT), JSON_VALUE_DATE_ISO);
 
         out = new JSONObject();
         setDataType(out,"field1",
@@ -131,11 +147,6 @@ public class S3SchemaRegistryManagerTest {
         setDataType(out,"field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_BOOLEAN));
         assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_BOOLEAN);
-    }
-
-    private void assertDate(JSONObject node) {
-        assertEquals(node.getString(JSON_PROP_TYPE), JSON_TYPE_DATE);
-        assertEquals(node.getString(JSON_PROP_DATA_FORMAT), JSON_VALUE_DATE_ISO);
     }
 
     /**

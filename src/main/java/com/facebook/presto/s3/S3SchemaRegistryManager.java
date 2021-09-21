@@ -209,6 +209,12 @@ public class S3SchemaRegistryManager {
                 columnType = "integer";
             } else if(column.getType().getDisplayName().equalsIgnoreCase("DATE")){
                 columnType = "string";
+                columnObjectNode.put("format", "date");
+            } else if(column.getType().getDisplayName().equalsIgnoreCase("TIME")){
+                columnType = "string";
+                columnObjectNode.put("format", "time");
+            } else if(column.getType().getDisplayName().equalsIgnoreCase("TIMESTAMP")){
+                columnType = "string";
                 columnObjectNode.put("format", "date-time");
             }
             columnObjectNode.put(JSON_PROP_TYPE, columnType);
@@ -231,7 +237,7 @@ public class S3SchemaRegistryManager {
             throw new PrestoException(CONFIGURATION_INVALID,
                     format("Error processing schema string: %s", propertyString));
         }
-        log.info("Add schema: " + schemaNode.toString());
+        log.info("Add schema: " + schemaNode);
 
         SchemaInfo newSchema = new SchemaInfo(tablename, SerializationFormat.Json,
                 ByteBuffer.wrap(schemaNode.toString().getBytes(Charsets.UTF_8)),
@@ -423,12 +429,21 @@ public class S3SchemaRegistryManager {
         if (type.equalsIgnoreCase(JSON_TYPE_STRING)) {
             if (properties.has(JSON_PROP_FORMAT)) {
                 switch (properties.getString(JSON_PROP_FORMAT)) {
-                    case FORMAT_VALUE_DATE_TIME:
                     case FORMAT_VALUE_DATE:
-                    case FORMAT_VALUE_TIME:
                         node.put(JSON_PROP_TYPE, JSON_TYPE_DATE);
                         node.put(JSON_PROP_DATA_FORMAT, JSON_VALUE_DATE_ISO);
                         break;
+
+                    case FORMAT_VALUE_TIME:
+                        node.put(JSON_PROP_TYPE, JSON_TYPE_TIME);
+                        node.put(JSON_PROP_DATA_FORMAT, JSON_VALUE_DATE_ISO);
+                        break;
+
+                    case FORMAT_VALUE_DATE_TIME:
+                        node.put(JSON_PROP_TYPE, JSON_TYPE_TIMESTAMP);
+                        node.put(JSON_PROP_DATA_FORMAT, JSON_VALUE_DATE_ISO);
+                        break;
+
                     default:
                         node.put(JSON_PROP_TYPE, JSON_TYPE_VARCHAR);
                         break;

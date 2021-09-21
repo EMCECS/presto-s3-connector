@@ -76,6 +76,8 @@ public class S3Const
     public static final String JSON_PROP_NAME = "name";
 
     public static final String JSON_TYPE_DATE = "DATE";
+    public static final String JSON_TYPE_TIME = "TIME";
+    public static final String JSON_TYPE_TIMESTAMP = "TIMESTAMP";
     public static final String JSON_TYPE_VARCHAR = "VARCHAR";
     public static final String JSON_TYPE_BIGINT = "BIGINT";
     public static final String JSON_TYPE_DOUBLE = "DOUBLE";
