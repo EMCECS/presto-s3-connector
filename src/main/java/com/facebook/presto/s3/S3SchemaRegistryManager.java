@@ -211,7 +211,7 @@ public class S3SchemaRegistryManager {
                 columnType = "string";
                 columnObjectNode.put("format", "date-time");
             }
-            columnObjectNode.put("type", columnType);
+            columnObjectNode.put(JSON_PROP_TYPE, columnType);
             propertyString += "\"" + column.getName() + "\":" + columnObjectNode;
             if (i == tableMetadata.getColumns().size() - 1) {
                 propertyString += "}";
@@ -379,34 +379,13 @@ public class S3SchemaRegistryManager {
                 while (propertyKeys.hasNext()) {
                     String propertyKey = propertyKeys.next();
                     JSONObject newObject = new JSONObject();
-                    newObject.put("name", propertyKey);
-                    String propertyValue = properties.getJSONObject(propertyKey).getString("type");
-                    if (propertyValue.equalsIgnoreCase("string")) {
-                        if (properties.getJSONObject(propertyKey).has("format")) {
-                            switch (properties.getJSONObject(propertyKey).getString("format")) {
-                                case "date-time":
-                                    newObject.put("type", "DATE");
-                                    break;
-                                default:
-                                    newObject.put("type", "VARCHAR");
-                                    break;
-                            }
-                        } else {
-                            newObject.put("type", "VARCHAR");
-                        }
-                    } else if (propertyValue.equalsIgnoreCase("number")) {
-                        newObject.put("type", "DOUBLE");
-                    } else if (propertyValue.equalsIgnoreCase("integer")) {
-                        newObject.put("type", "BIGINT");
-                    } else if (propertyValue.equalsIgnoreCase("boolean")) {
-                        newObject.put("type", "BOOLEAN");
-                    } else {
-                        throw new PrestoException(INVALID_TABLE_PROPERTY,
-                                format("Unknown type %s for column name %s", propertyValue, propertyKey));
-                    }
+                    newObject.put(JSON_PROP_NAME, propertyKey);
+
+                    setDataType(newObject, propertyKey, properties.getJSONObject(propertyKey));
+
                     columns.put(newObject);
                 }
-                s3Table.put("name", tablename)
+                s3Table.put(JSON_PROP_NAME, tablename)
                     .put("columns", columns);
                 if (commentInfo.has("objectDataFormat"))
                     s3Table.put("objectDataFormat", commentInfo.getString("objectDataFormat"));
@@ -437,5 +416,35 @@ public class S3SchemaRegistryManager {
             returnJSON.put("schemas", arrayOfSchemas);
         }
         return (returnJSON);
+    }
+
+    public static void setDataType(JSONObject node, String fieldName, JSONObject properties) {
+        String type = properties.getString(JSON_PROP_TYPE);
+        if (type.equalsIgnoreCase(JSON_TYPE_STRING)) {
+            if (properties.has(JSON_PROP_FORMAT)) {
+                switch (properties.getString(JSON_PROP_FORMAT)) {
+                    case FORMAT_VALUE_DATE_TIME:
+                    case FORMAT_VALUE_DATE:
+                    case FORMAT_VALUE_TIME:
+                        node.put(JSON_PROP_TYPE, JSON_TYPE_DATE);
+                        node.put(JSON_PROP_DATA_FORMAT, JSON_VALUE_DATE_ISO);
+                        break;
+                    default:
+                        node.put(JSON_PROP_TYPE, JSON_TYPE_VARCHAR);
+                        break;
+                }
+            } else {
+                node.put(JSON_PROP_TYPE, JSON_TYPE_VARCHAR);
+            }
+        } else if (type.equalsIgnoreCase(JSON_TYPE_NUMBER)) {
+            node.put(JSON_PROP_TYPE, JSON_TYPE_DOUBLE);
+        } else if (type.equalsIgnoreCase(JSON_TYPE_INTEGER)) {
+            node.put(JSON_PROP_TYPE, JSON_TYPE_BIGINT);
+        } else if (type.equalsIgnoreCase(JSON_TYPE_BOOLEAN)) {
+            node.put(JSON_PROP_TYPE, JSON_TYPE_BOOLEAN);
+        } else {
+            throw new PrestoException(INVALID_TABLE_PROPERTY,
+                    format("Unknown type %s for column name %s", type, fieldName));
+        }
     }
 }
