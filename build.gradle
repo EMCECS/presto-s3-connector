@@ -104,7 +104,12 @@ dependencies {
     testImplementation "org.testng:testng:${testNGVersion}"
     testImplementation "com.facebook.airlift:testing:${airliftVersion}"
 
-    testCompile "io.pravega:schemaregistry-server:${pravegaSchemaRegistryVersion}"
+    testImplementation "io.pravega:schemaregistry-server:${pravegaSchemaRegistryVersion}"
+    testImplementation("org.apache.avro:avro") {
+        version {
+            strictly '1.8.1'
+        }
+    }
 }
 
 /*
