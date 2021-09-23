@@ -131,7 +131,8 @@ public class CsvRecordReader
 
         record.len = lineReader.read(record.value);
         record.decoded = false;
-        haveRow = record.len > 0;
+        // 0 is empty row.  -1 is EOF.
+        haveRow = record.len >= 0;
         return haveRow;
     }
 

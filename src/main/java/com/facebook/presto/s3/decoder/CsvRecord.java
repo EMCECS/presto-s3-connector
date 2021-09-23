@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.facebook.presto.s3.decoder;
 
 import io.airlift.slice.Slice;
@@ -26,11 +25,23 @@ public class CsvRecord
     public byte[] value;
 
     int positions;
-    int[] position;
+    private final Position[] position;
 
-    char fieldSep;
+    private final char fieldSep;
 
     public boolean decoded = false;
+
+    private static final byte QUOTE = '"';
+    private boolean quoted = false;
+
+    private static class Position {
+        int pos;
+        int len;
+        Position(int pos, int len) {
+            this.pos = pos;
+            this.len = len;
+        }
+    }
 
     public CsvRecord(char fieldSep)
     {
@@ -38,29 +49,39 @@ public class CsvRecord
 
         this.len = 0;
         this.value = new byte[65536];
-        this.position = new int[1024];
+        this.position = new Position[1024];
     }
 
     public void decode()
     {
-        position[0] = 0;
-        positions = 1;
+        positions = 0;
 
-        int pos = 0;
-        while (pos < len) {
-            if (value[pos++] == fieldSep) {
-                position[positions++] = pos;
+        int absPos = 0;
+        int absPrevPos = 0;
+
+        int p;
+        int l;
+
+        // look for non-quoted field seps
+        // note offset + length of each field (+1's are to skip field sep in byte byte[])
+        while (absPos < len) {
+            if (value[absPos] == fieldSep && !quoted) {
+                p = positions == 0 ? 0 : absPrevPos + 1;
+                l = absPos - absPrevPos - (positions == 0 ? 0 : 1);
+                position[positions++] = new Position(p, l);
+                absPrevPos = absPos;
+
+            } else if (value[absPos] == QUOTE) {
+                quoted = !quoted;
             }
+            absPos++;
         }
 
-        decoded = true;
-    }
+        p = positions == 0 ? 0 : absPrevPos + 1;
+        l = absPos - absPrevPos - (positions == 0 ? 0 : 1);
+        position[positions++] = new Position(p, l);
 
-    private int fieldLen(int field)
-    {
-        return field+1 == positions
-                ? len - position[field]
-                : position[field+1] - position[field] - 1;
+        decoded = true;
     }
 
     public boolean isNull(int field)
@@ -68,7 +89,7 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return field >= positions || fieldLen(field) == 0;
+        return field >= positions || position[field].len == 0;
     }
 
     public long getLong(int field)
@@ -76,7 +97,7 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return Long.parseLong(new String(value, position[field], fieldLen(field)));
+        return Long.parseLong(new String(value, position[field].pos, position[field].len));
     }
 
     public double getDouble(int field)
@@ -84,7 +105,7 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return Double.parseDouble(new String(value, position[field], fieldLen(field)));
+        return Double.parseDouble(new String(value, position[field].pos, position[field].len));
     }
 
     public boolean getBoolean(int field)
@@ -92,7 +113,7 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return Boolean.getBoolean(new String(value, position[field], fieldLen(field)));
+        return Boolean.getBoolean(new String(value, position[field].pos, position[field].len));
     }
 
     public Slice getSlice(int field)
@@ -100,6 +121,6 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return Slices.wrappedBuffer(value, position[field], fieldLen(field));
+        return Slices.wrappedBuffer(value, position[field].pos, position[field].len);
     }
 }

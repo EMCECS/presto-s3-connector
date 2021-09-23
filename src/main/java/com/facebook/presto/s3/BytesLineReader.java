@@ -15,11 +15,13 @@
  */
 package com.facebook.presto.s3;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 
 public class BytesLineReader
+        implements Closeable
 {
     private final InputStream inputStream;
     private boolean skip = false;
