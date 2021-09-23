@@ -20,10 +20,13 @@ import com.facebook.airlift.log.Logger;
 import com.facebook.airlift.log.Logging;
 import com.facebook.presto.Session;
 import com.facebook.presto.common.type.DateType;
+import com.facebook.presto.common.type.TimeType;
 import com.facebook.presto.common.type.TimestampType;
+import com.facebook.presto.s3.services.EmbeddedSchemaRegistry;
 import com.facebook.presto.testing.MaterializedResult;
 import com.facebook.presto.testing.MaterializedRow;
 import com.facebook.presto.testing.QueryRunner;
+import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -43,10 +46,10 @@ import static org.testng.Assert.*;
 public class S3QueryTest
 {
     private Process p1 = null;
-    private Process p2 = null;
     private QueryRunner queryRunner;
     private static final Logger log = Logger.get(S3QueryTest.class);
 
+    private EmbeddedSchemaRegistry schemaRegistry;
 
     @BeforeSuite
     public void setUp()
@@ -56,7 +59,6 @@ public class S3QueryTest
         System.out.println("Start s3 server and load data");
         this.p1 = Runtime.getRuntime().exec(cmd);
 
-        queryRunner = createQueryRunner();
         BufferedReader output = new BufferedReader(new InputStreamReader(p1.getInputStream()));
         String cmdOut = output.readLine();
         while (cmdOut != null) {
@@ -73,23 +75,15 @@ public class S3QueryTest
         throw new Exception("s3 server failed to start");
     }
 
-    try {
-        String[] cmd = { "bash", "src/test/bin/schema_registry_start.sh" };
-        System.out.println("Start schema registry server");
-        this.p2 = Runtime.getRuntime().exec(cmd);
-        BufferedReader output = new BufferedReader(new InputStreamReader(p2.getInputStream()));
-        String cmdOut = output.readLine();
-        while (cmdOut != null) {
-            System.out.println(cmdOut);
-            cmdOut = output.readLine();
-        }
-    } catch (Exception e) {
-        System.out.println("Exception starting schema registry server: " + e.toString());
-        throw e;
-    }
-    p2.waitFor();
+
+    schemaRegistry = new EmbeddedSchemaRegistry();
+    schemaRegistry.start();
     System.out.println("schema registry server started");
 
+    Map<String, String> extraProps = ImmutableMap.<String, String>builder()
+            .put("s3.schemaRegistryPort", String.valueOf(schemaRegistry.port()))
+            .build();
+    queryRunner = createQueryRunner(extraProps);
 
         Logging logging = Logging.initialize();
     logging.setLevel("com.facebook.presto.s3", DEBUG);
@@ -337,14 +331,17 @@ public class S3QueryTest
     @Test (dependsOnMethods = "testCreateSchema")
     public void testCreateTableJson() {
         log.info("Test: testCreateTableJson");
-        queryRunner.execute("CREATE TABLE s3.newschema.jsontable (id123 bigint, name123 varchar, balance123 double) WITH (FORMAT='JSON', has_header_row = 'false', external_location='s3a://testbucket/TestDataJson/')");
-        assertEquals(queryRunner.execute("DESCRIBE s3.newschema.jsontable").getMaterializedRows().size(), 3);
+        queryRunner.execute("CREATE TABLE s3.newschema.jsontable (id123 bigint, name123 varchar, balance123 double, date123 date, time123 time) WITH (FORMAT='JSON', has_header_row = 'false', external_location='s3a://testbucket/TestDataJson/')");
+        MaterializedResult result = queryRunner.execute("DESCRIBE s3.newschema.jsontable");
+        assertEquals(result.getMaterializedRows().size(), 5);
+        assertEquals(result.getMaterializedRows().get(3).getField(1), "date");
+        assertEquals(result.getMaterializedRows().get(4).getField(1), "time");
     }
 
     @Test (dependsOnMethods = "testCreateTableJson")
     public void testInsertRowJson() {
         log.info("Test: testInsertRowJson");
-        queryRunner.execute("INSERT INTO s3.newschema.jsontable VALUES (100, 'GEORGE', 20.0)");
+        queryRunner.execute("INSERT INTO s3.newschema.jsontable VALUES (100, 'GEORGE', 20.0, date '2021-09-20', time '07:00:00.000')");
         assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.jsontable").getMaterializedRows().size(), 1);
     }
 
@@ -430,11 +427,11 @@ public class S3QueryTest
     @AfterSuite
     public void shutdown()
             throws Exception {
+
         System.out.println("Stop query runners, schema registry and s3 server");
         queryRunner.close();
         queryRunner= null;
         Process p3;
-        Process p4;
 
         if (p1 != null) {
             try {
@@ -446,15 +443,10 @@ public class S3QueryTest
                 throw e;
             }
         }
-        if (p2 != null) {
-            try {
-                String[] cmd = { "bash", "src/test/bin/schema_registry_stop.sh" };
-                p4 = Runtime.getRuntime().exec(cmd);
-                p4.waitFor();
-            } catch (Exception e) {
-                System.out.println("Exception stopping schema registry: " + e.toString());
-                throw e;
-            }
+
+        if (schemaRegistry != null) {
+            schemaRegistry.stop();
+            schemaRegistry = null;
         }
     }
 }

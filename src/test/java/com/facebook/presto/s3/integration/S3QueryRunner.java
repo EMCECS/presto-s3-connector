@@ -26,6 +26,7 @@ import com.facebook.presto.s3.*;
 import com.facebook.airlift.log.Logging;
 import com.facebook.airlift.log.LoggingConfiguration;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.facebook.airlift.testing.Closeables.closeAllSuppress;
@@ -38,15 +39,20 @@ public class S3QueryRunner {
 
     public static DistributedQueryRunner createQueryRunner()
             throws Exception {
-        return createQueryRunner(false, ImmutableMap.of());
+        return createQueryRunner(false, ImmutableMap.of(), ImmutableMap.of());
+    }
+
+    public static DistributedQueryRunner createQueryRunner(Map<String, String> extraS3Properties)
+            throws Exception {
+        return createQueryRunner(false, ImmutableMap.of(), extraS3Properties);
     }
 
     public static DistributedQueryRunner createQueryRunner(boolean s3SelectEnabled)
             throws Exception {
-        return createQueryRunner(s3SelectEnabled, ImmutableMap.of());
+        return createQueryRunner(s3SelectEnabled, ImmutableMap.of(), ImmutableMap.of());
     }
 
-    private static DistributedQueryRunner createQueryRunner(boolean s3SelectEnabled, Map<String, String> extraProperties)
+    private static DistributedQueryRunner createQueryRunner(boolean s3SelectEnabled, Map<String, String> extraProperties, Map<String, String> extraS3Properties)
             throws Exception {
         Logging logging = Logging.initialize();
         logging.configure(new LoggingConfiguration());
@@ -62,20 +68,23 @@ public class S3QueryRunner {
 
         try {
             queryRunner.installPlugin(new S3Plugin());
-            Map<String, String> s3Properties = ImmutableMap.<String, String>builder()
-                    .put("s3.s3SchemaFileLocationDir", "src/test/resources")
-                    .put("s3.s3Port", "8000")
-                    .put("s3.s3UserKey", "accessKey1")
-                    .put("s3.s3UserSecretKey", "verySecretKey1")
-                    .put("s3.s3Nodes", "127.0.0.1")
-                    .put("s3.schemaRegistryServerIP", "127.0.0.1")
-                    .put("s3.schemaRegistryPort", "9092")
-                    .put("s3.schemaRegistryNamespace", "s3-schemas")
-                    .put("s3.maxConnections", "500")
-                    .put("s3.s3SocketTimeout", "5000")
-                    .put("s3.s3ConnectionTimeout", "5000")
-                    .put("s3.s3ClientExecutionTimeout", "5000")
-                    .build();
+            Map<String, String> s3Properties = new HashMap<>();
+            s3Properties.put("s3.s3SchemaFileLocationDir", "src/test/resources");
+            s3Properties.put("s3.s3Port", "8000");
+            s3Properties.put("s3.s3UserKey", "accessKey1");
+            s3Properties.put("s3.s3UserSecretKey", "verySecretKey1");
+            s3Properties.put("s3.s3Nodes", "127.0.0.1");
+            s3Properties.put("s3.schemaRegistryServerIP", "127.0.0.1");
+            s3Properties.put("s3.schemaRegistryPort", "9092");
+            s3Properties.put("s3.schemaRegistryNamespace", "s3-schemas");
+            s3Properties.put("s3.maxConnections", "500");
+            s3Properties.put("s3.s3SocketTimeout", "5000");
+            s3Properties.put("s3.s3ConnectionTimeout", "5000");
+            s3Properties.put("s3.s3ClientExecutionTimeout", "5000");
+            s3Properties.putAll(extraS3Properties);
+
+            s3Properties = ImmutableMap.copyOf(s3Properties);
+
             queryRunner.createCatalog("s3", "s3", s3Properties);
 
             return queryRunner;

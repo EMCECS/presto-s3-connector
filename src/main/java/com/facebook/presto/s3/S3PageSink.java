@@ -29,6 +29,7 @@ import com.opencsv.ICSVWriter;
 import io.airlift.slice.Slice;
 
 import java.io.*;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -44,6 +45,7 @@ import static com.facebook.presto.common.type.DateType.DATE;
 import static com.facebook.presto.common.type.DoubleType.DOUBLE;
 import static com.facebook.presto.common.type.IntegerType.INTEGER;
 import static com.facebook.presto.common.type.RealType.REAL;
+import static com.facebook.presto.common.type.TimeType.TIME;
 import static com.facebook.presto.common.type.TimestampType.TIMESTAMP;
 import static com.facebook.presto.common.type.VarbinaryType.VARBINARY;
 import static com.facebook.presto.common.type.Varchars.isVarcharType;
@@ -181,6 +183,9 @@ public class S3PageSink
         }
         else if (DATE.equals(type)) {
             jsonMap.put(name, DATE_FORMATTER.format(Instant.ofEpochMilli(TimeUnit.DAYS.toMillis(type.getLong(block, position)))));
+        }
+        else if (TIME.equals(type)) {
+            jsonMap.put(name, String.valueOf(new Time(type.getLong(block, position))));
         }
         else if (TIMESTAMP.equals(type)) {
             jsonMap.put(name, String.valueOf(new Timestamp(type.getLong(block, position))));

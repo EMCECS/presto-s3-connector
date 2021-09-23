@@ -73,6 +73,28 @@ public class S3Const
     public static final String FALSE = "false";
 
 
+    public static final String JSON_PROP_TYPE = "type";
+    public static final String JSON_PROP_FORMAT = "format";
+    public static final String JSON_PROP_DATA_FORMAT = "dataFormat";
+    public static final String JSON_PROP_NAME = "name";
+
+    public static final String JSON_TYPE_DATE = "DATE";
+    public static final String JSON_TYPE_TIME = "TIME";
+    public static final String JSON_TYPE_TIMESTAMP = "TIMESTAMP";
+    public static final String JSON_TYPE_VARCHAR = "VARCHAR";
+    public static final String JSON_TYPE_BIGINT = "BIGINT";
+    public static final String JSON_TYPE_DOUBLE = "DOUBLE";
+    public static final String JSON_TYPE_BOOLEAN = "BOOLEAN";
+    public static final String JSON_TYPE_INTEGER = "integer";
+    public static final String JSON_TYPE_NUMBER = "number";
+    public static final String JSON_TYPE_STRING = "string";
+    public static final String JSON_VALUE_DATE_ISO = "iso8601";
+
+    public static final String FORMAT_VALUE_DATE_TIME = "date-time";
+    public static final String FORMAT_VALUE_DATE = "date";
+    public static final String FORMAT_VALUE_TIME = "time";
+
+
     private static final List<String> validFormatsQuery = new ArrayList<>(
             Arrays.asList(CSV, TEXT, AVRO, JSON, PARQUET)
     );
