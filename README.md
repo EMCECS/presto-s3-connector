@@ -121,7 +121,7 @@ Modify the s3.properties file in etc/catalog as previously described to point to
 
 ## Schema Definitions
 
-Optionally, you may manually create schema definitions using a JSON file. The 'CREATE TABLE' and 'CREAE TABLE AS' Presto commands are also available to create ad-hoc tables.  The JSON configuration files are read at server startup, and should be located in etc/s3 directory.  
+Optionally, you may manually create schema definitions using a JSON file. The 'CREATE TABLE' and 'CREATE TABLE AS' Presto commands are also available to create ad-hoc tables.  The JSON configuration files are read at server startup, and should be located in etc/s3 directory.  
 
 In the JSON schema example below, "testdb" is the Presto schema in the S3 catalog, addressTable is the name of the table.  In sources, testbucket is the name of the bucket, and testdb/addressTable is the S3 prefix location of the object data for the table.  The objectDataFormat, hasHeaderRow and recordDelimiter settings are self explanitory.
 
