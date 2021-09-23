@@ -30,6 +30,9 @@ public class S3Const
     public static final String AVRO = "avro";
     public static final String JSON = "json";
     public static final String PARQUET = "parquet";
+
+    public static final String S3_BUCKETS_SCHEMA = "s3_buckets";
+
     public static final String LC_TRUE = "true";
 
     public static final String OBJECT_FILE_TYPE_DEF = "format";

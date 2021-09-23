@@ -33,12 +33,12 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.facebook.presto.s3.S3Const.*;
 import static java.lang.String.format;
 import static com.facebook.presto.s3.Types.checkType;
 import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
-import static com.facebook.presto.s3.S3Const.NO_TABLES;
 
 public class S3Metadata
         implements ConnectorMetadata {
@@ -271,33 +271,19 @@ public class S3Metadata
         ImmutableMap.Builder<String, ColumnHandle> columnHandles = ImmutableMap.builder();
         int index = 0;
         for (S3Column column : table.getColumns()) {
-            if (table.getObjectDataFormat().equalsIgnoreCase("json")) {
-                columnHandles.put(column.getName(), new S3ColumnHandle(
-                        connectorId,
-                        index,
-                        column.getName(),
-                        column.getType(),
-                        column.getName(),
-                        column.getDataFormat(),
-                        formatHint,
-                        keyDecoder,
-                        hidden,
-                        internal
-                ));
-            } else {
-                columnHandles.put(column.getName(), new S3ColumnHandle(
-                        connectorId,
-                        index,
-                        column.getName(),
-                        column.getType(),
-                        String.valueOf(index),
-                        column.getDataFormat(),
-                        formatHint,
-                        keyDecoder,
-                        hidden,
-                        internal
-                ));
-            }
+            columnHandles.put(column.getName(), new S3ColumnHandle(
+                    connectorId,
+                    index,
+                    column.getName(),
+                    column.getType(),
+                    /* mapping - for delimited fmt like csv it is ordinal position.  else name. */
+                    delimitedFormat(table) ? String.valueOf(index) : column.getName(),
+                    column.getDataFormat(),
+                    formatHint,
+                    keyDecoder,
+                    hidden,
+                    internal));
+
             index++;
         }
         return columnHandles.build();
@@ -341,5 +327,11 @@ public class S3Metadata
     public ColumnMetadata getColumnMetadata(ConnectorSession session, ConnectorTableHandle tableHandle, ColumnHandle columnHandle) {
         checkType(tableHandle, S3TableHandle.class, "tableHandle");
         return checkType(columnHandle, S3ColumnHandle.class, "columnHandle").getColumnMetadata();
+    }
+
+    static boolean delimitedFormat(S3Table table)
+    {
+        return table.getObjectDataFormat().equals(CSV) ||
+                table.getObjectDataFormat().equals(TEXT);
     }
 }

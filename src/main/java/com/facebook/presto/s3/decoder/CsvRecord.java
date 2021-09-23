@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package com.facebook.presto.s3;
+package com.facebook.presto.s3.decoder;
 
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 
 // TODO: https://github.com/EMCECS/presto-s3-connector/issues/27
-public class S3Record
+public class CsvRecord
 {
-    int len;
-    byte[] value;
+    public int len;
+    public byte[] value;
 
     int positions;
     int[] position;
 
     char fieldSep;
 
-    boolean decoded = false;
+    public boolean decoded = false;
 
-    public S3Record(char fieldSep)
+    public CsvRecord(char fieldSep)
     {
         this.fieldSep = fieldSep;
 
@@ -65,37 +65,40 @@ public class S3Record
 
     public boolean isNull(int field)
     {
+        if (!decoded) {
+            decode();
+        }
         return field >= positions || fieldLen(field) == 0;
     }
 
-    public Long getLong(int field)
+    public long getLong(int field)
     {
-        if (isNull(field)) {
-            return null;
+        if (!decoded) {
+            decode();
         }
         return Long.parseLong(new String(value, position[field], fieldLen(field)));
     }
 
-    public Double getDouble(int field)
+    public double getDouble(int field)
     {
-        if (isNull(field)) {
-            return null;
+        if (!decoded) {
+            decode();
         }
         return Double.parseDouble(new String(value, position[field], fieldLen(field)));
     }
 
-    public Boolean getBoolean(int field)
+    public boolean getBoolean(int field)
     {
-        if (isNull(field)) {
-            return null;
+        if (!decoded) {
+            decode();
         }
         return Boolean.getBoolean(new String(value, position[field], fieldLen(field)));
     }
 
     public Slice getSlice(int field)
     {
-        if (isNull(field)) {
-            return null;
+        if (!decoded) {
+            decode();
         }
         return Slices.wrappedBuffer(value, position[field], fieldLen(field));
     }
