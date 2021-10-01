@@ -18,8 +18,11 @@ package com.facebook.presto.s3.decoder;
 import com.facebook.presto.s3.BytesLineReader;
 import org.testng.annotations.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -38,10 +41,25 @@ public class CsvRecordTest {
         runTest("emptyfields.csv");
         runTest("unmatchedquoteatend.csv");
         runTest("unmatchedquoteinmiddle.csv");
+
+        runTest("\"value1\",\"value2\"", Stream.of("value1", "value2"));
     }
 
     private void runTest(String f) {
-        CsvTest test = readTest(f);
+        verifyTest(readTest(f));
+    }
+
+    private void runTest(String line, Stream<String> expected) {
+        CsvTest test = new CsvTest();
+        byte[] buf = line.getBytes(StandardCharsets.UTF_8);
+        System.arraycopy(buf, 0, test.record.value, 0, buf.length);
+        test.record.len = buf.length;
+        test.expected.addAll(expected.collect(Collectors.toList()));
+
+        verifyTest(test);
+    }
+
+    private void verifyTest(CsvTest test) {
         test.record.decode();
 
         assertTrue(test.record.positions > 0);

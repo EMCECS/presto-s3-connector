@@ -22,10 +22,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Supplier;
 
 import static com.facebook.presto.common.type.BigintType.BIGINT;
+import static com.facebook.presto.common.type.BooleanType.BOOLEAN;
 import static com.facebook.presto.common.type.VarcharType.VARCHAR;
 import static org.testng.Assert.*;
 
@@ -81,18 +85,30 @@ public class S3RecordCursorTest {
         return new S3TableLayoutHandle(table, null);
     }
 
-    Supplier<CountingInputStream> inputStream(String f) {
-        return () ->
-                new CountingInputStream(S3RecordCursorTest.class.getResourceAsStream("/cursor/" + f));
+    Supplier<CountingInputStream> readerStream(String f) {
+        return readerStream(S3RecordCursorTest.class.getResourceAsStream("/cursor/" + f));
     }
 
-    RecordReader newReader(List<S3ColumnHandle> columns, String f) {
+    Supplier<CountingInputStream> readerStream(InputStream stream) {
+        return () -> new CountingInputStream(stream);
+    }
+
+    RecordReader newFileReader(List<S3ColumnHandle> columns, String f) {
         return new CsvRecordReader(columns,
                 new S3ObjectRange("bucket", "key"),
                 table(),
                 new S3ReaderProps(false, 65536),
-                inputStream(f));
+                readerStream(f));
     }
+
+    RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString) {
+        return new CsvRecordReader(columns,
+                new S3ObjectRange("bucket", "key"),
+                table(),
+                new S3ReaderProps(false, 65536),
+                readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8))));
+    }
+
     /*
      * end test helpers
      */
@@ -111,7 +127,7 @@ public class S3RecordCursorTest {
                         .build();
 
         S3RecordCursor cursor =
-                new S3RecordCursor(newReader(columnHandles, "emptyline.csv"), columnHandles);
+                new S3RecordCursor(newFileReader(columnHandles, "emptyline.csv"), columnHandles);
 
         assertTrue(cursor.advanceNextPosition());
         assertEquals(cursor.getSlice(0).toStringUtf8(), "andrew");
@@ -130,6 +146,24 @@ public class S3RecordCursorTest {
         assertEquals(cursor.getLong(1), 33L);
 
         assertFalse(cursor.advanceNextPosition());
+    }
+
+    @Test
+    public void testQuotedTypes() {
+        List<S3ColumnHandle> columnHandles =
+                new ColumnBuilder()
+                        .add("field1", BIGINT)
+                        .add("field2", BOOLEAN)
+                        .build();
+
+        String line = "\"1027\",\"true\"";
+
+        S3RecordCursor cursor =
+                new S3RecordCursor(newStringReader(columnHandles, line), columnHandles);
+
+        assertTrue(cursor.advanceNextPosition());
+        assertEquals(cursor.getLong(0), 1027L);
+        assertTrue(cursor.getBoolean(1));
     }
 }
 

@@ -32,7 +32,6 @@ public class CsvRecord
     public boolean decoded = false;
 
     private static final byte QUOTE = '"';
-    private boolean quoted = false;
 
     private static class Position {
         int pos;
@@ -52,34 +51,47 @@ public class CsvRecord
         this.position = new Position[1024];
     }
 
+    /*
+    private String debug(int field) {
+        return "{" + position[field].pos + "," + position[field].len + "}: " +
+                getSlice(field).toStringUtf8();
+    }
+     */
+
     public void decode()
     {
         positions = 0;
 
-        int absPos = 0;
-        int absPrevPos = 0;
+        int idx = 0;
 
-        int p;
+        boolean quoted = false;
+
+        int p = 0;
         int l;
 
-        // look for non-quoted field seps
-        // note offset + length of each field (+1's are to skip field sep in byte byte[])
-        while (absPos < len) {
-            if (value[absPos] == fieldSep && !quoted) {
-                p = positions == 0 ? 0 : absPrevPos + 1;
-                l = absPos - absPrevPos - (positions == 0 ? 0 : 1);
-                position[positions++] = new Position(p, l);
-                absPrevPos = absPos;
+        // look for non-quoted field separator
+        // note offset + length of each field
+        // if value starts+ends with quote, trim quotes
+        while (idx < len) {
+            // terminate field with separator or end of line
+            if ((value[idx] == fieldSep && !quoted) ||
+                    idx+1 == len) {
 
-            } else if (value[absPos] == QUOTE) {
+                l = idx - p + (value[idx] == fieldSep ? 0 : 1);
+
+                if (value[p] == QUOTE && value[p+l-1] == QUOTE) {
+                    p++;
+                    l-=2; // backup before quote and account for p++
+                }
+
+                position[positions++] = new Position(p, l);
+                p = idx + 1; // +1 skip field sep
+            } else if (value[idx] == QUOTE) {
                 quoted = !quoted;
             }
-            absPos++;
-        }
 
-        p = positions == 0 ? 0 : absPrevPos + 1;
-        l = absPos - absPrevPos - (positions == 0 ? 0 : 1);
-        position[positions++] = new Position(p, l);
+            idx++;
+        }
 
         decoded = true;
     }
@@ -113,7 +125,7 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return Boolean.getBoolean(new String(value, position[field].pos, position[field].len));
+        return Boolean.parseBoolean(new String(value, position[field].pos, position[field].len));
     }
 
     public Slice getSlice(int field)
