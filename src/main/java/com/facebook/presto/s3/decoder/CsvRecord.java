@@ -77,6 +77,7 @@ public class CsvRecord
             if ((value[idx] == fieldSep && !quoted) ||
                     idx+1 == len) {
 
+                // code assumes length includes field sep.  adjust if end of line
                 l = idx - p + (value[idx] == fieldSep ? 0 : 1);
 
                 if (value[p] == QUOTE && value[p+l-1] == QUOTE) {
