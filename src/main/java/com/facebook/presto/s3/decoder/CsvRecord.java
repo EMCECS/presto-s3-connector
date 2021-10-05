@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.facebook.presto.s3.decoder;
 
 import io.airlift.slice.Slice;
@@ -26,11 +25,22 @@ public class CsvRecord
     public byte[] value;
 
     int positions;
-    int[] position;
+    private final Position[] position;
 
-    char fieldSep;
+    private final char fieldSep;
 
     public boolean decoded = false;
+
+    private static final byte QUOTE = '"';
+
+    private static class Position {
+        int pos;
+        int len;
+        Position(int pos, int len) {
+            this.pos = pos;
+            this.len = len;
+        }
+    }
 
     public CsvRecord(char fieldSep)
     {
@@ -38,29 +48,53 @@ public class CsvRecord
 
         this.len = 0;
         this.value = new byte[65536];
-        this.position = new int[1024];
+        this.position = new Position[1024];
     }
+
+    /*
+    private String debug(int field) {
+        return "{" + position[field].pos + "," + position[field].len + "}: " +
+                getSlice(field).toStringUtf8();
+    }
+     */
 
     public void decode()
     {
-        position[0] = 0;
-        positions = 1;
+        positions = 0;
 
-        int pos = 0;
-        while (pos < len) {
-            if (value[pos++] == fieldSep) {
-                position[positions++] = pos;
+        int idx = 0;
+
+        boolean quoted = false;
+
+        int p = 0;
+        int l;
+
+        // look for non-quoted field separator
+        // note offset + length of each field
+        // if value starts+ends with quote, trim quotes
+        while (idx < len) {
+            // terminate field with separator or end of line
+            if ((value[idx] == fieldSep && !quoted) ||
+                    idx+1 == len) {
+
+                // code assumes length includes field sep.  adjust if end of line
+                l = idx - p + (value[idx] == fieldSep ? 0 : 1);
+
+                if (value[p] == QUOTE && value[p+l-1] == QUOTE) {
+                    p++;
+                    l-=2; // backup before quote and account for p++
+                }
+
+                position[positions++] = new Position(p, l);
+                p = idx + 1; // +1 skip field sep
+            } else if (value[idx] == QUOTE) {
+                quoted = !quoted;
             }
+
+            idx++;
         }
 
         decoded = true;
-    }
-
-    private int fieldLen(int field)
-    {
-        return field+1 == positions
-                ? len - position[field]
-                : position[field+1] - position[field] - 1;
     }
 
     public boolean isNull(int field)
@@ -68,7 +102,7 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return field >= positions || fieldLen(field) == 0;
+        return field >= positions || position[field].len == 0;
     }
 
     public long getLong(int field)
@@ -76,7 +110,7 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return Long.parseLong(new String(value, position[field], fieldLen(field)));
+        return Long.parseLong(new String(value, position[field].pos, position[field].len));
     }
 
     public double getDouble(int field)
@@ -84,7 +118,7 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return Double.parseDouble(new String(value, position[field], fieldLen(field)));
+        return Double.parseDouble(new String(value, position[field].pos, position[field].len));
     }
 
     public boolean getBoolean(int field)
@@ -92,7 +126,7 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return Boolean.getBoolean(new String(value, position[field], fieldLen(field)));
+        return Boolean.parseBoolean(new String(value, position[field].pos, position[field].len));
     }
 
     public Slice getSlice(int field)
@@ -100,6 +134,6 @@ public class CsvRecord
         if (!decoded) {
             decode();
         }
-        return Slices.wrappedBuffer(value, position[field], fieldLen(field));
+        return Slices.wrappedBuffer(value, position[field].pos, position[field].len);
     }
 }
