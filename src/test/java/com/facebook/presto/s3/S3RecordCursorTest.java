@@ -16,16 +16,23 @@
 package com.facebook.presto.s3;
 
 import com.facebook.presto.common.type.Type;
+import com.facebook.presto.s3.reader.AvroRecordReader;
 import com.facebook.presto.s3.reader.CsvRecordReader;
 import com.facebook.presto.s3.reader.RecordReader;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.fs.BufferedFSInputStream;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSInputStream;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static com.facebook.presto.common.type.BigintType.BIGINT;
@@ -47,7 +54,12 @@ public class S3RecordCursorTest {
         ImmutableList.Builder<S3ColumnHandle> builder = ImmutableList.builder();
 
         ColumnBuilder add(final String name, final Type type) {
-            builder.add(column(name, type, position++));
+            builder.add(column(name, type, position++, null));
+            return this;
+        }
+
+        ColumnBuilder add(final String name, final String mapping, final Type type) {
+            builder.add(column(name, type, position++, mapping));
             return this;
         }
 
@@ -55,15 +67,15 @@ public class S3RecordCursorTest {
             return builder.build();
         }
 
-        S3ColumnHandle column(final String name, final Type type, int position)
+        S3ColumnHandle column(final String name, final Type type, int position, String mapping)
         {
             return new S3ColumnHandle("s3",
                     position,
                     name,
                     type,
-                    String.valueOf(position),
-                    "unused-dataFormat",
-                    "unused-formatHint",
+                    mapping != null ? mapping : String.valueOf(position),
+                    null /* dataFormat */,
+                    null /* formatHint */,
                     false /* keyDecoder */,
                     false /* hidden */,
                     false /* internal */);
@@ -107,6 +119,45 @@ public class S3RecordCursorTest {
                 table(),
                 new S3ReaderProps(false, 65536),
                 readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8))));
+    }
+
+    RecordReader newAvroRecordReader(List<S3ColumnHandle> columns, String f) {
+        RandomAccessFile file;
+        try {
+            file = new RandomAccessFile(new File(f), "r");
+
+            InputStream inputStream = new FSDataInputStream(
+                    new BufferedFSInputStream(
+                            new FSInputStream() {
+                                @Override
+                                public void seek(long l) throws IOException {
+                                    file.seek(l);
+                                }
+
+                                @Override
+                                public long getPos() throws IOException {
+                                    return file.getFilePointer();
+                                }
+
+                                @Override
+                                public boolean seekToNewSource(long l) {
+                                    return false;
+                                }
+
+                                @Override
+                                public int read() throws IOException {
+                                    return file.read();
+                                }
+                            },
+                            65536));
+
+            return new AvroRecordReader(columns,
+                    new S3ObjectRange("bucket", "key", 0, (int) file.length()),
+                    readerStream(inputStream));
+
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /*
@@ -164,6 +215,30 @@ public class S3RecordCursorTest {
         assertTrue(cursor.advanceNextPosition());
         assertEquals(cursor.getLong(0), 1027L);
         assertTrue(cursor.getBoolean(1));
+    }
+
+    @Test
+    public void testAvro() throws Exception {
+        List<S3ColumnHandle> columnHandles =
+                new ColumnBuilder()
+                        .add("Name", "Name", VARCHAR)
+                        .add("Age", "Age", BIGINT)
+                        .build();
+
+        String f = "/media/andrew/disk2/code/presto-s3-connector/src/test/resources/avro_datafile";
+
+        /*
+        final DataFileStream<GenericRecord> dataStream =
+                new DataFileStream<>(new FileInputStream(new File(f)), new GenericDatumReader<>());
+        String schema = dataStream.getSchema().toString(true);
+        System.out.println(schema);
+        */
+
+        S3RecordCursor cursor =
+                new S3RecordCursor(newAvroRecordReader(columnHandles, f), columnHandles);
+        assertTrue(cursor.advanceNextPosition());
+        System.out.println(cursor.getSlice(0).toStringUtf8());
+        System.out.println(cursor.getLong(1));
     }
 }
 
