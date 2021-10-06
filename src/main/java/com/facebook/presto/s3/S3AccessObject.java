@@ -110,6 +110,7 @@ public class S3AccessObject
                     .enablePathStyleAccess()
                     .build();
         } catch (URISyntaxException e) {
+            log.error("%s",e.getMessage());
             e.printStackTrace();
         }
     }
@@ -292,9 +293,7 @@ public class S3AccessObject
                 listOfMaps.add(map);
             }
         } catch (S3Exception e){
-
-
-
+            log.error("%s",e.getMessage());
         }
         return listOfMaps;
 
@@ -321,6 +320,7 @@ public class S3AccessObject
                 }
             }
         } catch (S3Exception e){
+            log.error("%s",e.getMessage());
         }
         schema.put("name", bucketName);
         schema.put("columns", columns);
