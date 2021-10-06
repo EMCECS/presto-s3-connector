@@ -193,8 +193,7 @@ public class S3SchemaRegistryManager {
         String tablename = tableMetadata.getTable().getTableName();
         ObjectNode schemaNode = populateObjectNode(tableMetadata.getProperties(),
                 database, tablename);
-        StringBuilder propertyStringBuilder = new StringBuilder("{");
-        // Create a StringBuilder for all the properties, then parse the string into a JsonNode
+        ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
         for (int i = 0; i <= tableMetadata.getColumns().size() - 1; i++) {
             ColumnMetadata column = tableMetadata.getColumns().get(i);
             log.debug("Column name: " + column.getName() + ", type: " + column.getType());
@@ -221,25 +220,13 @@ public class S3SchemaRegistryManager {
                 columnObjectNode.put("format", "date-time");
             }
             columnObjectNode.put(JSON_PROP_TYPE, columnType);
-            propertyStringBuilder.append("\"").append(column.getName()).append("\":").append(columnObjectNode);
-            if (i == tableMetadata.getColumns().size() - 1) {
-                propertyStringBuilder.append("}");
-            } else {
-                propertyStringBuilder.append(",");
-            }
+            propertyNode.set(column.getName(), columnObjectNode);
             // For now, there are no column properties
             // for (Map.Entry<String, Object> properties1 : column.getProperties().entrySet()) {
             //    String propertyName = properties1.getKey();
             // }
         }
-        try {
-            ObjectMapper objMapper = new ObjectMapper();
-            JsonNode propertyNode = objMapper.readTree(propertyStringBuilder.toString());
-            schemaNode.set(properties_var, propertyNode);
-        } catch (IOException e) {
-            throw new PrestoException(CONFIGURATION_INVALID,
-                    format("Error processing schema string: %s", propertyStringBuilder.toString()));
-        }
+        schemaNode.set(properties_var, propertyNode);
         log.info("Add schema: " + schemaNode);
 
         SchemaInfo newSchema = new SchemaInfo(tablename, SerializationFormat.Json,
