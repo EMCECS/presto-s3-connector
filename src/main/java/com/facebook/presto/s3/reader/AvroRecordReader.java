@@ -20,9 +20,14 @@ import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.decoder.avro.AvroColumnDecoder;
 import com.facebook.presto.s3.CountingInputStream;
 import com.facebook.presto.s3.S3ColumnHandle;
-import org.apache.avro.file.DataFileStream;
+import com.facebook.presto.s3.S3ObjectRange;
+import com.google.common.base.Preconditions;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.file.FileReader;
+import org.apache.avro.file.SeekableInput;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.hadoop.fs.FSDataInputStream;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -40,14 +45,21 @@ public class AvroRecordReader
 
     private final Supplier<CountingInputStream> inputStreamSupplier;
 
-    private DataFileStream<GenericRecord> reader = null;
+    private final S3ObjectRange objectRange;
+
+    private final long lastOffset;
+
+    private FileReader<GenericRecord> reader = null;
 
     private CountingInputStream inputStream;
 
-    public AvroRecordReader(List<S3ColumnHandle> columnHandles, final Supplier<CountingInputStream> inputStreamSupplier)
+    public AvroRecordReader(List<S3ColumnHandle> columnHandles, final S3ObjectRange objectRange, final Supplier<CountingInputStream> inputStreamSupplier)
     {
         this.columnDecoders = columnHandles.stream().collect(toImmutableMap(identity(), this::createColumnDecoder));
+        this.objectRange = objectRange;
         this.inputStreamSupplier = inputStreamSupplier;
+        Preconditions.checkArgument(objectRange.getLength() >= 0);
+        this.lastOffset = objectRange.getOffset() + objectRange.getLength();
     }
 
     private AvroColumnDecoder createColumnDecoder(DecoderColumnHandle columnHandle)
@@ -59,11 +71,43 @@ public class AvroRecordReader
     {
         try {
             this.inputStream = inputStreamSupplier.get();
-            this.reader = new DataFileStream<>(inputStream, new SpecificDatumReader<>());
+            this.reader = DataFileReader.openReader(seekableInput(inputStream, lastOffset), new SpecificDatumReader<>());
+            this.reader.sync(objectRange.getOffset());
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private SeekableInput seekableInput(CountingInputStream is, long length) {
+        Preconditions.checkArgument(is.getWrappedStream() instanceof FSDataInputStream);
+        final FSDataInputStream fsDataInputStream = (FSDataInputStream) is.getWrappedStream();
+        return new SeekableInput() {
+            @Override
+            public void seek(long l) throws IOException {
+                fsDataInputStream.seek(l);
+            }
+
+            @Override
+            public long tell() throws IOException {
+                return fsDataInputStream.getPos();
+            }
+
+            @Override
+            public long length() {
+                return length;
+            }
+
+            @Override
+            public int read(byte[] bytes, int off, int len) throws IOException {
+                return is.read(bytes, off, len);
+            }
+
+            @Override
+            public void close() throws IOException {
+                is.close();
+            }
+        };
     }
 
     @Override
@@ -81,7 +125,12 @@ public class AvroRecordReader
             init();
         }
 
-        return reader.hasNext();
+        try {
+            return reader.hasNext() &&
+                    !reader.pastSync(lastOffset);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override

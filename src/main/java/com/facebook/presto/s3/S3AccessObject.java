@@ -379,7 +379,7 @@ public class S3AccessObject
             super(format("%s (key: %s)", cause, key), cause);
         }
     }
-    public FSDataInputStream getParquetObject(String bucket, String key, int bufferSize)
+    public FSDataInputStream getFsDataInputStream(String bucket, String key, int bufferSize)
     {
         return new FSDataInputStream(
                 new BufferedFSInputStream(

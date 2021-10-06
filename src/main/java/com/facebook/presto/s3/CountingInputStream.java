@@ -29,6 +29,10 @@ public class CountingInputStream extends InputStream
         this.delegate = delegate;
     }
 
+    public InputStream getWrappedStream() {
+        return delegate;
+    }
+
     public long getTotalBytes()
     {
         return bytes;
