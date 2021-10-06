@@ -16,14 +16,17 @@
 package com.facebook.presto.s3;
 
 import com.facebook.presto.common.type.Type;
+import com.facebook.presto.s3.avro.User;
 import com.facebook.presto.s3.reader.AvroRecordReader;
 import com.facebook.presto.s3.reader.CsvRecordReader;
 import com.facebook.presto.s3.reader.RecordReader;
+import com.facebook.presto.s3.util.AvroByteArrayOutputStream;
+import com.facebook.presto.s3.util.SeekableByteArrayInputStream;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.avro.file.DataFileStream;
-import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.fs.BufferedFSInputStream;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSInputStream;
@@ -31,8 +34,8 @@ import org.testng.annotations.Test;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import static com.facebook.presto.common.type.BigintType.BIGINT;
@@ -42,7 +45,7 @@ import static org.testng.Assert.*;
 
 public class S3RecordCursorTest {
 
-    // note: helpers support CSV only.  though only need some tweaks for other formats.
+    private static final int AVRO_BLOCK_SIZE_BYTES = 16*1024;
 
     /*
      * start test helpers
@@ -121,43 +124,41 @@ public class S3RecordCursorTest {
                 readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8))));
     }
 
-    RecordReader newAvroRecordReader(List<S3ColumnHandle> columns, String f) {
-        RandomAccessFile file;
-        try {
-            file = new RandomAccessFile(new File(f), "r");
+    RecordReader newAvroRecordReader(List<S3ColumnHandle> columns, byte[] bytes, int start, int end) {
+        final SeekableByteArrayInputStream byteArrayInputStream = new SeekableByteArrayInputStream(bytes);
+        InputStream inputStream = new FSDataInputStream(
+                new BufferedFSInputStream(
+                        new FSInputStream() {
+                            @Override
+                            public void seek(long l) {
+                                byteArrayInputStream.seek(l);
+                            }
 
-            InputStream inputStream = new FSDataInputStream(
-                    new BufferedFSInputStream(
-                            new FSInputStream() {
-                                @Override
-                                public void seek(long l) throws IOException {
-                                    file.seek(l);
-                                }
+                            @Override
+                            public long getPos() {
+                                return byteArrayInputStream.tell();
+                            }
 
-                                @Override
-                                public long getPos() throws IOException {
-                                    return file.getFilePointer();
-                                }
+                            @Override
+                            public boolean seekToNewSource(long l) {
+                                return false;
+                            }
 
-                                @Override
-                                public boolean seekToNewSource(long l) {
-                                    return false;
-                                }
+                            @Override
+                            public int read() {
+                                return byteArrayInputStream.read();
+                            }
 
-                                @Override
-                                public int read() throws IOException {
-                                    return file.read();
-                                }
-                            },
-                            65536));
+                            @Override
+                            public int read(byte[] b, int off, int len) {
+                                return byteArrayInputStream.read(b, off, len);
+                            }
+                        },
+                        65536));
 
             return new AvroRecordReader(columns,
-                    new S3ObjectRange("bucket", "key", 0, (int) file.length()),
+                    new S3ObjectRange("bucket", "key", start, end-start),
                     readerStream(inputStream));
-
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     /*
@@ -218,27 +219,93 @@ public class S3RecordCursorTest {
     }
 
     @Test
-    public void testAvro() throws Exception {
+    public void testAvroSplits() throws Exception {
         List<S3ColumnHandle> columnHandles =
                 new ColumnBuilder()
-                        .add("Name", "Name", VARCHAR)
-                        .add("Age", "Age", BIGINT)
+                        .add("userId", "userId", BIGINT)
+                        .add("first", "first", VARCHAR)
+                        .add("last", "last", VARCHAR)
                         .build();
 
-        String f = "/media/andrew/disk2/code/presto-s3-connector/src/test/resources/avro_datafile";
+        // write a few blocks worth of avro records
+        // userId field value 0->N so that we can ensure come back in order
 
-        /*
-        final DataFileStream<GenericRecord> dataStream =
-                new DataFileStream<>(new FileInputStream(new File(f)), new GenericDatumReader<>());
-        String schema = dataStream.getSchema().toString(true);
-        System.out.println(schema);
-        */
+        User user = User.newBuilder().setUserId(0).setFirst("f").setLast("l").build();
+        DatumWriter<User> sampleDatumWriter = new SpecificDatumWriter<>(User.class);
+        DataFileWriter<User> dataFileWriter = new DataFileWriter<>(sampleDatumWriter);
+        dataFileWriter.setSyncInterval(AVRO_BLOCK_SIZE_BYTES);
 
+        // generate our own sync so we can look for+capture it
+        byte[] sync = new byte[] {
+                'a', 'v', 'r', 'o', 's', 'y', 'n', 'c', 0, 1, 2, 3, 4, 5, 6, 7
+        };
+
+        AvroByteArrayOutputStream os = new AvroByteArrayOutputStream(sync);
+        dataFileWriter.create(user.getSchema(), os, sync);
+
+        int avroBlocksToWrite = 3;
+
+        int userId = 0;
+        while (os.getSyncs() < avroBlocksToWrite) {
+            user = User.newBuilder()
+                    .setUserId(userId)
+                    .setFirst("first_" + userId)
+                    .setLast("last_" + userId).build();
+            dataFileWriter.append(user);
+            userId++;
+        }
+        dataFileWriter.close();
+
+        // more like 2k but sanity check that we wrote something
+        assertTrue(userId > 1000);
+        assertEquals(avroBlocksToWrite, os.getSyncs());
+
+        // read entire object back using different splits
+        // each split will use different offset, length in the data
+
+        int records = 0;
+        int n;
+        int split = 0;
+        int splitsWithData = 0;
+
+        // collect each id from the data to ensure that different splits don't return same data
+        HashSet<Long> duplicateSet = new HashSet<>();
+
+        byte[] avroData = os.toByteArray();
+        do {
+            n = readSplit(columnHandles, duplicateSet, avroData, split++);
+            records += n;
+            System.out.println("split " + (split-1) + " returned " + n + " records");
+            if (n > 0) {
+                splitsWithData++;
+            }
+        } while (n > 0);
+
+        assertEquals(avroBlocksToWrite, splitsWithData); // read all expected blocks
+        assertEquals(split - 1, splitsWithData);      // only 1 empty split (the last)
+        assertEquals(userId, records);                  // expected number of records
+
+        System.out.println("read " + records + " records in total from " + split + " splits");
+    }
+
+    private int readSplit(List<S3ColumnHandle> columnHandles, HashSet<Long> duplicateSet, byte[] avroData, int splitNum) {
         S3RecordCursor cursor =
-                new S3RecordCursor(newAvroRecordReader(columnHandles, f), columnHandles);
-        assertTrue(cursor.advanceNextPosition());
-        System.out.println(cursor.getSlice(0).toStringUtf8());
-        System.out.println(cursor.getLong(1));
+                new S3RecordCursor(newAvroRecordReader(columnHandles, avroData,
+                        AVRO_BLOCK_SIZE_BYTES * splitNum,
+                        AVRO_BLOCK_SIZE_BYTES * splitNum + AVRO_BLOCK_SIZE_BYTES), columnHandles);
+        int records = 0;
+        long lastId = -1;
+        while (cursor.advanceNextPosition()) {
+            // check that the id hasn't been returned before
+            // and that always increasing in sequence
+            assertTrue(duplicateSet.add(cursor.getLong(0)));
+            if (lastId >= 0) {
+                assertEquals(lastId+1, cursor.getLong(0));
+            }
+            lastId = lastId == -1 ? cursor.getLong(0) : lastId + 1;
+            records++;
+        }
+        return records;
     }
 }
 

@@ -15,16 +15,24 @@
  */
 
 /*
- * Build gradle file for the Pravega connector
+ * Build gradle file for the S3 connector
  */
 
 plugins {
     id 'java'
     id 'distribution'
     id 'maven'
+    id 'com.github.davidmc24.gradle.plugin.avro-base' version "1.2.1"
 }
 
 apply from: "$rootDir/gradle/checkstyle.gradle"
+apply plugin: "com.github.davidmc24.gradle.plugin.avro"
+sourceSets.main.java.srcDirs += 'build/generated-test-avro-java/'
+
+avro {
+    // prestoDb right now fails with avro String -> varchar
+    stringType = "CharSequence"
+}
 
 repositories {
     mavenLocal()
@@ -105,16 +113,7 @@ dependencies {
     testImplementation "com.facebook.airlift:testing:${airliftVersion}"
 
     testImplementation "io.pravega:schemaregistry-server:${pravegaSchemaRegistryVersion}"
-    testImplementation("org.apache.avro:avro") {
-        version {
-            strictly '1.8.1'
-        }
-    }
 }
-
-/*
-    testImplementation "io.pravega:schemaregistry-common:${pravegaSchemaRegistryVersion}"
-*/
 
 group = 'com.facebook.presto'
 version = '0.1.0'
