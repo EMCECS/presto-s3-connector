@@ -1,0 +1,10 @@
+{
+    "namespace": "com.facebook.presto.s3.avro",
+    "type": "record",
+    "name": "User",
+    "fields": [
+        {"name": "userId", "type": "int"},
+        {"name": "first", "type": "string"},
+        {"name": "last", "type": "string"}
+    ]
+}

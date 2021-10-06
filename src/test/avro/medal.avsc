@@ -1,0 +1,55 @@
+{
+  "type" : "record",
+  "name" : "olympic_record_data",
+  "namespace": "com.facebook.presto.s3.avro",
+  "fields" : [ {
+    "name" : "ID",
+    "type" : "string"
+  }, {
+    "name" : "Name",
+    "type" : "string"
+  }, {
+    "name" : "Sex",
+    "type" : "string"
+  }, {
+    "name" : "Age",
+    "type" : "int",
+    "default" : 0
+  }, {
+    "name" : "Height",
+    "type" : "int",
+    "default" : 0
+  }, {
+    "name" : "Weight",
+    "type" : "int",
+    "default" : 0
+  }, {
+    "name" : "Team",
+    "type" : "string"
+  }, {
+    "name" : "NOC",
+    "type" : "string"
+  }, {
+    "name" : "Games",
+    "type" : "string"
+  }, {
+    "name" : "Year",
+    "type" : "int",
+    "default" : 0
+  }, {
+    "name" : "Season",
+    "type" : "string"
+  }, {
+    "name" : "City",
+    "type" : "string"
+  }, {
+    "name" : "Sport",
+    "type" : "string"
+  }, {
+    "name" : "Event",
+    "type" : "string"
+  }, {
+    "name" : "Medal",
+    "type" : "string"
+  } ]
+}

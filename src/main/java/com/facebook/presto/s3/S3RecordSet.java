@@ -28,8 +28,11 @@ import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.RecordSet;
 import com.google.common.collect.ImmutableList;
+import org.apache.hadoop.fs.FSDataInputStream;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -100,7 +103,7 @@ public class S3RecordSet
                 recordReader = new JsonRecordReader(objectDecoder, inputStreamSupplier);
                 break;
             case AVRO:
-                recordReader = new AvroRecordReader(columnHandles, inputStreamSupplier);
+                recordReader = new AvroRecordReader(columnHandles, objectRange, inputStreamSupplier);
                 break;
             default:
                 throw new IllegalArgumentException("unhandled type " + s3TableHandle.getObjectDataFormat());
@@ -126,7 +129,15 @@ public class S3RecordSet
                     new S3SelectProps(hasHeaderRow, recordDelimiter, fieldDelimiter)));
         }
         else {
-            return new CountingInputStream(accessObject.getObject(objectRange.getBucket(), objectRange.getKey(), objectRange.getOffset()));
+            FSDataInputStream stream =
+                    accessObject.getFsDataInputStream(objectRange.getBucket(), objectRange.getKey(), readerProps.getBufferSizeBytes());
+            try {
+                stream.seek(objectRange.getOffset()); // changes position, no call yet
+            }
+            catch (IOException  e) {
+                throw new UncheckedIOException(e);
+            }
+            return new CountingInputStream(stream);
         }
     }
 
