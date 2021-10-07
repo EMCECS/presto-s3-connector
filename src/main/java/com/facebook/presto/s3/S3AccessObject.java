@@ -44,6 +44,7 @@ import org.apache.hadoop.fs.BufferedFSInputStream;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSInputStream;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 
@@ -110,8 +111,8 @@ public class S3AccessObject
                     .enablePathStyleAccess()
                     .build();
         } catch (URISyntaxException e) {
-            log.error("%s",e.getMessage());
-            e.printStackTrace();
+            log.error("%s",e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -292,8 +293,9 @@ public class S3AccessObject
                 }
                 listOfMaps.add(map);
             }
-        } catch (S3Exception e){
-            log.error("%s",e.getMessage());
+        }
+        catch (S3Exception e) {
+            log.error("%s", e);
         }
         return listOfMaps;
 
@@ -319,8 +321,9 @@ public class S3AccessObject
                     columns.put(new JSONObject().put("name", entry.getName()).put("type", "VARCHAR"));
                 }
             }
-        } catch (S3Exception e){
-            log.error("%s",e.getMessage());
+        }
+        catch (S3Exception e) {
+            log.error("%s", e);
         }
         schema.put("name", bucketName);
         schema.put("columns", columns);

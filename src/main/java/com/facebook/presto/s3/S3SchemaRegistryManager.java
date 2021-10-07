@@ -114,10 +114,10 @@ public class S3SchemaRegistryManager {
                 }
             }
         } catch (ProcessingException e) {
-            log.error("%s", e.getMessage());
+            log.error("%s", e);
             throw e;
         } catch (RegistryExceptions.ResourceNotFoundException e1) {
-            log.error("Exception: " + e1.getMessage());
+            log.error("Exception: " + e1);
             throw e1;
         }
     }
