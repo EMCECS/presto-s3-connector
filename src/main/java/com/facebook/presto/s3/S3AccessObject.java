@@ -110,8 +110,8 @@ public class S3AccessObject
                     .enablePathStyleAccess()
                     .build();
         } catch (URISyntaxException e) {
-            log.error("%s",e.getMessage());
-            e.printStackTrace();
+            log.error("Invalid Syntax for URI",e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -293,7 +293,8 @@ public class S3AccessObject
                 listOfMaps.add(map);
             }
         } catch (S3Exception e){
-            log.error("%s",e.getMessage());
+            log.error("%s",e);
+            throw e;
         }
         return listOfMaps;
 
@@ -320,7 +321,8 @@ public class S3AccessObject
                 }
             }
         } catch (S3Exception e){
-            log.error("%s",e.getMessage());
+            log.error("%s",e);
+            throw e;
         }
         schema.put("name", bucketName);
         schema.put("columns", columns);
