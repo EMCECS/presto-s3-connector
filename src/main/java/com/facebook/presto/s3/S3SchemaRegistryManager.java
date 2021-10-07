@@ -71,7 +71,6 @@ public class S3SchemaRegistryManager {
         schemaRegistryServerHost = s3ConnectorConfig.getSchemaRegistryServerIP();
         schemaRegistryServerPort = s3ConnectorConfig.getSchemaRegistryServerPort();
         schemaRegistryServerNamespace = s3ConnectorConfig.getSchemaRegistryServerNamespace();
-        client = initializeClient("http://" + schemaRegistryServerHost.getHostText() + ":" + schemaRegistryServerPort);
     }
 
     public void createGroup (String schemaName, String owner) {
@@ -79,6 +78,8 @@ public class S3SchemaRegistryManager {
         log.info("Create S3 schema " + schemaName + ", with owner: " + owner
                 + " to schema registry host: " +  schemaRegistryServerHost
                 + " using namespace: " + schemaRegistryServerNamespace);
+        String url = "http://" + schemaRegistryServerHost.getHostText() + ":" + schemaRegistryServerPort;
+        client = initializeClient(url);
         GroupProperties newGroupProperties = new GroupProperties(SerializationFormat.Json,
                 Compatibility.allowAny(), true);
 
@@ -95,12 +96,16 @@ public class S3SchemaRegistryManager {
         log.info("Drop S3 schema " + schemaName
                 + " from schema registry host: " +  schemaRegistryServerHost
                 + " using namespace: " + schemaRegistryServerNamespace);
+        String url = "http://" + schemaRegistryServerHost.getHostText() + ":" + schemaRegistryServerPort;
+        client = initializeClient(url);
         client.removeGroup(schemaName);
     }
 
     public void dropTable (S3TableHandle tableHandle) {
+        String url = "http://" + schemaRegistryServerHost.getHostText() + ":" + schemaRegistryServerPort;
         log.info("Dropping table " + tableHandle.getTableName() + " on schema " + tableHandle.getSchemaName());
         try {
+            client = initializeClient(url);
             // Remember - a "schema" in Presto is a "group" in Schema Registry
             for (SchemaWithVersion version : client.getSchemas(tableHandle.getSchemaName())) {
                 if (version.getSchemaInfo().getType().equalsIgnoreCase(tableHandle.getTableName())) {
@@ -109,10 +114,10 @@ public class S3SchemaRegistryManager {
                 }
             }
         } catch (ProcessingException e) {
-            log.error("%s", e);
+            log.error("%s", e.getMessage());
             throw e;
         } catch (RegistryExceptions.ResourceNotFoundException e1) {
-            log.error("Exception: " + e1);
+            log.error("Exception: " + e1.getMessage());
             throw e1;
         }
     }
@@ -182,6 +187,8 @@ public class S3SchemaRegistryManager {
                 + ", in group " + tableMetadata.getTable().getSchemaName()
                 + " to schema registry host: " +  schemaRegistryServerHost
                 + " using namespace: " + schemaRegistryServerNamespace);
+        String url = "http://" + schemaRegistryServerHost.getHostText() + ":" + schemaRegistryServerPort;
+        client = initializeClient(url);
         String database = tableMetadata.getTable().getSchemaName();
         String tablename = tableMetadata.getTable().getTableName();
         ObjectNode schemaNode = populateObjectNode(tableMetadata.getProperties(),
@@ -232,6 +239,8 @@ public class S3SchemaRegistryManager {
     public boolean schemaExists(String schemaName) {
         Iterator<Map.Entry<String, GroupProperties>> configuredGroups;
         try {
+            String url = "http://" + schemaRegistryServerHost.getHostText() + ":" + schemaRegistryServerPort;
+            client = initializeClient(url);
             // if schema registry is down, I think it should throw, but it doesn't.
             configuredGroups = client.listGroups();
             // If schema registry is down, listGroups will still succeed, but hasNext will throw
@@ -259,6 +268,8 @@ public class S3SchemaRegistryManager {
     public boolean tableSchemaExists(String schemaName, String tableName) {
         Iterator<Map.Entry<String, GroupProperties>> configuredGroups;
         try {
+            String url = "http://" + schemaRegistryServerHost.getHostText() + ":" + schemaRegistryServerPort;
+            client = initializeClient(url);
             // if schema registry is down, I think it should throw, but it doesn't.
             configuredGroups = client.listGroups();
             // If schema registry is down, listGroups will still succeed, but hasNext will throw
@@ -298,6 +309,8 @@ public class S3SchemaRegistryManager {
         // as defined in static JSON config file defined in presto-main/etc/s3.schemas.config.json
         Iterator<Map.Entry<String, GroupProperties>> configuredGroups;
         try {
+            String url = "http://" + schemaRegistryServerHost.getHostText() + ":" + schemaRegistryServerPort;
+            client = initializeClient(url);
             // if schema registry is down, I think it should throw, but it doesn't.
             configuredGroups = client.listGroups();
             // If schema registry is down, listGroups will still succeed, but hasNext will throw
