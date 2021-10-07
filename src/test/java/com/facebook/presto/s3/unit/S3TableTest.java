@@ -39,7 +39,7 @@ public class S3TableTest {
     private final String tableBucketName = "testbucket";
     private final String tableBucketPrefix = "TestData/";
     private final List<String> objects = Arrays.asList("source1", "source2");
-    private final Map<String, List<String>> objectBucketMap = Collections.singletonMap("bucket", objects);
+    private final Map<String, List<String>> sources = Collections.singletonMap("bucket", objects);
 
     // for use in S3TableHandleTest
     public final S3Table table = new S3Table(
@@ -51,7 +51,7 @@ public class S3TableTest {
             fieldDelimiter,
             tableBucketName,
             tableBucketPrefix,
-            objectBucketMap);
+            sources);
 
     @Test
     public void testGetName() {
@@ -79,7 +79,7 @@ public class S3TableTest {
 
     @Test
     public void testGetBucketObjectsMap() {
-        assertEquals(table.getBucketObjectsMap(), Collections.singletonMap("bucket", objects));
+        assertEquals(table.getSources(), Collections.singletonMap("bucket", objects));
     }
 
     @Test

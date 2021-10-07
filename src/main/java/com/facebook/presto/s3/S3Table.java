@@ -40,7 +40,7 @@ public class S3Table {
     private final String fieldDelimiter;
     private final String tableBucketName;
     private final String tableBucketPrefix;
-    private Map<String, List<String>> bucketObjectsMap;
+    private Map<String, List<String>> sources;
 
     @JsonCreator
     public S3Table(
@@ -52,10 +52,9 @@ public class S3Table {
             @JsonProperty("fieldDelimiter") String fieldDelimiter,
             @JsonProperty("tableBucketName") String tableBucketName,
             @JsonProperty("tableBucketPrefix") String tableBucketPrefix,
-            // TODO: need to rename to sources
-            @JsonProperty("sources") Map<String, List<String>> bucketObjectsMap) {
+            @JsonProperty("sources") Map<String, List<String>> sources) {
 
-        this.bucketObjectsMap = requireNonNull(bucketObjectsMap, "objectBucketMap is null");
+        this.sources = requireNonNull(sources, "sources is null");
         checkArgument(!isNullOrEmpty(name), "name is null or is empty");
         this.name = requireNonNull(name, "name is null");
         this.objectDataFormat = requireNonNull(objectDataFormat, "objectDataFormat is null");
@@ -68,8 +67,8 @@ public class S3Table {
             // Using JSON, it's possible to define multiple buckets and prefix locations
             // Using Presto CLI, you specify one external location 's3a://bucket/prefix
             // Be able to parse this: "testbucket":["cvdata/VehicleLog1.csv", "cvdata/VehicleLog2.csv" ]
-            this.tableBucketName = (String)bucketObjectsMap.keySet().toArray()[0];
-            this.tableBucketPrefix = (String)bucketObjectsMap.get(this.tableBucketName).toArray()[0];
+            this.tableBucketName = (String)sources.keySet().toArray()[0];
+            this.tableBucketPrefix = (String)sources.get(this.tableBucketName).toArray()[0];
         } else {
             this.tableBucketName = tableBucketName;
             this.tableBucketPrefix = tableBucketPrefix;
@@ -112,7 +111,7 @@ public class S3Table {
     }
 
     @JsonProperty
-    public Map<String, List<String>> getBucketObjectsMap() { return bucketObjectsMap; }
+    public Map<String, List<String>> getSources() { return sources; }
 
     @JsonProperty
     public String getHasHeaderRow() { return hasHeaderRow; }
@@ -128,6 +127,4 @@ public class S3Table {
 
     @JsonProperty
     public String getTableBucketPrefix() { return  tableBucketPrefix; }
-
-    public void setBucketObjectsMap(Map<String, List<String>> bucketObjectsMap) { this.bucketObjectsMap = bucketObjectsMap; }
 }

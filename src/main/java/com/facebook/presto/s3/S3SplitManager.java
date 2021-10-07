@@ -37,7 +37,7 @@ public class S3SplitManager
     private final String connectorId;
     private final S3ConnectorConfig s3ConnectorConfig;
     private final S3AccessObject s3AccessObject;
-    private static final Logger log = Logger.get(S3ConnectorFactory.class);
+    private static final Logger log = Logger.get(S3SplitManager.class);
 
     @Inject
     public S3SplitManager(S3ConnectorConfig s3ConnectorConfig,
