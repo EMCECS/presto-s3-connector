@@ -114,6 +114,10 @@ public class S3AccessObject
         }
     }
 
+    public AmazonS3 getS3Client() {
+        return amazonS3Client;
+    }
+
     public boolean bucketExists(String bucket) {
         return amazonS3Client.doesBucketExistV2(bucket);
     }

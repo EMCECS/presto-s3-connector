@@ -52,6 +52,7 @@ public class S3Table {
             @JsonProperty("fieldDelimiter") String fieldDelimiter,
             @JsonProperty("tableBucketName") String tableBucketName,
             @JsonProperty("tableBucketPrefix") String tableBucketPrefix,
+            // TODO: need to rename to sources
             @JsonProperty("sources") Map<String, List<String>> bucketObjectsMap) {
 
         this.bucketObjectsMap = requireNonNull(bucketObjectsMap, "objectBucketMap is null");
