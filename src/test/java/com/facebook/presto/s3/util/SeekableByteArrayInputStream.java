@@ -17,7 +17,8 @@ package com.facebook.presto.s3.util;
 
 import java.io.InputStream;
 
-public class SeekableByteArrayInputStream extends InputStream  {
+public class SeekableByteArrayInputStream
+        extends InputStream implements SeekableStream {
 
     private int position = 0;
     private final byte[] bytes;

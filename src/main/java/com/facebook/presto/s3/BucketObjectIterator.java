@@ -48,7 +48,6 @@ public class BucketObjectIterator
     }
 
     // TODO: must handle bucket/object not found
-    // TODO: check e.getErrorCode() for getObjectMetadata
     private boolean advance() {
         if (listing != null && listing.isTruncated()) {
             listing = s3Client.listNextBatchOfObjects(listing);
@@ -91,13 +90,16 @@ public class BucketObjectIterator
             return true;
         } catch (AmazonS3Exception e) {
             // fall through to bucket / listObjects handling
+            if (!e.getErrorCode().equals("404 Not Found")) {
+                throw e;
+            }
         }
 
         // directory, include trailing '/'
         listing = s3Client.listObjects(bucket, prefix + "/");
         iterator = listing.getObjectSummaries().iterator();
-        Preconditions.checkState(iterator.hasNext());
-        return true;
+
+        return iterator.hasNext() || advance();
     }
 
     @Override
