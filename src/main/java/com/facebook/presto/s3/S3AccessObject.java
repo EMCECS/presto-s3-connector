@@ -112,7 +112,7 @@ public class S3AccessObject
                     .build();
         } catch (URISyntaxException e) {
             log.error("%s",e);
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -294,8 +294,8 @@ public class S3AccessObject
                 listOfMaps.add(map);
             }
         }
-        catch (S3Exception e) {
-            log.error("%s", e);
+        catch (S3Exception ignored) {
+
         }
         return listOfMaps;
 
@@ -322,8 +322,7 @@ public class S3AccessObject
                 }
             }
         }
-        catch (S3Exception e) {
-            log.error("%s", e);
+        catch (S3Exception ignored) {
         }
         schema.put("name", bucketName);
         schema.put("columns", columns);
