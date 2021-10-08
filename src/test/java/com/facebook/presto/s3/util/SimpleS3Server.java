@@ -20,7 +20,11 @@ import com.amazonaws.Protocol;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.facebook.presto.s3.Pair;
 import com.google.common.base.Preconditions;
+import org.apache.http.impl.io.ChunkedInputStream;
+import org.apache.http.impl.io.HttpTransportMetricsImpl;
+import org.apache.http.impl.io.SessionInputBufferImpl;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -36,16 +40,15 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
+import java.net.URI;
 import java.util.*;
 
 import static com.facebook.presto.s3.util.S3ErrorUtil.errorResponse;
 
 @Path("/")
-public class SimpleServer extends Application {
+public class SimpleS3Server extends Application {
 
     private final Set<Object> singletons = new HashSet<>();
 
@@ -53,7 +56,7 @@ public class SimpleServer extends Application {
 
     private Server server;
 
-    public SimpleServer(int port) {
+    public SimpleS3Server(int port) {
         this.port = port;
     }
 
@@ -158,6 +161,7 @@ public class SimpleServer extends Application {
 
     class S3DataStore {
         Map<String, List<S3Data>> data = new HashMap<>();
+
         public S3DataStore addBucket(String bucket) {
             if (!data.containsKey(bucket)) {
                 data.put(bucket, new ArrayList<>());
@@ -182,6 +186,10 @@ public class SimpleServer extends Application {
         }
 
         public S3Data getKey(String bucket, String key) {
+            if (!data.containsKey(bucket)) {
+                return null;
+            }
+
             for (S3Data s3Data : data.get(bucket)) {
                 if (s3Data.key.equalsIgnoreCase(key)) {
                     return s3Data;
@@ -201,6 +209,33 @@ public class SimpleServer extends Application {
         dataStore.addKey(bucket, key, bytes);
     }
 
+    Pair<Integer, Integer> parseRange(S3Data data, String range) {
+        int offset = 0;
+        int len = data.size();
+
+        if (range == null) {
+            return new Pair<>(offset, len);
+        }
+
+        range = range.replace("bytes=", "");
+        String[] parts = range.split("-");
+        if (range.startsWith("-")) {
+            // last N bytes
+            offset = data.size() - Integer.parseInt(parts[0]);
+            len = Integer.parseInt(parts[0]);
+            Preconditions.checkState(offset >= 0);
+        } else {
+            offset = Integer.parseInt(parts[0]);
+            if (parts.length == 2) {
+                long end = Long.parseLong(parts[1]);
+                len = (int) Math.min(Integer.MAX_VALUE, end) - offset;
+                Preconditions.checkState(len >= 0);
+            }
+        }
+
+        return new Pair<>(offset, len);
+    }
+
     @HEAD
     @Path("{bucket}/{key}")
     public Response getMetadata(@Context HttpServletResponse response,
@@ -210,7 +245,8 @@ public class SimpleServer extends Application {
         if (data == null) {
             return errorResponse(404, "NoSuchKey", "Cannot find key");
         } else {
-            response.setContentLength(data.size());
+            Pair<Integer, Integer> range = parseRange(data, response.getHeader("Range"));
+            response.setContentLength(range.getRight());
             return Response.ok().build();
         }
     }
@@ -226,32 +262,51 @@ public class SimpleServer extends Application {
             return errorResponse(404, "NoSuchKey", "Cannot find key");
         }
 
-        int offset = 0;
-        int len = Integer.MAX_VALUE;
-
-        String range = request.getHeader("Range");
-        if (range != null) {
-            range = range.replace("bytes=", "");
-            String[] parts = range.split("-");
-            if (range.startsWith("-")) {
-                // last N bytes
-                offset = data.size() - Integer.parseInt(parts[0]);
-                Preconditions.checkState(offset >= 0);
-            } else {
-                offset = Integer.parseInt(parts[0]);
-                if (parts.length == 2) {
-                    long end = Long.parseLong(parts[1]);
-                    len = (int) Math.min(Integer.MAX_VALUE, end) - offset;
-                    Preconditions.checkState(len >= 0);
-                }
-            }
-        }
-
-        int finalOffset = offset;
-        int finalLen = len;
+        final Pair<Integer, Integer> range =
+                parseRange(data, response.getHeader("Range"));
 
         return Response.ok((StreamingOutput) output ->
-                data.writeTo(output, finalOffset, finalLen)).build();
+                data.writeTo(output, range.getLeft(), range.getRight())).build();
+    }
+
+    @PUT
+    @Path("{bucket}/{key}")
+    public Response putKey(@Context HttpServletRequest request,
+                           @PathParam("bucket") String bucket,
+                           @PathParam("key") String key) {
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        try {
+            SessionInputBufferImpl sessionInputBuffer =
+                    new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65536);
+            sessionInputBuffer.bind(request.getInputStream());
+            InputStream inputStream = new ChunkedInputStream(sessionInputBuffer);
+
+            int n;
+            byte[] b = new byte[4096];
+
+            do {
+                n = inputStream.read(b);
+                if (n > 0) {
+                    os.write(b, 0, n);
+                }
+            } while (n > 0);
+        } catch (IOException e) {
+            return Response.serverError().build();
+        }
+
+        S3Data data = dataStore.getKey(bucket, key);
+
+        if (data != null) {
+            data.bytes = os.toByteArray();
+            data.f = null;
+            return Response.ok().build();
+        } else {
+            dataStore.addKey(bucket, key, os.toByteArray());
+            URI location = URI.create("http://127.0.0.1:" + port + "/" + bucket + "/" + key);
+            return Response.created(location).build();
+        }
     }
 
     @GET
@@ -276,7 +331,7 @@ public class SimpleServer extends Application {
 
         for (S3Data key : data) {
             if (prefix == null || key.key.startsWith(prefix)) {
-                addKey(sb, key);
+                addToListResults(sb, key);
             }
         }
         sb.append("</ListBucketResult>");
@@ -284,13 +339,13 @@ public class SimpleServer extends Application {
         return Response.ok(sb.toString()).build();
     }
 
-    StringBuilder addKey(StringBuilder sb, S3Data key) {
+    StringBuilder addToListResults(StringBuilder sb, S3Data key) {
         sb.append("<Contents>").append("\n");
         sb.append("<Key>").append(key.key).append("</Key>").append("\n");
         sb.append("<Size>").append(key.size()).append("</Size>").append("\n");
         sb.append("<ETag>").append("abcdefg").append("</ETag>").append("\n");
         sb.append("<LastModified>").append("2021-10-01T12:00:00.000Z").append("</LastModified>").append("\n");
-        sb.append("<StorageClass>").append("tier2").append("</StorageClass>").append("\n");
+        sb.append("<StorageClass>").append("STANDARD").append("</StorageClass>").append("\n");
         sb.append("<Owner>").append("\n")
                 .append("<ID>").append("user1").append("</ID>")
                 .append("<DisplayName>").append("user1").append("</DisplayName>")

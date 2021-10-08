@@ -17,9 +17,8 @@ package com.facebook.presto.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.facebook.presto.s3.util.SimpleServer;
+import com.facebook.presto.s3.util.SimpleS3Server;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -32,13 +31,13 @@ public class BucketObjectIteratorTest {
 
     private static final int PORT = 9999;
 
-    private SimpleServer server;
+    private SimpleS3Server server;
 
     private AmazonS3 client;
 
     @BeforeClass
     public void beforeClass() {
-        server = new SimpleServer(PORT);
+        server = new SimpleS3Server(PORT);
         server.start();
 
         client = server.getClient();
@@ -52,11 +51,17 @@ public class BucketObjectIteratorTest {
 
     @Test
     public void testPutGet() {
+        String s;
+
+        client.putObject("bucketX", "keyXXX", "abcdefg");
+        s = readToString(client.getObject("bucketX", "keyXXX").getObjectContent());
+        System.out.println(s);
+
         server.putKey("bucket1", "abc", "abcdefg".getBytes(StandardCharsets.UTF_8));
         server.putKey("bucket1", "key2", "abcdefg".getBytes(StandardCharsets.UTF_8));
 
         GetObjectRequest request = new GetObjectRequest("bucket1", "key2").withRange(2);
-        String s = readToString(client.getObject(request).getObjectContent());
+        s = readToString(client.getObject(request).getObjectContent());
         System.out.println(s);
 
         s = readToString(client.getObject("bucket1", "key2").getObjectContent());

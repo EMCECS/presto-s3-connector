@@ -113,6 +113,7 @@ dependencies {
     testImplementation "com.facebook.airlift:testing:${airliftVersion}"
 
     testImplementation "io.pravega:schemaregistry-server:${pravegaSchemaRegistryVersion}"
+    testImplementation 'org.apache.httpcomponents:httpcore:4.4.14'
 }
 
 group = 'com.facebook.presto'
