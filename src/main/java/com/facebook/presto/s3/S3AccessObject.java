@@ -117,6 +117,7 @@ public class S3AccessObject
     public boolean bucketExists(String bucket) {
         return amazonS3Client.doesBucketExistV2(bucket);
     }
+
     public Long getObjectLength(String bucket, String key)
     {
         if (key.startsWith("/")) {
@@ -159,7 +160,9 @@ public class S3AccessObject
         return amazonS3Client.listBuckets();
     }
 
-    public List<Map<String, Object>> searchObjectMetadata(String bucket){
+    public List<Map<String, Object>> searchObjectMetadata(String bucket) {
+        // metadata search API extension
+        // https://github.com/EMCECS/presto-s3-connector/issues/57
         throw new UnsupportedOperationException("not yet implemented");
     }
 
@@ -184,6 +187,7 @@ public class S3AccessObject
                 }
             }
         } catch (S3Exception e){
+            // not all s3 compat. API support listBucketMetadataSearchKeys
         }
         schema.put("name", bucketName);
         schema.put("columns", columns);
