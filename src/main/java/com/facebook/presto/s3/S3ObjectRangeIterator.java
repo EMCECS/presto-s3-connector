@@ -25,7 +25,7 @@ public class S3ObjectRangeIterator
 {
     private final AmazonS3 s3Client;
     private final long rangeBytes;
-    private final int batchSize = 100;
+    private final int batchSize;
 
     private final Iterator<Map.Entry<String, List<String>>> source;
     private BucketObjectIterator bucketObject;
@@ -34,14 +34,20 @@ public class S3ObjectRangeIterator
     private Pair<S3ObjectSummary, Long> continuation;
 
     public S3ObjectRangeIterator(AmazonS3 s3Client, Map<String, List<String>> sourceMap, long rangeBytes) {
+        this(s3Client, sourceMap, rangeBytes, 100);
+    }
+
+    public S3ObjectRangeIterator(AmazonS3 s3Client, Map<String, List<String>> sourceMap, long rangeBytes, int batchSize) {
         this.s3Client = s3Client;
         this.rangeBytes = rangeBytes;
         this.source = sourceMap.entrySet().iterator();
+        this.batchSize = batchSize;
     }
 
     private boolean advance() {
         do {
-            if (bucketObject == null || !bucketObject.hasNext()) {
+            if (continuation == null &&
+                    (bucketObject == null || !bucketObject.hasNext())) {
                 if (!source.hasNext()) {
                     return false;
                 }
@@ -94,7 +100,7 @@ public class S3ObjectRangeIterator
                     rangeList.add(new S3ObjectRange(object.getBucketName(), object.getKey(), offset, length));
                     offset += rangeBytes;
 
-                    if (count++ >= batchSize) {
+                    if (++count >= batchSize) {
                         continuation = offset < object.getSize()
                                 ? new Pair<>(object, offset)
                                 : null;

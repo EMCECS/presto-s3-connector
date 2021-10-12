@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.*;
 
 public class S3ObjectRangeIteratorTest {
 
@@ -65,7 +65,8 @@ public class S3ObjectRangeIteratorTest {
         sources.put("bucket2", null);
         sources.put("bucket3", null);
 
-        S3ObjectRangeIterator iterator = new S3ObjectRangeIterator(client, sources, 100);
+        S3ObjectRangeIterator iterator =
+                new S3ObjectRangeIterator(client, sources, 100);
 
         List<S3ObjectRange> ranges = new ArrayList<>();
         while (iterator.hasNext()) {
@@ -83,7 +84,72 @@ public class S3ObjectRangeIteratorTest {
     }
 
     @Test
-    public void testBucketDoesNotExist() {
+    public void testSplitObject() {
+        String bucket = "test-split-object";
+        server.putKey(bucket, "key1", new byte[4096]);
 
+        Map<String, List<String>> sources = new TreeMap<>();
+        sources.put(bucket, null);
+
+        S3ObjectRangeIterator iterator =
+                new S3ObjectRangeIterator(client, sources, 1024);
+
+        S3ObjectRange range;
+
+        assertTrue(iterator.hasNext());
+        range = iterator.next();
+        assertEquals(range.getBucket(), bucket);
+        assertEquals(range.getKey(), "key1");
+        assertEquals(range.getOffset(), 0);
+        assertEquals(range.getLength(), 1024);
+
+        assertTrue(iterator.hasNext());
+        range = iterator.next();
+        assertEquals(range.getBucket(), bucket);
+        assertEquals(range.getKey(), "key1");
+        assertEquals(range.getOffset(), 1024);
+        assertEquals(range.getLength(), 1024);
+
+        assertTrue(iterator.hasNext());
+        range = iterator.next();
+        assertEquals(range.getBucket(), bucket);
+        assertEquals(range.getKey(), "key1");
+        assertEquals(range.getOffset(), 2048);
+        assertEquals(range.getLength(), 1024);
+
+        assertTrue(iterator.hasNext());
+        range = iterator.next();
+        assertEquals(range.getBucket(), bucket);
+        assertEquals(range.getKey(), "key1");
+        assertEquals(range.getOffset(), 3072);
+        assertEquals(range.getLength(), 1024);
+
+        assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    public void testSplitResume() {
+        String bucket = "test-split-resume";
+        server.putKey(bucket, "key1", new byte[2048]);
+
+        Map<String, List<String>> sources = new TreeMap<>();
+        sources.put(bucket, null);
+
+        S3ObjectRangeIterator iterator =
+                new S3ObjectRangeIterator(client, sources, 1024, 1);
+
+        S3ObjectRange range;
+
+        assertTrue(iterator.hasNext());
+        range = iterator.next();
+        assertEquals(range.getOffset(), 0);
+        assertEquals(range.getLength(), 1024);
+
+        assertTrue(iterator.hasNext());
+        range = iterator.next();
+        assertEquals(range.getOffset(), 1024);
+        assertEquals(range.getLength(), 1024);
+
+        assertFalse(iterator.hasNext());
     }
 }
