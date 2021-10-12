@@ -20,7 +20,6 @@ import com.facebook.airlift.log.Logger;
 import com.facebook.airlift.log.Logging;
 import com.facebook.presto.Session;
 import com.facebook.presto.common.type.DateType;
-import com.facebook.presto.common.type.TimeType;
 import com.facebook.presto.common.type.TimestampType;
 import com.facebook.presto.s3.services.EmbeddedSchemaRegistry;
 import com.facebook.presto.s3.util.SimpleS3Server;
@@ -36,10 +35,7 @@ import com.facebook.presto.s3.*;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -50,19 +46,20 @@ import static org.testng.Assert.*;
 @Test
 public class S3QueryTest
 {
+    private final boolean scality = true;
+
     private Process p1 = null;
     private QueryRunner queryRunner;
     private static final Logger log = Logger.get(S3QueryTest.class);
 
     private EmbeddedSchemaRegistry schemaRegistry;
 
-    private final SimpleS3Server s3Server = new SimpleS3Server(8000);
+    private SimpleS3Server s3Server;
 
     @BeforeSuite
     public void setUp()
             throws Exception {
 
-        boolean scality = false;
         if (scality) {
             try {
                 String[] cmd = {"bash", "src/test/bin/s3_start.sh"};
@@ -86,34 +83,32 @@ public class S3QueryTest
             }
 
         } else {
+            s3Server = new SimpleS3Server(8000);
+            s3Server.start();
 
-        s3Server.start();
-
-        putToS3Server("testbucket", "medical.csv", "medical.csv");
-        putToS3Server("testbucket", "names.csv", "names.csv");
-        putToS3Server("testbucket", "grades/grades.csv", "grades.csv");
-        putToS3Server("testbucket", "cartoondb/cartoon_table.json", "json_datafile");
-        putToS3Server("testbucket", "jsondata/json_datafile", "json_datafile");
-        putToS3Server("testbucket", "types.json", "types.json");
-        putToS3Server("testbucket", "avro_datafile", "avro_datafile");
-        putToS3Server("testbucket", "datafile.txt", "datafile.txt");
-        putToS3Server("testbucket", "customer/customerfile", "customerfile");
-        putToS3Server("testbucket", "store/storefile", "storefile");
+            putToS3Server("testbucket", "medical.csv", "medical.csv");
+            putToS3Server("testbucket", "names.csv", "names.csv");
+            putToS3Server("testbucket", "grades/grades.csv", "grades.csv");
+            putToS3Server("testbucket", "cartoondb/cartoon_table.json", "json_datafile");
+            putToS3Server("testbucket", "jsondata/json_datafile", "json_datafile");
+            putToS3Server("testbucket", "types.json", "types.json");
+            putToS3Server("testbucket", "avro_datafile", "avro_datafile");
+            putToS3Server("testbucket", "datafile.txt", "datafile.txt");
+            putToS3Server("testbucket", "customer/customerfile", "customerfile");
+            putToS3Server("testbucket", "store/storefile", "storefile");
         }
 
+        schemaRegistry = new EmbeddedSchemaRegistry();
+        schemaRegistry.start();
+        System.out.println("schema registry server started");
 
-    schemaRegistry = new EmbeddedSchemaRegistry();
-    schemaRegistry.start();
-    System.out.println("schema registry server started");
+        Map<String, String> extraProps = ImmutableMap.<String, String>builder()
+                .put("s3.schemaRegistryPort", String.valueOf(schemaRegistry.port()))
+                .build();
+        queryRunner = createQueryRunner(extraProps);
 
-    Map<String, String> extraProps = ImmutableMap.<String, String>builder()
-            .put("s3.schemaRegistryPort", String.valueOf(schemaRegistry.port()))
-            .build();
-    queryRunner = createQueryRunner(extraProps);
-
-        Logging logging = Logging.initialize();
-    logging.setLevel("com.facebook.presto.s3", DEBUG);
-
+            Logging logging = Logging.initialize();
+        logging.setLevel("com.facebook.presto.s3", DEBUG);
     }
 
     void putToS3Server(String bucket, String key, String file) {
@@ -472,6 +467,10 @@ public class S3QueryTest
                 System.out.println("Exception stopping query runner and s3 server: " + e.toString());
                 throw e;
             }
+        }
+
+        if (s3Server != null) {
+            s3Server.stop();
         }
 
         if (schemaRegistry != null) {

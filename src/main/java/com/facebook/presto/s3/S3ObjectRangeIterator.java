@@ -16,6 +16,7 @@
 package com.facebook.presto.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 import java.util.*;
@@ -54,9 +55,7 @@ public class S3ObjectRangeIterator
 
                 Map.Entry<String, List<String>> entry = source.next();
 
-                if (!s3Client.doesBucketExistV2(entry.getKey())) {
-                    throw new IllegalArgumentException("Bucket '" + entry.getKey() + "' does not exist");
-                }
+                checkBucketExists(entry.getKey());
 
                 bucketObject = new BucketObjectIterator(s3Client,
                         entry.getKey(),
@@ -69,6 +68,22 @@ public class S3ObjectRangeIterator
                 return true;
             }
         } while (true);
+    }
+
+    private void checkBucketExists(String bucket) {
+        // normalize returned errors from different s3 apis
+        boolean exists = false;
+        try {
+            exists = s3Client.doesBucketExistV2(bucket);
+        } catch (AmazonS3Exception e) {
+            if (!e.getErrorCode().equalsIgnoreCase("InvalidBucketName")) {
+                throw e;
+            }
+        }
+
+        if (!exists) {
+            throw new IllegalArgumentException("Bucket '" + bucket + "' does not exist");
+        }
     }
 
     private boolean nextRangeList() {
