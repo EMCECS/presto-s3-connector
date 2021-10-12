@@ -114,6 +114,9 @@ public class S3AccessObject
         return amazonS3Client;
     }
 
+    public boolean bucketExists(String bucket) {
+        return amazonS3Client.doesBucketExistV2(bucket);
+    }
     public Long getObjectLength(String bucket, String key)
     {
         if (key.startsWith("/")) {

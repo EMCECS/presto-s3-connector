@@ -37,6 +37,8 @@ public class BucketObjectIterator
     private ObjectListing listing;
     private Iterator<S3ObjectSummary> iterator;
 
+    private final int subObjectSize;
+
     // for each object, it can be an actual object, or a prefix for a directory
     // the former, that is only object for the bucket
     // the latter, we have to list that prefix and return all of those matching objects
@@ -45,9 +47,9 @@ public class BucketObjectIterator
         this.s3Client = s3Client;
         this.bucket = bucket;
         this.objects = objects.iterator();
+        this.subObjectSize = objects.size();
     }
 
-    // TODO: must handle bucket/object not found
     private boolean advance() {
         if (listing != null && listing.isTruncated()) {
             listing = s3Client.listNextBatchOfObjects(listing);
@@ -65,10 +67,12 @@ public class BucketObjectIterator
         if (object.isEmpty()) {
             // entire bucket
             // in this case there shouldn't be anything else given
-            Preconditions.checkState(!objects.hasNext());
+            if (subObjectSize != 1) {
+                throw new IllegalArgumentException("multiple sub objects given along with listing all");
+            }
             listing = s3Client.listObjects(bucket);
             iterator = listing.getObjectSummaries().iterator();
-            return true;
+            return iterator.hasNext();
         }
 
         // could be single object, or could be directory/
@@ -89,10 +93,11 @@ public class BucketObjectIterator
             iterator = Collections.singletonList(summary).iterator();
             return true;
         } catch (AmazonS3Exception e) {
-            // fall through to bucket / listObjects handling
-            if (!e.getErrorCode().equals("404 Not Found")) {
+            if (e.getStatusCode() != 404 &&
+                    e.getStatusCode() != 400) {
                 throw e;
             }
+            // fall through to bucket / listObjects handling
         }
 
         // directory, include trailing '/'

@@ -20,6 +20,7 @@ import com.amazonaws.Protocol;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.emc.object.s3.bean.MetadataSearchList;
 import com.facebook.presto.s3.Pair;
 import com.google.common.base.Preconditions;
 import org.apache.http.impl.io.ChunkedInputStream;
@@ -36,10 +37,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.*;
 import java.io.*;
 
 import java.net.URI;
@@ -80,10 +78,8 @@ public class SimpleS3Server extends Application {
         connector.setPort(port);
         server.setConnectors(new Connector[]{connector});
 
-
         ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         contextHandler.addServlet(new ServletHolder(new ServletContainer(ResourceConfig.forApplication(this))), "/*");
-
         server.setHandler(contextHandler);
 
         try {
@@ -197,9 +193,13 @@ public class SimpleS3Server extends Application {
             }
             return null;
         }
+
+        public Set<String> getBuckets() {
+            return data.keySet();
+        }
     }
 
-    private S3DataStore dataStore = new S3DataStore();
+    private final S3DataStore dataStore = new S3DataStore();
 
     public void putKey(String bucket, String key, File f) {
         dataStore.addKey(bucket, key, f);
@@ -207,6 +207,10 @@ public class SimpleS3Server extends Application {
 
     public void putKey(String bucket, String key, byte[] bytes) {
         dataStore.addKey(bucket, key, bytes);
+    }
+
+    public void putBucket(String bucket) {
+        dataStore.addKey(bucket, "", (byte[]) null);
     }
 
     Pair<Integer, Integer> parseRange(S3Data data, String range) {
@@ -228,7 +232,7 @@ public class SimpleS3Server extends Application {
             offset = Integer.parseInt(parts[0]);
             if (parts.length == 2) {
                 long end = Long.parseLong(parts[1]);
-                len = (int) Math.min(Integer.MAX_VALUE, end) - offset;
+                len = (int) Math.min(Integer.MAX_VALUE-1, end) - offset + 1;
                 Preconditions.checkState(len >= 0);
             }
         }
@@ -236,41 +240,70 @@ public class SimpleS3Server extends Application {
         return new Pair<>(offset, len);
     }
 
+    @GET
+    public Response listBuckets() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<ListAllMyBucketsResult>");
+        sb.append("<Buckets>");
+        for (String bucket : dataStore.getBuckets()) {
+            sb.append("<Bucket>");
+            sb.append("<CreationDate>").append("2021-10-01T12:00:00.000Z").append("</CreationDate>");
+            sb.append("<Name>").append(bucket).append("</Name>");
+            sb.append("</Bucket>");
+        }
+        sb.append("</Buckets>");
+        sb.append("<Owner>")
+                .append("<ID>").append("user1").append("</ID>")
+                .append("<DisplayName>").append("user1").append("</DisplayName>")
+                .append("</Owner>");
+        sb.append("</ListAllMyBucketsResult>");
+        return Response.ok(sb.toString()).build();
+    }
+
     @HEAD
-    @Path("{bucket}/{key}")
-    public Response getMetadata(@Context HttpServletResponse response,
+    @Path("{bucket}/{key: .+}")
+    public Response getMetadata(@Context HttpServletRequest request,
+                                @Context HttpServletResponse response,
                                 @PathParam("bucket") String bucket,
                                 @PathParam("key") String key) {
+        if (dataStore.getBucket(bucket) == null) {
+            return errorResponse(404, "NoSuchBucket", "Cannot find bucket");
+        }
+
         S3Data data = dataStore.getKey(bucket, key);
         if (data == null) {
             return errorResponse(404, "NoSuchKey", "Cannot find key");
         } else {
-            Pair<Integer, Integer> range = parseRange(data, response.getHeader("Range"));
+            Pair<Integer, Integer> range = parseRange(data, request.getHeader("Range"));
             response.setContentLength(range.getRight());
             return Response.ok().build();
         }
     }
 
     @GET
-    @Path("{bucket}/{key}")
+    @Path("{bucket}/{key: .+}")
     public Response getKey(@Context HttpServletRequest request,
                            @Context HttpServletResponse response,
                            @PathParam("bucket") String bucket,
                            @PathParam("key") String key) {
+        if (dataStore.getBucket(bucket) == null) {
+            return errorResponse(404, "NoSuchBucket", "Cannot find bucket");
+        }
+
         final S3Data data = dataStore.getKey(bucket, key);
         if (data == null) {
             return errorResponse(404, "NoSuchKey", "Cannot find key");
         }
 
         final Pair<Integer, Integer> range =
-                parseRange(data, response.getHeader("Range"));
+                parseRange(data, request.getHeader("Range"));
 
         return Response.ok((StreamingOutput) output ->
                 data.writeTo(output, range.getLeft(), range.getRight())).build();
     }
 
     @PUT
-    @Path("{bucket}/{key}")
+    @Path("{bucket}/{key: .+}")
     public Response putKey(@Context HttpServletRequest request,
                            @PathParam("bucket") String bucket,
                            @PathParam("key") String key) {
@@ -310,8 +343,9 @@ public class SimpleS3Server extends Application {
     }
 
     @GET
-    @Path("{bucket}/")
-    public Response list(@PathParam("bucket") String bucket,
+    @Path("{bucket}")
+    public Response list(@Context HttpServletRequest request,
+                         @PathParam("bucket") String bucket,
                          @QueryParam("prefix") String prefix,
                          @QueryParam("marker") String marker,
                          @QueryParam("max-keys") @DefaultValue("100") int maxKeys) {
@@ -321,6 +355,18 @@ public class SimpleS3Server extends Application {
             return errorResponse(404, "NoSuchBucket", "Cannot find bucket");
         }
 
+        Object entity = request.getParameterMap().containsKey("searchmetadata")
+                ? searchMdKeys(bucket)
+                : listObjects(data, bucket, maxKeys, prefix, marker);
+
+        return Response.ok(entity, MediaType.APPLICATION_XML_TYPE).build();
+    }
+
+    private Object searchMdKeys(String bucket) {
+        return new MetadataSearchList();
+    }
+
+    private Object listObjects(List<S3Data> data, String bucket, int maxKeys, String prefix, String marker) {
         StringBuilder sb = new StringBuilder();
         sb.append("<ListBucketResult>");
         sb.append("<IsTruncated>").append("false").append("</IsTruncated>");
@@ -329,28 +375,31 @@ public class SimpleS3Server extends Application {
         sb.append("<Prefix>").append(prefix == null ? "" : prefix).append("</Prefix>");
         sb.append("<Marker>").append(marker == null ? "" : marker).append("</Marker>");
 
+
+        data.sort(Comparator.comparing(s3Data -> s3Data.key));
+
         for (S3Data key : data) {
-            if (prefix == null || key.key.startsWith(prefix)) {
+            if (!key.key.isEmpty() &&
+                    (prefix == null || key.key.startsWith(prefix))) {
                 addToListResults(sb, key);
             }
         }
         sb.append("</ListBucketResult>");
-
-        return Response.ok(sb.toString()).build();
+        return sb.toString();
     }
 
     StringBuilder addToListResults(StringBuilder sb, S3Data key) {
-        sb.append("<Contents>").append("\n");
-        sb.append("<Key>").append(key.key).append("</Key>").append("\n");
-        sb.append("<Size>").append(key.size()).append("</Size>").append("\n");
-        sb.append("<ETag>").append("abcdefg").append("</ETag>").append("\n");
-        sb.append("<LastModified>").append("2021-10-01T12:00:00.000Z").append("</LastModified>").append("\n");
-        sb.append("<StorageClass>").append("STANDARD").append("</StorageClass>").append("\n");
-        sb.append("<Owner>").append("\n")
+        sb.append("<Contents>");
+        sb.append("<Key>").append(key.key).append("</Key>");
+        sb.append("<Size>").append(key.size()).append("</Size>");
+        sb.append("<ETag>").append("abcdefg").append("</ETag>");
+        sb.append("<LastModified>").append("2021-10-01T12:00:00.000Z").append("</LastModified>");
+        sb.append("<StorageClass>").append("STANDARD").append("</StorageClass>");
+        sb.append("<Owner>")
                 .append("<ID>").append("user1").append("</ID>")
                 .append("<DisplayName>").append("user1").append("</DisplayName>")
-                .append("</Owner>").append("\n");
-        sb.append("</Contents>").append("\n");
+                .append("</Owner>");
+        sb.append("</Contents>");
         return sb;
     }
 }

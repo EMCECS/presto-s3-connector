@@ -55,9 +55,10 @@ public class S3SplitManager
 
         Iterator<S3ObjectRange> objectContentsIterator;
         if(!layoutHandle.getTable().getSchemaName().equals("s3_buckets")) {
+            long rangeBytes = intProp(session, SESSION_PROP_SPLIT_RANGE_MB, 32) * 1024 * 1024;
             objectContentsIterator = new S3ObjectRangeIterator(s3AccessObject.getS3Client(),
                     layoutHandle.getTable().getBucketObjectsMap(),
-                    intProp(session, SESSION_PROP_SPLIT_RANGE_MB, 32));
+                    rangeBytes);
         } else {
                 objectContentsIterator = new Iterator<S3ObjectRange>() {
                 int objectCount = layoutHandle.getTable().getBucketObjectsMap().size();

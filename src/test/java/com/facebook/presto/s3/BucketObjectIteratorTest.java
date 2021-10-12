@@ -16,16 +16,15 @@
 package com.facebook.presto.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.facebook.presto.s3.util.SimpleS3Server;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import static org.testng.Assert.*;
 
 public class BucketObjectIteratorTest {
 
@@ -48,63 +47,124 @@ public class BucketObjectIteratorTest {
         server.stop();
     }
 
-
     @Test
-    public void testPutGet() {
-        String s;
-
-        client.putObject("bucketX", "keyXXX", "abcdefg");
-        s = readToString(client.getObject("bucketX", "keyXXX").getObjectContent());
-        System.out.println(s);
-
-        server.putKey("bucket1", "abc", "abcdefg".getBytes(StandardCharsets.UTF_8));
-        server.putKey("bucket1", "key2", "abcdefg".getBytes(StandardCharsets.UTF_8));
-
-        GetObjectRequest request = new GetObjectRequest("bucket1", "key2").withRange(2);
-        s = readToString(client.getObject(request).getObjectContent());
-        System.out.println(s);
-
-        s = readToString(client.getObject("bucket1", "key2").getObjectContent());
-        System.out.println(s);
-
-
-        for (S3ObjectSummary s3ObjectSummary : client.listObjects("bucket1").getObjectSummaries()) {
-            System.out.println(s3ObjectSummary.getKey());
-        }
-
-        for (S3ObjectSummary s3ObjectSummary : client.listObjects("bucket1", "ke").getObjectSummaries()) {
-            System.out.println(s3ObjectSummary.getKey());
-        }
-    }
-
-    private String readToString(InputStream inputStream) {
-        int n;
-        byte[] b = new byte[4096];
-        StringBuilder sb = new StringBuilder();
-
-        try {
-            do {
-                n = inputStream.read(b);
-                if (n > 0) {
-                    sb.append(new String(b, 0, n));
-                }
-            } while (n > 0);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return sb.toString();
-    }
-
-    @Test
-    public void testIterator() {
+    public void testBucketNotFound() {
         BucketObjectIterator iterator =
-                new BucketObjectIterator(client, "bucket1", Collections.singletonList("key1"));
+                new BucketObjectIterator(client, "not-found-bucket", Collections.singletonList("key1"));
+        boolean ex = false;
+        try {
+            iterator.hasNext();
+        } catch (AmazonS3Exception e) {
+            ex = e.getStatusCode() == 404;
+        }
+        assertTrue(ex);
+    }
 
+    @Test
+    public void testSingleKey() {
+        String bucket = "test-single-key";
 
-        iterator.hasNext();
+        server.putKey(bucket, "key1", new byte[]{'a'});
 
-        //client().getObject("bucket1", "key1");
-        System.out.println("abc");
+        BucketObjectIterator iterator =
+                new BucketObjectIterator(client, bucket, Collections.singletonList("key1"));
+        assertTrue(iterator.hasNext());
+        assertEquals(iterator.next().getKey(), "key1");
+        assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    public void testPrefix() {
+        String bucket = "test-prefix";
+        server.putKey(bucket, "2021-10-11/hour00", new byte[]{'a'});
+        server.putKey(bucket, "2021-10-11/hour01", new byte[]{'a'});
+        server.putKey(bucket, "2021-10-11/hour02", new byte[]{'a'});
+        server.putKey(bucket, "2021-10-11/hour03", new byte[]{'a'});
+
+        BucketObjectIterator iterator =
+                new BucketObjectIterator(client, bucket, Collections.singletonList("2021-10-11"));
+        int i = 0;
+        while (iterator.hasNext()) {
+            assertEquals(iterator.next().getKey(), "2021-10-11/hour0" + i++);
+        }
+        assertEquals(i, 4);
+    }
+
+    @Test
+    public void testMix() {
+        String bucket = "test-mix";
+
+        server.putKey(bucket, "key1", new byte[]{'a'});
+        server.putKey(bucket, "2021-10-11/hour00", new byte[]{'a'});
+        server.putKey(bucket, "2021-10-11/hour01", new byte[]{'a'});
+
+        List<String> subObjects = new ArrayList<>();
+        subObjects.add("key1");
+        subObjects.add("2021-10-11");
+
+        BucketObjectIterator iterator =
+                new BucketObjectIterator(client, bucket, subObjects);
+
+        assertTrue(iterator.hasNext());
+        assertEquals(iterator.next().getKey(), "key1");
+
+        assertTrue(iterator.hasNext());
+        assertEquals(iterator.next().getKey(), "2021-10-11/hour00");
+
+        assertTrue(iterator.hasNext());
+        assertEquals(iterator.next().getKey(), "2021-10-11/hour01");
+
+        assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    public void testAll() {
+        String bucket = "test-all";
+
+        int count = 9;
+        for (int i = 0; i < count; i++) {
+            server.putKey(bucket, "key" + i, new byte[]{'a'});
+        }
+
+        // single, empty object in list means all objects
+        BucketObjectIterator iterator =
+                new BucketObjectIterator(client, bucket, Collections.singletonList(""));
+        int i = 0;
+        while (iterator.hasNext()) {
+            assertEquals(iterator.next().getKey(), "key" + i++);
+        }
+        assertEquals(i, 9);
+    }
+
+    @Test
+    public void testEmpty() {
+        String bucket = "test-empty";
+
+        server.putBucket(bucket);
+
+        BucketObjectIterator iterator =
+                new BucketObjectIterator(client, bucket, Collections.singletonList(""));
+        assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    public void testInvalidListAll() {
+        String bucket = "test-invalid-list-all";
+
+        List<String> subObjects = new ArrayList<>();
+        subObjects.add("");
+        subObjects.add(bucket);
+
+        BucketObjectIterator iterator =
+                new BucketObjectIterator(client, bucket, subObjects);
+
+        boolean ex = false;
+        try {
+            iterator.hasNext();
+        } catch (IllegalArgumentException e) {
+            ex = e.getMessage().startsWith("multiple");
+        }
+        assertTrue(ex);
     }
 }
 

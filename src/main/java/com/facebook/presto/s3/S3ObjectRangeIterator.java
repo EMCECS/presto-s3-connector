@@ -24,7 +24,7 @@ public class S3ObjectRangeIterator
         implements Iterator<S3ObjectRange>
 {
     private final AmazonS3 s3Client;
-    private final int rangeBytes;
+    private final long rangeBytes;
     private final int batchSize = 100;
 
     private final Iterator<Map.Entry<String, List<String>>> source;
@@ -33,33 +33,51 @@ public class S3ObjectRangeIterator
 
     private Pair<S3ObjectSummary, Long> continuation;
 
-    public S3ObjectRangeIterator(AmazonS3 s3Client, Map<String, List<String>> sourceMap, int rangeMB) {
+    public S3ObjectRangeIterator(AmazonS3 s3Client, Map<String, List<String>> sourceMap, long rangeBytes) {
         this.s3Client = s3Client;
-        this.rangeBytes = rangeMB * 1024 * 1024;
+        this.rangeBytes = rangeBytes;
         this.source = sourceMap.entrySet().iterator();
     }
 
     private boolean advance() {
-        if (bucketObject == null || !bucketObject.hasNext()) {
-            if (!source.hasNext()) {
-                return false;
+        do {
+            if (bucketObject == null || !bucketObject.hasNext()) {
+                if (!source.hasNext()) {
+                    return false;
+                }
+
+                Map.Entry<String, List<String>> entry = source.next();
+
+                if (!s3Client.doesBucketExistV2(entry.getKey())) {
+                    throw new IllegalArgumentException("Bucket '" + entry.getKey() + "' does not exist");
+                }
+
+                bucketObject = new BucketObjectIterator(s3Client,
+                        entry.getKey(),
+                        entry.getValue() != null
+                                ? entry.getValue()
+                                : Collections.singletonList(""));
             }
 
-            Map.Entry<String, List<String>> entry = source.next();
-            bucketObject = new BucketObjectIterator(s3Client,
-                    entry.getKey(),
-                    entry.getValue() != null
-                            ? entry.getValue()
-                            : Collections.singletonList(""));
-        }
+            if (nextRangeList()) {
+                return true;
+            }
+        } while (true);
+    }
 
+    private boolean nextRangeList() {
         List<S3ObjectRange> rangeList = new ArrayList<>();
 
         for (int count = 0; count < batchSize &&
                 continuation != null || bucketObject.hasNext();) {
+
             S3ObjectSummary object = continuation == null
                     ? bucketObject.next()
                     : continuation.getLeft();
+            long offset = continuation == null
+                    ? 0
+                    : continuation.getRight();
+            continuation = null;
 
             if (object.getSize() == 0) {
                 continue;
@@ -69,9 +87,6 @@ public class S3ObjectRangeIterator
                 count++;
                 rangeList.add(new S3ObjectRange(object.getBucketName(), object.getKey()));
             } else {
-                long offset = continuation == null
-                        ? 0
-                        : continuation.getRight();
                 while (offset == 0 || offset < object.getSize()) {
                     int length = (int) (offset + rangeBytes > object.getSize()
                             ? object.getSize() - offset
