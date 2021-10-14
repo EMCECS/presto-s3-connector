@@ -18,6 +18,7 @@ package com.facebook.presto.s3.reader;
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.decoder.RowDecoder;
+import com.facebook.presto.s3.BytesLineReader;
 import com.facebook.presto.s3.CountingInputStream;
 import com.facebook.presto.s3.S3ObjectRange;
 import com.facebook.presto.s3.S3ReaderProps;
@@ -38,10 +39,22 @@ public class JsonRecordReader
 
     private CountingInputStream inputStream;
 
+    private final S3ObjectRange objectRange;
+
+    private BytesLineReader bytesLineReader = null;
+
+    private int length;
+
+    private byte[] line;
+
+    private final int bufferSize;
+
     public JsonRecordReader(RowDecoder rowDecoder, S3ReaderProps readerProps, S3ObjectRange objectRange, final Supplier<CountingInputStream> inputStreamSupplier)
     {
         this.rowDecoder = rowDecoder;
+        this.objectRange = objectRange;
         this.inputStreamSupplier = inputStreamSupplier;
+        this.bufferSize = readerProps.getBufferSizeBytes();
     }
 
     private void init() {
