@@ -46,7 +46,7 @@ public class JsonRecordReader
 
     private final int bufferSize;
 
-    public JsonRecordReader(RowDecoder rowDecoder, S3ReaderProps readerProps, S3ObjectRange objectRange, final Supplier<CountingInputStream> inputStreamSupplier)
+    public JsonRecordReader(RowDecoder rowDecoder, S3ObjectRange objectRange, S3ReaderProps readerProps, final Supplier<CountingInputStream> inputStreamSupplier)
     {
         this.rowDecoder = rowDecoder;
         this.objectRange = objectRange;
