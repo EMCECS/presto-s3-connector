@@ -100,7 +100,7 @@ public class S3RecordSet
                         inputStreamSupplier);
                 break;
             case JSON:
-                recordReader = new JsonRecordReader(objectDecoder, inputStreamSupplier);
+                recordReader = new JsonRecordReader(objectDecoder, readerProps, objectRange, inputStreamSupplier);
                 break;
             case AVRO:
                 recordReader = new AvroRecordReader(columnHandles, objectRange, inputStreamSupplier);
