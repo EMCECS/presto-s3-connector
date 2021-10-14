@@ -24,7 +24,6 @@ import com.facebook.presto.s3.S3ObjectRange;
 import com.facebook.presto.s3.S3ReaderProps;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -32,8 +31,6 @@ public class JsonRecordReader
         implements RecordReader {
 
     private final RowDecoder rowDecoder;
-
-    private Iterator<String> lineIterator;
 
     private final Supplier<CountingInputStream> inputStreamSupplier;
 
@@ -58,8 +55,12 @@ public class JsonRecordReader
     }
 
     private void init() {
+        this.line = new byte[bufferSize];
         this.inputStream = inputStreamSupplier.get();
-        this.lineIterator = tempS3ObjectToStringObjectList(inputStream).iterator();
+        this.bytesLineReader = new BytesLineReader(inputStream,
+                bufferSize,
+                objectRange.getOffset(),
+                objectRange.getOffset() + objectRange.getLength());
     }
 
     @Override
@@ -73,22 +74,23 @@ public class JsonRecordReader
     @Override
     public boolean hasNext()
     {
-        if (lineIterator == null) {
+        if (bytesLineReader == null) {
             init();
         }
 
-        return lineIterator.hasNext();
+        length = bytesLineReader.read(line);
+        return length >= 0;
     }
 
     @Override
     public Map<DecoderColumnHandle, FieldValueProvider> next()
     {
-        if (lineIterator == null) {
-            init();
-        }
+        byte[] row = new byte[length];
+        System.arraycopy(line, 0, row, 0, length);
 
+        // FIXME
         Optional<Map<DecoderColumnHandle, FieldValueProvider>> fieldValueProviderMap =
-                rowDecoder.decodeRow(lineIterator.next().getBytes(StandardCharsets.UTF_8), Collections.EMPTY_MAP);
+                rowDecoder.decodeRow(line, Collections.EMPTY_MAP);
         return fieldValueProviderMap.get();
     }
 
@@ -99,22 +101,5 @@ public class JsonRecordReader
             inputStream.close();
         }
         catch (IOException ignore) {}
-    }
-
-    private ArrayList<String> tempS3ObjectToStringObjectList(InputStream inputStream)
-    {
-        // i don't think can stream with JSONObject. For now read it all.
-        ArrayList<String> json = new ArrayList<>();
-        String line;
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-        try {
-            while ((line = bufferedReader.readLine()) != null){
-                json.add(line);
-            }
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return json;
     }
 }
