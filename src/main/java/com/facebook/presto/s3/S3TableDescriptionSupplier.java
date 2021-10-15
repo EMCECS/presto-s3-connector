@@ -87,18 +87,22 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
             builder.putAll(getSchema(objSchema).build());
         }
         File schemaDir = new File(s3SchemaFileLocationDir);
-        String[] schemaFilesInDir = schemaDir.list();
-        for (int i=0; i < schemaFilesInDir.length; i++) {
-            if (schemaFilesInDir[i].endsWith(".json")) {
-                File jsonFile = new File (s3SchemaFileLocationDir + "/" + schemaFilesInDir[i]);
-                String jsonFileStr = getConfigJSONString(jsonFile.getAbsolutePath());
-                JSONObject fileObjSchema = new JSONObject(jsonFileStr);
-                log.info("Including Schema file " + jsonFile.getAbsolutePath()
-                        + " with JSON schema: " + fileObjSchema.toString());
-                if (fileObjSchema.has("schemas")) {
-                    builder.putAll(getSchema(fileObjSchema).build());
+        if (schemaDir.exists() && schemaDir.isDirectory()) {
+            String[] schemaFilesInDir = schemaDir.list();
+            for (int i = 0; i < schemaFilesInDir.length; i++) {
+                if (schemaFilesInDir[i].endsWith(".json")) {
+                    File jsonFile = new File(s3SchemaFileLocationDir + "/" + schemaFilesInDir[i]);
+                    String jsonFileStr = getConfigJSONString(jsonFile.getAbsolutePath());
+                    JSONObject fileObjSchema = new JSONObject(jsonFileStr);
+                    log.info("Including Schema file " + jsonFile.getAbsolutePath()
+                            + " with JSON schema: " + fileObjSchema.toString());
+                    if (fileObjSchema.has("schemas")) {
+                        builder.putAll(getSchema(fileObjSchema).build());
+                    }
                 }
             }
+        } else {
+            log.info("No JSON schema files found in " + s3SchemaFileLocationDir + " or directory doesn't exist");
         }
         currentTables = builder.build();
         return currentTables;
