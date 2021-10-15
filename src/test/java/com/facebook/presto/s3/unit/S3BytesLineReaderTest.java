@@ -172,6 +172,27 @@ public class S3BytesLineReaderTest
         assertEquals("andrew", line);
     }
 
+        @Test
+    public void testNonZeroAndNonMaxEnd()
+    {
+        int len;
+        String line;
+        byte[] lineBuf = new byte[1024];
+        byte[] data = new byte[] {'x', 'y', 'z', '\n', 'a', 'n', 'd', 'r', 'e', 'w', '\n'};
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+
+        // test bug fix where absPos was incremented 2x
+        // fails when start-end offset in data did not contain at least 1 full record
+        BytesLineReader reader = new BytesLineReader(inputStream, 2, 1, 5);
+
+        len = reader.read(lineBuf);
+        line = new String(lineBuf, 0, len);
+        assertEquals("andrew", line);
+
+        assertEquals(reader.read(lineBuf), -1);
+    }
+
+
     @Test
     public void testPartial()
     {
