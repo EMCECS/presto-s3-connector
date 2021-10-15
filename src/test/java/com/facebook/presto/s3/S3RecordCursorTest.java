@@ -293,6 +293,26 @@ public class S3RecordCursorTest {
         assertFalse(cursor.advanceNextPosition());
     }
 
+    @Test
+    public void testJsonNoRecordFound() {
+        List<S3ColumnHandle> columnHandles =
+                new ColumnBuilder()
+                        .add("field1", "field1", VARCHAR)
+                        .add("field2", "field2", BOOLEAN)
+                        .build();
+
+        String line = "{\"field1\": \"jamesssjohndoeeeeeeeeeee\",\"field2\": true}\n" +
+                "{\"field1\": \"andrew\",\"field2\": false}\n" +
+                "{\"field1\": \"karan\",\"field2\": true}";
+
+        S3RecordCursor cursor =
+                new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON), columnHandles);
+
+        // if the split starts in the middle of a record
+        // then the ByteslineReader seeks for the start of the next record, if it is not within the end,
+        // however, if the start of the next record does not exist in the given start and end range, it does not find a record
+        assertFalse(cursor.advanceNextPosition());
+    }
 
     @Test
     public void testAvroSplits() throws Exception {
