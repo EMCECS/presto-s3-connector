@@ -162,7 +162,7 @@ public class S3RecordCursorTest {
 
                         // S3ObjectRange start-end must contain at least 1 full record
 
-                        new S3ObjectRange("bucket", "key", 1, 40),
+                        new S3ObjectRange("bucket", "key", 1, 40), // modify as needed
                         new S3ReaderProps(false, 65536),
                         stream);
             default:
@@ -277,14 +277,9 @@ public class S3RecordCursorTest {
                 "{\"field1\": \"andrew\",\"field2\": false}\n" +
                 "{\"field1\": \"karan\",\"field2\": true}";
 
+        // objectRange start = 1, end = 40
         S3RecordCursor cursor =
                 new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON), columnHandles);
-
-        /*
-        assertTrue(cursor.advanceNextPosition());
-        assertEquals(cursor.getSlice(0).toStringUtf8(), "james");
-        assertTrue(cursor.getBoolean(1));
-        */
 
         assertTrue(cursor.advanceNextPosition());
         assertEquals(cursor.getSlice(0).toStringUtf8(), "andrew");
@@ -305,6 +300,7 @@ public class S3RecordCursorTest {
                 "{\"field1\": \"andrew\",\"field2\": false}\n" +
                 "{\"field1\": \"karan\",\"field2\": true}";
 
+        // objectRange start = 1, end = 40
         S3RecordCursor cursor =
                 new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON), columnHandles);
 
