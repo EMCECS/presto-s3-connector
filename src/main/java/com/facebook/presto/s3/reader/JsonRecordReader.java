@@ -88,7 +88,6 @@ public class JsonRecordReader
         byte[] row = new byte[length];
         System.arraycopy(line, 0, row, 0, length);
 
-        // FIXME
         Optional<Map<DecoderColumnHandle, FieldValueProvider>> fieldValueProviderMap =
                 rowDecoder.decodeRow(line, Collections.EMPTY_MAP);
         return fieldValueProviderMap.get();
