@@ -87,7 +87,7 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
             builder.putAll(getSchema(objSchema).build());
         }
         File schemaDir = new File(s3SchemaFileLocationDir);
-        if (schemaDir.exists() && schemaDir.isDirectory() && schemaDir.list().length > 0) {
+        if (schemaDir.exists() && schemaDir.isDirectory()) {
             String[] schemaFilesInDir = schemaDir.list();
             for (int i = 0; i < schemaFilesInDir.length; i++) {
                 if (schemaFilesInDir[i].endsWith(".json")) {
