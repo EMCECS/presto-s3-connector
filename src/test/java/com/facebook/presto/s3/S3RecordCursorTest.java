@@ -138,10 +138,12 @@ public class S3RecordCursorTest {
     }
 
     RecordReader newCsvStringReader(List<S3ColumnHandle> columns, String streamAsString) {
-        return newStringReader(columns, streamAsString, S3Const.CSV);
+        return newStringReader(columns, streamAsString, S3Const.CSV, -1, -1);
     }
 
-    RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString, String dataFormat) {
+    RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString, String dataFormat,
+            int S3ObjectRangeOffset, int S3ObjecRangeLength) {
+
         Supplier<CountingInputStream> stream =
                 readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8)));
 
@@ -161,8 +163,7 @@ public class S3RecordCursorTest {
                         // 35-70
 
                         // S3ObjectRange start-end must contain at least 1 full record
-
-                        new S3ObjectRange("bucket", "key", 1, 40), // modify as needed
+                        new S3ObjectRange("bucket", "key", S3ObjectRangeOffset, S3ObjecRangeLength),
                         new S3ReaderProps(false, 65536),
                         stream);
             default:
@@ -279,7 +280,7 @@ public class S3RecordCursorTest {
 
         // objectRange start = 1, end = 40
         S3RecordCursor cursor =
-                new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON), columnHandles);
+                new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON, 1, 40), columnHandles);
 
         assertTrue(cursor.advanceNextPosition());
         assertEquals(cursor.getSlice(0).toStringUtf8(), "andrew");
@@ -302,7 +303,7 @@ public class S3RecordCursorTest {
 
         // objectRange start = 1, end = 40
         S3RecordCursor cursor =
-                new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON), columnHandles);
+                new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON, 1, 40), columnHandles);
 
         // if the split starts in the middle of a record
         // then the ByteslineReader seeks for the start of the next record, if it is not within the end,
