@@ -159,9 +159,6 @@ public class S3RecordCursorTest {
                 RowDecoder rowDecoder =
                         new JsonRowDecoderFactory(new ObjectMapper()).create(ImmutableMap.of(), new HashSet<>(columns));
                 return new JsonRecordReader(rowDecoder,
-                        // 0-34
-                        // 35-70
-
                         // S3ObjectRange start-end must contain at least 1 full record
                         new S3ObjectRange("bucket", "key", S3ObjectRangeOffset, S3ObjecRangeLength),
                         new S3ReaderProps(false, 65536),
