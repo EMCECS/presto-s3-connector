@@ -318,9 +318,9 @@ public class S3RecordCursorTest {
                         .add("field2", "field2", BOOLEAN)
                         .build();
 
-        String line = "{\"field1\": \"johnDoe\",\"field2\": true}\n" +
-                      "{\"field1\": \"a\",\"field2\": false}\n" +
-                      "{\"field1\": \"abc\",\"field2\": true}\n";
+        String line = "{\"field1\": \"johnDoe\",\"field2\": true}\n" +      // length: 36   buffer: "field1": "johnDoe","field2": true}
+                      "{\"field1\": \"a\",\"field2\": false}\n" +           // length: 31   buffer: "field1": "a","field2": false}true}     you can see here
+                      "{\"field1\": \"abc\",\"field2\": true}\n";           // length: 32   buffer: "field1": "abc","field2": true}rue}
 
         // read entire records
         S3RecordCursor cursor =
