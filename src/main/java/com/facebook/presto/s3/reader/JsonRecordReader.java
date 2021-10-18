@@ -23,8 +23,10 @@ import com.facebook.presto.s3.CountingInputStream;
 import com.facebook.presto.s3.S3ObjectRange;
 import com.facebook.presto.s3.S3ReaderProps;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class JsonRecordReader
