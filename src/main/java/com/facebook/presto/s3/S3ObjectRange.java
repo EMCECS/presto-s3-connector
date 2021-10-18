@@ -35,11 +35,6 @@ public class S3ObjectRange
     private final long offset;
     private final int length;
 
-    public S3ObjectRange(String bucket, String key)
-    {
-        this(bucket, key, 0, Integer.MAX_VALUE);
-    }
-
     public S3ObjectRange(String bucket, String key, long offset, int length)
     {
         this.bucket = bucket;
