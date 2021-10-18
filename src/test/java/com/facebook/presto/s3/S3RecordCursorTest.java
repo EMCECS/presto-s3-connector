@@ -110,7 +110,7 @@ public class S3RecordCursorTest {
 
     RecordReader newFileReader(List<S3ColumnHandle> columns, String f) {
         return new CsvRecordReader(columns,
-                new S3ObjectRange("bucket", "key"),
+                new S3ObjectRange("bucket", "key", 0, Integer.MAX_VALUE),
                 table(),
                 new S3ReaderProps(false, 65536),
                 readerStream(f));
@@ -118,7 +118,7 @@ public class S3RecordCursorTest {
 
     RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString) {
         return new CsvRecordReader(columns,
-                new S3ObjectRange("bucket", "key"),
+                new S3ObjectRange("bucket", "key", 0, Integer.MAX_VALUE),
                 table(),
                 new S3ReaderProps(false, 65536),
                 readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8))));
