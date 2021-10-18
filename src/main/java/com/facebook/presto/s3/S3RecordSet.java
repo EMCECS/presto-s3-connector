@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.fs.FSDataInputStream;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.function.Supplier;
