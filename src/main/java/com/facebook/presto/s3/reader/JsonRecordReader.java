@@ -85,9 +85,6 @@ public class JsonRecordReader
     @Override
     public Map<DecoderColumnHandle, FieldValueProvider> next()
     {
-        byte[] row = new byte[length];
-        System.arraycopy(line, 0, row, 0, length);
-
         Optional<Map<DecoderColumnHandle, FieldValueProvider>> fieldValueProviderMap =
                 rowDecoder.decodeRow(line, Collections.EMPTY_MAP);
         return fieldValueProviderMap.get();
