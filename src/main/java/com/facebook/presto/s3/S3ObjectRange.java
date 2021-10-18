@@ -37,7 +37,7 @@ public class S3ObjectRange
 
     public S3ObjectRange(String bucket, String key)
     {
-        this(bucket, key, 0, -1);
+        this(bucket, key, 0, Integer.MAX_VALUE);
     }
 
     public S3ObjectRange(String bucket, String key, long offset, int length)
