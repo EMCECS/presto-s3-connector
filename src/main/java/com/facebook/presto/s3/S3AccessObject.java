@@ -44,7 +44,6 @@ import org.apache.hadoop.fs.BufferedFSInputStream;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSInputStream;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 
@@ -53,7 +52,6 @@ import java.io.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.ConnectException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
