@@ -48,7 +48,7 @@ public class S3ObjectManager
                     continue;
                 }
                 if (rangeBytes == 0) {
-                    objectList.add(new S3ObjectRange(bucket, key));
+                    objectList.add(new S3ObjectRange(bucket, key, 0, Integer.MAX_VALUE));
                 } else {
                     long offset = 0;
                     while (offset == 0 || offset < objectLength) {
