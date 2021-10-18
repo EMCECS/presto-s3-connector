@@ -55,10 +55,13 @@ public class S3SplitManager
 
         Iterator<S3ObjectRange> objectContentsIterator;
         if(!layoutHandle.getTable().getSchemaName().equals("s3_buckets")) {
+            // higher batch size here, so we can answer isFinished() without reading more from server
+            int batchSize = intProp(session, SESSION_PROP_SPLIT_BATCH, 100);
+            batchSize = batchSize + batchSize / 2;
             long rangeBytes = intProp(session, SESSION_PROP_SPLIT_RANGE_MB, 32) * 1024 * 1024;
             objectContentsIterator = new S3ObjectRangeIterator(s3AccessObject.getS3Client(),
                     layoutHandle.getTable().getBucketObjectsMap(),
-                    rangeBytes);
+                    rangeBytes, batchSize);
         } else {
                 objectContentsIterator = new Iterator<S3ObjectRange>() {
                 int objectCount = layoutHandle.getTable().getBucketObjectsMap().size();
