@@ -312,6 +312,35 @@ public class S3RecordCursorTest {
     }
 
     @Test
+    public void testJsonCheckLineBuffer() {
+        List<S3ColumnHandle> columnHandles =
+                new ColumnBuilder()
+                        .add("field1", "field1", VARCHAR)
+                        .add("field2", "field2", BOOLEAN)
+                        .build();
+
+        String line = "{\"field1\": \"johnDoe\",\"field2\": true}\n" +
+                      "{\"field1\": \"a\",\"field2\": false}\n" +
+                      "{\"field1\": \"abc\",\"field2\": true}\n";
+
+        // read entire records
+        S3RecordCursor cursor =
+                new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON, 0, Integer.MAX_VALUE), columnHandles);
+
+        assertTrue(cursor.advanceNextPosition());
+        assertEquals(cursor.getSlice(0).toStringUtf8(), "johnDoe");
+        assertTrue(cursor.getBoolean(1));
+
+        assertTrue(cursor.advanceNextPosition());
+        assertEquals(cursor.getSlice(0).toStringUtf8(), "a");
+        assertFalse(cursor.getBoolean(1));
+
+        assertTrue(cursor.advanceNextPosition());
+        assertEquals(cursor.getSlice(0).toStringUtf8(), "abc");
+        assertTrue(cursor.getBoolean(1));
+    }
+
+    @Test
     public void testAvroSplits() throws Exception {
         List<S3ColumnHandle> columnHandles =
                 new ColumnBuilder()
