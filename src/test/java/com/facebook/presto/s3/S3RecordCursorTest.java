@@ -330,6 +330,11 @@ public class S3RecordCursorTest {
         assertEquals(cursor.getSlice(0).toStringUtf8(), "johnDoe");
         assertTrue(cursor.getBoolean(1));
 
+        // step into the method decodeRow, the byte[] data is passed in with the previous cursor elements.
+        // in our case, it is "field1": "a","field2": false}true} with the last 5 characters still present in the buffer data
+        // however, that part gets ignored/truncated after
+        // the line [ tree = objectMapper.readTree(data); ]
+
         assertTrue(cursor.advanceNextPosition());
         assertEquals(cursor.getSlice(0).toStringUtf8(), "a");
         assertFalse(cursor.getBoolean(1));
