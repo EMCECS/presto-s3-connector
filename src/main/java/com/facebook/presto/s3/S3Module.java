@@ -57,7 +57,6 @@ public class S3Module
     {
         binder.bind(S3ConnectorId.class).toInstance(new S3ConnectorId(connectorId));
         binder.bind(S3Metadata.class).in(Scopes.SINGLETON);
-        binder.bind(S3ObjectManager.class).in(Scopes.SINGLETON);
         binder.bind(S3SplitManager.class).in(Scopes.SINGLETON);
         binder.bind(MBeanServer.class).toInstance(new TestingMBeanServer());
         binder.bind(MBeanExporter.class).in(Scopes.SINGLETON);
