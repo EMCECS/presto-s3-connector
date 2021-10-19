@@ -71,6 +71,31 @@ public class JsonRowDecoder
         return Optional.of(decodedRow);
     }
 
+    public Optional<Map<DecoderColumnHandle, FieldValueProvider>> decodeRow(byte[] data,
+        int offset,
+        int length,
+        Map<String, String> dataMap)
+    {
+        JsonNode tree;
+        try {
+            tree = objectMapper.readTree(data, offset, length);
+        }
+        catch (Exception e) {
+            return Optional.empty();
+        }
+
+        Map<DecoderColumnHandle, FieldValueProvider> decodedRow = new HashMap<>();
+
+        for (Map.Entry<DecoderColumnHandle, JsonFieldDecoder> entry : fieldDecoders.entrySet()) {
+            DecoderColumnHandle columnHandle = entry.getKey();
+            JsonFieldDecoder decoder = entry.getValue();
+            JsonNode node = locateNode(tree, columnHandle);
+            decodedRow.put(columnHandle, decoder.decode(node));
+        }
+
+        return Optional.of(decodedRow);
+    }
+
     private static JsonNode locateNode(JsonNode tree, DecoderColumnHandle columnHandle)
     {
         String mapping = columnHandle.getMapping();
