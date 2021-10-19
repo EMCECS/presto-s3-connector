@@ -128,7 +128,7 @@ public class S3RecordCursorTest {
                         readerStream(f));
             case S3Const.JSON:
                 RowDecoder rowDecoder =
-                        (RowDecoder) new JsonRowDecoderFactory(new ObjectMapper()).create(ImmutableMap.of(), new HashSet<>(columns));
+                        new JsonRowDecoderFactory(new ObjectMapper()).create(ImmutableMap.of(), new HashSet<>(columns));
                 return new JsonRecordReader(rowDecoder,
                         new S3ObjectRange("bucket", "key", 0, (int) new File(f).length()),
                         new S3ReaderProps(false, 65536),
@@ -159,7 +159,7 @@ public class S3RecordCursorTest {
 
             case S3Const.JSON:
                 RowDecoder rowDecoder =
-                        (RowDecoder) new JsonRowDecoderFactory(new ObjectMapper()).create(ImmutableMap.of(), new HashSet<>(columns));
+                        new JsonRowDecoderFactory(new ObjectMapper()).create(ImmutableMap.of(), new HashSet<>(columns));
                 return new JsonRecordReader(rowDecoder,
                         // S3ObjectRange start-end must contain at least 1 full record
                         new S3ObjectRange("bucket", "key", S3ObjectRangeOffset, S3ObjecRangeLength),

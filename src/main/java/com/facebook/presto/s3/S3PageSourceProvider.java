@@ -86,7 +86,7 @@ public class S3PageSourceProvider
                 }
             }
 
-            RowDecoder objectDecoder = (RowDecoder) decoderFactory.create(
+            RowDecoder objectDecoder = decoderFactory.create(
                     s3TableHandle.getObjectDataFormat(),
                     getDecoderParameters(s3Split.getObjectDataSchemaContents()),
                     s3Columns.stream()
