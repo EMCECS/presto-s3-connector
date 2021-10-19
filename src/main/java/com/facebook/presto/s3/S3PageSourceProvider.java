@@ -20,7 +20,7 @@ import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.decoder.DispatchingRowDecoderFactory;
-import com.facebook.presto.decoder.RowDecoder;
+import com.facebook.presto.s3.decoder.RowDecoder;
 import com.facebook.presto.spi.*;
 import com.facebook.presto.spi.connector.ConnectorPageSourceProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
@@ -86,7 +86,7 @@ public class S3PageSourceProvider
                 }
             }
 
-            RowDecoder objectDecoder = decoderFactory.create(
+            RowDecoder objectDecoder = (RowDecoder) decoderFactory.create(
                     s3TableHandle.getObjectDataFormat(),
                     getDecoderParameters(s3Split.getObjectDataSchemaContents()),
                     s3Columns.stream()
