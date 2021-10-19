@@ -17,7 +17,7 @@ package com.facebook.presto.s3.reader;
 
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
-import com.facebook.presto.decoder.RowDecoder;
+import com.facebook.presto.s3.decoder.RowDecoder;
 import com.facebook.presto.s3.BytesLineReader;
 import com.facebook.presto.s3.CountingInputStream;
 import com.facebook.presto.s3.S3ObjectRange;
