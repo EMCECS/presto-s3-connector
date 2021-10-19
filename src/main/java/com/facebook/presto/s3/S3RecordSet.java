@@ -18,6 +18,7 @@ package com.facebook.presto.s3;
 
 import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.type.Type;
+import com.facebook.presto.decoder.RowDecoder;
 import com.facebook.presto.s3.reader.AvroRecordReader;
 import com.facebook.presto.s3.reader.CsvRecordReader;
 import com.facebook.presto.s3.reader.JsonRecordReader;
@@ -63,7 +64,7 @@ public class S3RecordSet
         requireNonNull(accessObject, "s3Helper is null");
         this.columnHandles = requireNonNull(columnHandles, "columnHandles is null");
         this.accessObject = requireNonNull(accessObject, "accessObject is null");
-        this.objectDecoder = requireNonNull(objectDecoder, "rowDecoder is null");
+        this.objectDecoder = objectDecoder;
         this.s3TableHandle = requireNonNull(s3TableHandle, "s3TableHandle is null");
         this.objectRange =
                 S3ObjectRange.deserialize(

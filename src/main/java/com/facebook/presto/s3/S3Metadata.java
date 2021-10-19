@@ -86,7 +86,7 @@ public class S3Metadata
                 table.getHasHeaderRow(),
                 table.getTableBucketName(),
                 table.getTableBucketPrefix(),
-                table.getBucketObjectsMap());
+                table.getSources());
     }
 
     @Override
