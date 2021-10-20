@@ -93,7 +93,6 @@ public class JsonRecordReader
     public Map<DecoderColumnHandle, FieldValueProvider> next()
     {
         Optional<Map<DecoderColumnHandle, FieldValueProvider>> fieldValueProviderMap =
-//                rowDecoder.decodeRow(line, Collections.EMPTY_MAP);
         rowDecoder.decodeRow(line, 0, length, Collections.EMPTY_MAP);
         return fieldValueProviderMap.get();
     }
