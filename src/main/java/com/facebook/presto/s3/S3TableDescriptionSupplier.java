@@ -63,9 +63,6 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
         List<Bucket> listOfBuckets = this.accessObject.listBuckets();
         for(Bucket bucket: listOfBuckets){
             JSONObject sources = new JSONObject();
-            // TODO: https://github.com/pravega/pravega-sql/issues/59
-            // In sources, it used to add all the objects of the bucket - very bad
-            // Eventually we need to replace with real metadata search
             S3Table table = this.objectDescriptionCodec.fromJson(
                     this.accessObject.getMetaData(bucket.getName()).
                             put("sources", sources).
