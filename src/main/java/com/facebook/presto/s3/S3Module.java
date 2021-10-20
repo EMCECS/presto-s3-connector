@@ -83,6 +83,9 @@ public class S3Module
         jsonBinder(binder).addDeserializerBinding(Type.class).to(TypeDeserializer.class);
         jsonCodecBinder(binder).bindJsonCodec(S3Table.class);
 
+        // We are creating our own DecoderModule so we can use our custom decoders when necessary.
+        // For this case as an example, we are using our JsonRowDecoder and the JsonRowDecoderFactory (not from the Presto code itself).
+        // The JsonRowDecoder and JsonRowDecoderFactory are both from our source code com.facebook.presto.s3.decoder
         binder.install(binder1 -> {
             MapBinder<String, RowDecoderFactory> decoderFactoriesByName = MapBinder.newMapBinder(binder1, String.class, RowDecoderFactory.class);
             decoderFactoriesByName.addBinding(DummyRowDecoder.NAME).to(DummyRowDecoderFactory.class).in(SINGLETON);
