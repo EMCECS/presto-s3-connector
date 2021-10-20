@@ -18,7 +18,6 @@ package com.facebook.presto.s3;
 
 import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.type.Type;
-import com.facebook.presto.s3.decoder.RowDecoder;
 import com.facebook.presto.s3.reader.AvroRecordReader;
 import com.facebook.presto.s3.reader.CsvRecordReader;
 import com.facebook.presto.s3.reader.JsonRecordReader;

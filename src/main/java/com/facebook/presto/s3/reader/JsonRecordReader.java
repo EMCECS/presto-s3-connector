@@ -17,11 +17,12 @@ package com.facebook.presto.s3.reader;
 
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
-import com.facebook.presto.s3.decoder.RowDecoder;
+import com.facebook.presto.decoder.RowDecoder;
 import com.facebook.presto.s3.BytesLineReader;
 import com.facebook.presto.s3.CountingInputStream;
 import com.facebook.presto.s3.S3ObjectRange;
 import com.facebook.presto.s3.S3ReaderProps;
+import com.facebook.presto.s3.decoder.JsonRowDecoder;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -32,7 +33,7 @@ import java.util.function.Supplier;
 public class JsonRecordReader
         implements RecordReader {
 
-    private final RowDecoder rowDecoder;
+    private final JsonRowDecoder rowDecoder;
 
     private final Supplier<CountingInputStream> inputStreamSupplier;
 
@@ -50,7 +51,11 @@ public class JsonRecordReader
 
     public JsonRecordReader(RowDecoder rowDecoder, S3ObjectRange objectRange, S3ReaderProps readerProps, final Supplier<CountingInputStream> inputStreamSupplier)
     {
-        this.rowDecoder = rowDecoder;
+        if (!(rowDecoder instanceof JsonRowDecoder)) {
+            throw new IllegalArgumentException();
+        }
+
+        this.rowDecoder = (JsonRowDecoder) rowDecoder;
         this.objectRange = objectRange;
         this.inputStreamSupplier = inputStreamSupplier;
         this.bufferSize = readerProps.getBufferSizeBytes();
