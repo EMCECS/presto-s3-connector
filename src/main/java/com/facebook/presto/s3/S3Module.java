@@ -86,9 +86,6 @@ public class S3Module
         jsonBinder(binder).addDeserializerBinding(Type.class).to(TypeDeserializer.class);
         jsonCodecBinder(binder).bindJsonCodec(S3Table.class);
 
-        binder.install(new DecoderModule());
-
-
         binder.install(binder1 -> {
             MapBinder<String, RowDecoderFactory> decoderFactoriesByName = MapBinder.newMapBinder(binder1, String.class, RowDecoderFactory.class);
             decoderFactoriesByName.addBinding(DummyRowDecoder.NAME).to(DummyRowDecoderFactory.class).in(SINGLETON);
