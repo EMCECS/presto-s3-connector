@@ -63,7 +63,7 @@ public class S3RecordSet
         requireNonNull(accessObject, "s3Helper is null");
         this.columnHandles = requireNonNull(columnHandles, "columnHandles is null");
         this.accessObject = requireNonNull(accessObject, "accessObject is null");
-        this.objectDecoder = requireNonNull(objectDecoder, "rowDecoder is null");
+        this.objectDecoder = objectDecoder;
         this.s3TableHandle = requireNonNull(s3TableHandle, "s3TableHandle is null");
         this.objectRange =
                 S3ObjectRange.deserialize(

@@ -63,9 +63,6 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
         List<Bucket> listOfBuckets = this.accessObject.listBuckets();
         for(Bucket bucket: listOfBuckets){
             JSONObject sources = new JSONObject();
-            // TODO: https://github.com/pravega/pravega-sql/issues/59
-            // In sources, it used to add all the objects of the bucket - very bad
-            // Eventually we need to replace with real metadata search
             S3Table table = this.objectDescriptionCodec.fromJson(
                     this.accessObject.getMetaData(bucket.getName()).
                             put("sources", sources).
@@ -87,18 +84,22 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
             builder.putAll(getSchema(objSchema).build());
         }
         File schemaDir = new File(s3SchemaFileLocationDir);
-        String[] schemaFilesInDir = schemaDir.list();
-        for (int i=0; i < schemaFilesInDir.length; i++) {
-            if (schemaFilesInDir[i].endsWith(".json")) {
-                File jsonFile = new File (s3SchemaFileLocationDir + "/" + schemaFilesInDir[i]);
-                String jsonFileStr = getConfigJSONString(jsonFile.getAbsolutePath());
-                JSONObject fileObjSchema = new JSONObject(jsonFileStr);
-                log.info("Including Schema file " + jsonFile.getAbsolutePath()
-                        + " with JSON schema: " + fileObjSchema.toString());
-                if (fileObjSchema.has("schemas")) {
-                    builder.putAll(getSchema(fileObjSchema).build());
+        if (schemaDir.exists() && schemaDir.isDirectory()) {
+            String[] schemaFilesInDir = schemaDir.list();
+            for (int i = 0; i < schemaFilesInDir.length; i++) {
+                if (schemaFilesInDir[i].endsWith(".json")) {
+                    File jsonFile = new File(s3SchemaFileLocationDir + "/" + schemaFilesInDir[i]);
+                    String jsonFileStr = getConfigJSONString(jsonFile.getAbsolutePath());
+                    JSONObject fileObjSchema = new JSONObject(jsonFileStr);
+                    log.info("Including Schema file " + jsonFile.getAbsolutePath()
+                            + " with JSON schema: " + fileObjSchema.toString());
+                    if (fileObjSchema.has("schemas")) {
+                        builder.putAll(getSchema(fileObjSchema).build());
+                    }
                 }
             }
+        } else {
+            log.info("No JSON schema files found in " + s3SchemaFileLocationDir + " or directory doesn't exist");
         }
         currentTables = builder.build();
         return currentTables;

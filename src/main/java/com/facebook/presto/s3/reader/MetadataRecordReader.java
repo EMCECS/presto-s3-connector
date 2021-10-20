@@ -37,7 +37,7 @@ public class MetadataRecordReader
     public MetadataRecordReader(List<S3ColumnHandle> columnHandles, S3AccessObject accessObject, S3TableLayoutHandle table)
     {
         this.columnHandles = columnHandles;
-        this.lines = accessObject.listObjectMetadata(table.getTable().getTableName()).iterator();
+        this.lines = accessObject.searchObjectMetadata(table.getTable().getTableName()).iterator();
     }
 
     @Override

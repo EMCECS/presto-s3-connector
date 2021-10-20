@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.facebook.presto.s3;
 
 import com.facebook.airlift.concurrent.MoreFutures;
@@ -38,13 +37,12 @@ public class S3SplitSource
 {
     private static final Logger log = Logger.get(com.facebook.presto.s3.S3SplitSource.class);
 
-    private final Iterator<S3ObjectRange> objects;
+    private final Iterator<S3ObjectRange> ranges;
     private final int max;
     private final int throttleMs;
     private final String connectorId;
     private final S3ConnectorConfig config;
     private final S3TableLayoutHandle layoutHandle;
-    private final Optional<String> objectDataSchemaContents;
     private final boolean s3SelectEnabled;
 
     private boolean first = true;
@@ -55,38 +53,35 @@ public class S3SplitSource
     public S3SplitSource(String connectorId,
                          S3ConnectorConfig config,
                          S3TableLayoutHandle layoutHandle,
-                         Optional<String> objectDataSchemaContents,
                          boolean s3SelectEnabled,
-                         Iterator<S3ObjectRange> objects,
                          int max,
-                         int throttleMs)
+                         int throttleMs,
+                         Iterator<S3ObjectRange> ranges)
     {
         this.connectorId = connectorId;
         this.config = config;
         this.layoutHandle = layoutHandle;
-        this.objectDataSchemaContents = objectDataSchemaContents;
         this.s3SelectEnabled = s3SelectEnabled;
-        this.objects = objects;
         this.max = max;
-        this.throttleMs= throttleMs;
+        this.throttleMs = throttleMs;
+        this.ranges = ranges;
     }
 
     @Override
     public CompletableFuture<ConnectorSplitBatch> getNextBatch(ConnectorPartitionHandle partitionHandle, int maxSize)
     {
-        // TODO: https://github.com/EMCECS/presto-s3-connector/issues/29
         ListenableScheduledFuture<ConnectorSplitBatch> future = tp.schedule(() -> {
             List<ConnectorSplit> results = new ArrayList<>();
             int size = Math.min(max, maxSize);
             int i = 0;
             while (!isFinished() && i++ < size) {
-                S3ObjectRange objectRange = objects.next();
+                S3ObjectRange objectRange = ranges.next();
                 S3Split split = new S3Split(
                         config.getS3Port(),
                         config.getS3Nodes(),
                         connectorId,
                         layoutHandle,
-                        objectDataSchemaContents,
+                        Optional.empty(),
                         s3SelectEnabled,
                         S3Util.serialize(objectRange));
                 results.add(split);
@@ -106,6 +101,6 @@ public class S3SplitSource
     @Override
     public boolean isFinished()
     {
-        return !objects.hasNext();
+        return !ranges.hasNext();
     }
 }

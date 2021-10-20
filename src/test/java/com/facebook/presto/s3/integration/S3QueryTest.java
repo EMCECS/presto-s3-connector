@@ -20,9 +20,9 @@ import com.facebook.airlift.log.Logger;
 import com.facebook.airlift.log.Logging;
 import com.facebook.presto.Session;
 import com.facebook.presto.common.type.DateType;
-import com.facebook.presto.common.type.TimeType;
 import com.facebook.presto.common.type.TimestampType;
 import com.facebook.presto.s3.services.EmbeddedSchemaRegistry;
+import com.facebook.presto.s3.util.SimpleS3Server;
 import com.facebook.presto.testing.MaterializedResult;
 import com.facebook.presto.testing.MaterializedRow;
 import com.facebook.presto.testing.QueryRunner;
@@ -34,6 +34,7 @@ import org.testng.annotations.Test;
 import com.facebook.presto.s3.*;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
@@ -45,50 +46,76 @@ import static org.testng.Assert.*;
 @Test
 public class S3QueryTest
 {
+    private final boolean scality = true;
+
     private Process p1 = null;
     private QueryRunner queryRunner;
     private static final Logger log = Logger.get(S3QueryTest.class);
 
     private EmbeddedSchemaRegistry schemaRegistry;
 
+    private SimpleS3Server s3Server;
+
     @BeforeSuite
     public void setUp()
             throws Exception {
-    try {
-        String[] cmd = { "bash", "src/test/bin/s3_start.sh" };
-        System.out.println("Start s3 server and load data");
-        this.p1 = Runtime.getRuntime().exec(cmd);
 
-        BufferedReader output = new BufferedReader(new InputStreamReader(p1.getInputStream()));
-        String cmdOut = output.readLine();
-        while (cmdOut != null) {
-            System.out.println(cmdOut);
-            cmdOut = output.readLine();
+        if (scality) {
+            try {
+                String[] cmd = {"bash", "src/test/bin/s3_start.sh"};
+                System.out.println("Start s3 server and load data");
+                this.p1 = Runtime.getRuntime().exec(cmd);
+
+                BufferedReader output = new BufferedReader(new InputStreamReader(p1.getInputStream()));
+                String cmdOut = output.readLine();
+                while (cmdOut != null) {
+                    System.out.println(cmdOut);
+                    cmdOut = output.readLine();
+                }
+            } catch (Exception e) {
+                throw new Exception("Exception starting s3 server: " + e.toString());
+            }
+            p1.waitFor();
+            if (p1.exitValue() == 0) {
+                System.out.println("s3 server started and data loaded");
+            } else {
+                throw new Exception("s3 server failed to start");
+            }
+
+        } else {
+            s3Server = new SimpleS3Server(8000);
+            s3Server.start();
+
+            putToS3Server("testbucket", "medical.csv", "medical.csv");
+            putToS3Server("testbucket", "names.csv", "names.csv");
+            putToS3Server("testbucket", "grades/grades.csv", "grades.csv");
+            putToS3Server("testbucket", "cartoondb/cartoon_table.json", "json_datafile");
+            putToS3Server("testbucket", "jsondata/json_datafile", "json_datafile");
+            putToS3Server("testbucket", "types.json", "types.json");
+            putToS3Server("testbucket", "avro_datafile", "avro_datafile");
+            putToS3Server("testbucket", "datafile.txt", "datafile.txt");
+            putToS3Server("testbucket", "customer/customerfile", "customerfile");
+            putToS3Server("testbucket", "store/storefile", "storefile");
         }
-    } catch (Exception e) {
-        throw new Exception("Exception starting s3 server: " + e.toString());
+
+        schemaRegistry = new EmbeddedSchemaRegistry();
+        schemaRegistry.start();
+        System.out.println("schema registry server started");
+
+        Map<String, String> extraProps = ImmutableMap.<String, String>builder()
+                .put("s3.schemaRegistryPort", String.valueOf(schemaRegistry.port()))
+                .build();
+        queryRunner = createQueryRunner(extraProps);
+
+            Logging logging = Logging.initialize();
+        logging.setLevel("com.facebook.presto.s3", DEBUG);
     }
-    p1.waitFor();
-    if (p1.exitValue() == 0) {
-        System.out.println("s3 server started and data loaded");
-    } else {
-        throw new Exception("s3 server failed to start");
+
+    void putToS3Server(String bucket, String key, String file) {
+        File f = new File(S3QueryTest.class.getResource("/" + file).getFile());
+        s3Server.putKey(bucket, key, f);
     }
 
-
-    schemaRegistry = new EmbeddedSchemaRegistry();
-    schemaRegistry.start();
-    System.out.println("schema registry server started");
-
-    Map<String, String> extraProps = ImmutableMap.<String, String>builder()
-            .put("s3.schemaRegistryPort", String.valueOf(schemaRegistry.port()))
-            .build();
-    queryRunner = createQueryRunner(extraProps);
-
-        Logging logging = Logging.initialize();
-    logging.setLevel("com.facebook.presto.s3", DEBUG);
-
-    }
 
     @Test
     public void resetSchema() {
@@ -370,19 +397,17 @@ public class S3QueryTest
 
     @Test (dependsOnMethods = "resetSchema",
             expectedExceptions = {RuntimeException.class},
-            expectedExceptionsMessageRegExp = ".*Error Code: InvalidBucketName.*")
+            expectedExceptionsMessageRegExp = "Bucket.*does not exist")
     public void testSchemaConfigBadBucket() {
         log.info("Test: testSchemaConfigBadBucket");
         queryRunner.execute("SELECT * FROM s3.bogusdb.bogusBucketTable");
-
     }
 
-    @Test (dependsOnMethods = "resetSchema",
-            expectedExceptions = {RuntimeException.class},
-            expectedExceptionsMessageRegExp = ".*Error Code: 404 Not Found.*")
+    @Test (dependsOnMethods = "resetSchema")
     public void testSchemaConfigBadObject() {
         log.info("Test: testSchemaConfigBadObject");
-        queryRunner.execute("SELECT * FROM s3.bogusdb.bogusObjectTable");
+        // bucket exists.  object/prefix could have been listed
+        assertEquals(queryRunner.execute("SELECT * FROM s3.bogusdb.bogusObjectTable").getRowCount(), 0);
     }
 
     @Test (dependsOnMethods = "resetSchema")
@@ -442,6 +467,10 @@ public class S3QueryTest
                 System.out.println("Exception stopping query runner and s3 server: " + e.toString());
                 throw e;
             }
+        }
+
+        if (s3Server != null) {
+            s3Server.stop();
         }
 
         if (schemaRegistry != null) {
