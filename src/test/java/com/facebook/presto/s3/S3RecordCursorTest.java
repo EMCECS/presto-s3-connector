@@ -16,6 +16,7 @@
 package com.facebook.presto.s3;
 
 import com.facebook.presto.common.type.Type;
+import com.facebook.presto.decoder.RowDecoder;
 import com.facebook.presto.decoder.json.JsonRowDecoderFactory;
 import com.facebook.presto.s3.avro.User;
 import com.facebook.presto.s3.reader.AvroRecordReader;

@@ -20,13 +20,27 @@ import com.facebook.airlift.configuration.AbstractConfigurationAwareModule;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.decoder.DecoderModule;
+import com.facebook.presto.decoder.DispatchingRowDecoderFactory;
+import com.facebook.presto.decoder.RowDecoderFactory;
+import com.facebook.presto.decoder.avro.AvroRowDecoder;
+import com.facebook.presto.decoder.avro.AvroRowDecoderFactory;
+import com.facebook.presto.decoder.csv.CsvRowDecoder;
+import com.facebook.presto.decoder.csv.CsvRowDecoderFactory;
+import com.facebook.presto.decoder.dummy.DummyRowDecoder;
+import com.facebook.presto.decoder.dummy.DummyRowDecoderFactory;
+import com.facebook.presto.decoder.raw.RawRowDecoder;
+import com.facebook.presto.decoder.raw.RawRowDecoderFactory;
+import com.facebook.presto.s3.decoder.JsonRowDecoder;
+import com.facebook.presto.s3.decoder.JsonRowDecoderFactory;
 import com.facebook.presto.s3.parquet.ParquetPageSourceFactory;
 import com.facebook.presto.parquet.cache.*;
+import com.facebook.presto.type.TypeDeserializer;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import org.weakref.jmx.MBeanExporter;
 import org.weakref.jmx.testing.TestingMBeanServer;
@@ -40,6 +54,7 @@ import static com.facebook.airlift.json.JsonBinder.jsonBinder;
 import static com.facebook.airlift.json.JsonCodecBinder.jsonCodecBinder;
 import static com.facebook.presto.common.type.TypeSignature.parseTypeSignature;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.inject.Scopes.SINGLETON;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static java.util.Objects.requireNonNull;
 
@@ -53,19 +68,18 @@ public class S3Module
     }
 
     @Override
-    public void setup(Binder binder)
-    {
+    public void setup(Binder binder) {
         binder.bind(S3ConnectorId.class).toInstance(new S3ConnectorId(connectorId));
-        binder.bind(S3Metadata.class).in(Scopes.SINGLETON);
-        binder.bind(S3SplitManager.class).in(Scopes.SINGLETON);
+        binder.bind(S3Metadata.class).in(SINGLETON);
+        binder.bind(S3SplitManager.class).in(SINGLETON);
         binder.bind(MBeanServer.class).toInstance(new TestingMBeanServer());
-        binder.bind(MBeanExporter.class).in(Scopes.SINGLETON);
-        binder.bind(S3AccessObject.class).in(Scopes.SINGLETON);
-        binder.bind(S3PageSourceProvider.class).in(Scopes.SINGLETON);
-        binder.bind(S3PageSinkProvider.class).in(Scopes.SINGLETON);
-        binder.bind(S3SchemaRegistryManager.class).in(Scopes.SINGLETON);
+        binder.bind(MBeanExporter.class).in(SINGLETON);
+        binder.bind(S3AccessObject.class).in(SINGLETON);
+        binder.bind(S3PageSourceProvider.class).in(SINGLETON);
+        binder.bind(S3PageSinkProvider.class).in(SINGLETON);
+        binder.bind(S3SchemaRegistryManager.class).in(SINGLETON);
         Multibinder<S3BatchPageSourceFactory> pageSourceFactoryBinder = newSetBinder(binder, S3BatchPageSourceFactory.class);
-        pageSourceFactoryBinder.addBinding().to(ParquetPageSourceFactory.class).in(Scopes.SINGLETON);
+        pageSourceFactoryBinder.addBinding().to(ParquetPageSourceFactory.class).in(SINGLETON);
         configBinder(binder).bindConfig(S3ConnectorConfig.class);
         configBinder(binder).bindConfig(ParquetCacheConfig.class, connectorId);
 
@@ -73,14 +87,28 @@ public class S3Module
         jsonCodecBinder(binder).bindJsonCodec(S3Table.class);
 
         binder.install(new DecoderModule());
+
+
+        binder.install(binder1 -> {
+            MapBinder<String, RowDecoderFactory> decoderFactoriesByName = MapBinder.newMapBinder(binder1, String.class, RowDecoderFactory.class);
+            decoderFactoriesByName.addBinding(DummyRowDecoder.NAME).to(DummyRowDecoderFactory.class).in(SINGLETON);
+            decoderFactoriesByName.addBinding(CsvRowDecoder.NAME).to(CsvRowDecoderFactory.class).in(SINGLETON);
+            decoderFactoriesByName.addBinding(RawRowDecoder.NAME).to(RawRowDecoderFactory.class).in(SINGLETON);
+            decoderFactoriesByName.addBinding(AvroRowDecoder.NAME).to(AvroRowDecoderFactory.class).in(SINGLETON);
+            decoderFactoriesByName.addBinding(JsonRowDecoder.NAME).to(JsonRowDecoderFactory.class).in(SINGLETON);
+            binder1.bind(DispatchingRowDecoderFactory.class).in(SINGLETON);
+
+        });
+
     }
-     @Singleton
-     @Provides
-     public ParquetMetadataSource createParquetMetadataSource()
-     {
-         ParquetMetadataSource parquetMetadataSource = new MetadataReader();
-         return parquetMetadataSource;
-     }
+
+    @Singleton
+    @Provides
+    public ParquetMetadataSource createParquetMetadataSource()
+    {
+        ParquetMetadataSource parquetMetadataSource = new MetadataReader();
+        return parquetMetadataSource;
+    }
 
     public static final class TypeDeserializer
             extends FromStringDeserializer<Type>
