@@ -96,7 +96,6 @@ public class S3Module
             binder1.bind(DispatchingRowDecoderFactory.class).in(SINGLETON);
 
         });
-
     }
 
     @Singleton
