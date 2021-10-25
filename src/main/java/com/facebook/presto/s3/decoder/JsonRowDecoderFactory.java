@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Note: This file contains changes from PrestoDb. Specifically the class is inspired from the
- * json row decoder factory.
+ * Note: This class file is from PrestoDb.
  * https://github.com/prestodb/presto/blob/master/presto-record-decoder/src/main/java/com/facebook/presto/decoder/json/JsonRowDecoderFactory.java
  */
 package com.facebook.presto.s3.decoder;
