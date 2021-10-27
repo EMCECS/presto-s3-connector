@@ -15,7 +15,7 @@
  *
  * Note: This class file is from PrestoDb and contains an additional method. Specifically, the
  * decodeRow(data, offset, length, dataMap) method.
- * (commit e7b5e7c11031ec7d357131d20a9e67801b26a081)
+ * (commit hash e7b5e7c11031ec7d357131d20a9e67801b26a081)
  * https://github.com/prestodb/presto/blob/e7b5e7c11031ec7d357131d20a9e67801b26a081/presto-record-decoder/src/main/java/com/facebook/presto/decoder/json/JsonRowDecoder.java
  */
 package com.facebook.presto.s3.decoder;
