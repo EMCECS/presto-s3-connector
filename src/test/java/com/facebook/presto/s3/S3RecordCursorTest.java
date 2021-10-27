@@ -16,12 +16,16 @@
 package com.facebook.presto.s3;
 
 import com.facebook.presto.common.type.Type;
+import com.facebook.presto.decoder.RowDecoder;
+import com.facebook.presto.s3.decoder.JsonRowDecoderFactory;
 import com.facebook.presto.s3.avro.User;
 import com.facebook.presto.s3.reader.AvroRecordReader;
 import com.facebook.presto.s3.reader.CsvRecordReader;
+import com.facebook.presto.s3.reader.JsonRecordReader;
 import com.facebook.presto.s3.reader.RecordReader;
 import com.facebook.presto.s3.util.AvroByteArrayOutputStream;
 import com.facebook.presto.s3.util.SeekableByteArrayInputStream;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.avro.file.DataFileWriter;
@@ -32,7 +36,9 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSInputStream;
 import org.testng.annotations.Test;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
@@ -85,12 +91,12 @@ public class S3RecordCursorTest {
         }
     }
 
-    S3TableLayoutHandle table() {
+    S3TableLayoutHandle table(String dataFormat) {
         // csv, only field+record delim, and header row used
         S3TableHandle table = new S3TableHandle("s3",
                 "schema",
                 "table",
-                S3Const.CSV,
+                dataFormat,
                 "," /* field delim */,
                 "\n" /* record delim */,
                 "false" /* header row */,
@@ -108,21 +114,62 @@ public class S3RecordCursorTest {
         return () -> new CountingInputStream(stream);
     }
 
-    RecordReader newFileReader(List<S3ColumnHandle> columns, String f) {
-        return new CsvRecordReader(columns,
-                new S3ObjectRange("bucket", "key"),
-                table(),
-                new S3ReaderProps(false, 65536),
-                readerStream(f));
+    RecordReader newCsvFileReader(List<S3ColumnHandle> columns, String f) {
+        return newFileReader(columns, f, S3Const.CSV);
     }
 
-    RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString) {
-        return new CsvRecordReader(columns,
-                new S3ObjectRange("bucket", "key"),
-                table(),
-                new S3ReaderProps(false, 65536),
-                readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8))));
+    RecordReader newFileReader(List<S3ColumnHandle> columns, String f, String dataFormat) {
+        switch (dataFormat) {
+            case S3Const.CSV:
+                return new CsvRecordReader(columns,
+                        new S3ObjectRange("bucket", "key"),
+                        table(dataFormat),
+                        new S3ReaderProps(false, 65536),
+                        readerStream(f));
+            case S3Const.JSON:
+                RowDecoder rowDecoder =
+                        new JsonRowDecoderFactory(new ObjectMapper()).create(ImmutableMap.of(), new HashSet<>(columns));
+                return new JsonRecordReader(rowDecoder,
+                        new S3ObjectRange("bucket", "key", 0, (int) new File(f).length()),
+                        new S3ReaderProps(false, 65536),
+                        readerStream(f));
+            default:
+        throw new UnsupportedOperationException();
+        }
+
     }
+
+    RecordReader newCsvStringReader(List<S3ColumnHandle> columns, String streamAsString) {
+        return newStringReader(columns, streamAsString, S3Const.CSV, -1, -1);
+    }
+
+    RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString, String dataFormat,
+            int S3ObjectRangeOffset, int S3ObjecRangeLength) {
+
+        Supplier<CountingInputStream> stream =
+                readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8)));
+
+        switch (dataFormat) {
+            case S3Const.CSV:
+                return new CsvRecordReader(columns,
+                        new S3ObjectRange("bucket", "key"),
+                        table(dataFormat),
+                        new S3ReaderProps(false, 65536),
+                        stream);
+
+            case S3Const.JSON:
+                RowDecoder rowDecoder =
+                        new JsonRowDecoderFactory(new ObjectMapper()).create(ImmutableMap.of(), new HashSet<>(columns));
+                return new JsonRecordReader(rowDecoder,
+                        // S3ObjectRange start-end must contain at least 1 full record
+                        new S3ObjectRange("bucket", "key", S3ObjectRangeOffset, S3ObjecRangeLength),
+                        new S3ReaderProps(false, 65536),
+                        stream);
+            default:
+                throw new UnsupportedOperationException();
+        }
+    }
+
 
     RecordReader newAvroRecordReader(List<S3ColumnHandle> columns, byte[] bytes, int start, int end) {
         final SeekableByteArrayInputStream byteArrayInputStream = new SeekableByteArrayInputStream(bytes);
@@ -179,7 +226,7 @@ public class S3RecordCursorTest {
                         .build();
 
         S3RecordCursor cursor =
-                new S3RecordCursor(newFileReader(columnHandles, "emptyline.csv"), columnHandles);
+                new S3RecordCursor(newCsvFileReader(columnHandles, "emptyline.csv"), columnHandles);
 
         assertTrue(cursor.advanceNextPosition());
         assertEquals(cursor.getSlice(0).toStringUtf8(), "andrew");
@@ -211,10 +258,84 @@ public class S3RecordCursorTest {
         String line = "\"1027\",\"true\"";
 
         S3RecordCursor cursor =
-                new S3RecordCursor(newStringReader(columnHandles, line), columnHandles);
+                new S3RecordCursor(newCsvStringReader(columnHandles, line), columnHandles);
 
         assertTrue(cursor.advanceNextPosition());
         assertEquals(cursor.getLong(0), 1027L);
+        assertTrue(cursor.getBoolean(1));
+    }
+
+    @Test
+    public void testJson() {
+        List<S3ColumnHandle> columnHandles =
+                new ColumnBuilder()
+                        .add("field1", "field1", VARCHAR)
+                        .add("field2", "field2", BOOLEAN)
+                        .build();
+
+        String line = "{\"field1\": \"james\",\"field2\": true}\n" +
+                "{\"field1\": \"andrew\",\"field2\": false}\n" +
+                "{\"field1\": \"karan\",\"field2\": true}";
+
+        // objectRange start = 1, end = 40
+        S3RecordCursor cursor =
+                new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON, 1, 40), columnHandles);
+
+        assertTrue(cursor.advanceNextPosition());
+        assertEquals(cursor.getSlice(0).toStringUtf8(), "andrew");
+        assertFalse(cursor.getBoolean(1));
+
+        assertFalse(cursor.advanceNextPosition());
+    }
+
+    @Test
+    public void testJsonNoRecordFound() {
+        List<S3ColumnHandle> columnHandles =
+                new ColumnBuilder()
+                        .add("field1", "field1", VARCHAR)
+                        .add("field2", "field2", BOOLEAN)
+                        .build();
+
+        String line = "{\"field1\": \"jamesssjohndoeeeeeeeeeee\",\"field2\": true}\n" +
+                "{\"field1\": \"andrew\",\"field2\": false}\n" +
+                "{\"field1\": \"karan\",\"field2\": true}";
+
+        // objectRange start = 1, end = 40
+        S3RecordCursor cursor =
+                new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON, 1, 40), columnHandles);
+
+        // if the split starts in the middle of a record
+        // then the ByteslineReader seeks for the start of the next record, if it is not within the end,
+        // however, if the start of the next record does not exist in the given start and end range, it does not find a record
+        assertFalse(cursor.advanceNextPosition());
+    }
+
+    @Test
+    public void testJsonCheckLineBuffer() {
+        List<S3ColumnHandle> columnHandles =
+                new ColumnBuilder()
+                        .add("field1", "field1", VARCHAR)
+                        .add("field2", "field2", BOOLEAN)
+                        .build();
+
+        String line = "{\"field1\": \"johnDoe\",\"field2\": true}\n" +      // length: 36   buffer: "field1": "johnDoe","field2": true}
+                      "{\"field1\": \"a\",\"field2\": false}\n" +           // length: 31   buffer: "field1": "a","field2": false}true}     you can see here
+                      "{\"field1\": \"abc\",\"field2\": true}\n";           // length: 32   buffer: "field1": "abc","field2": true}rue}
+
+        // read entire records
+        S3RecordCursor cursor =
+                new S3RecordCursor(newStringReader(columnHandles, line, S3Const.JSON, 0, Integer.MAX_VALUE), columnHandles);
+
+        assertTrue(cursor.advanceNextPosition());
+        assertEquals(cursor.getSlice(0).toStringUtf8(), "johnDoe");
+        assertTrue(cursor.getBoolean(1));
+
+        assertTrue(cursor.advanceNextPosition());
+        assertEquals(cursor.getSlice(0).toStringUtf8(), "a");
+        assertFalse(cursor.getBoolean(1));
+
+        assertTrue(cursor.advanceNextPosition());
+        assertEquals(cursor.getSlice(0).toStringUtf8(), "abc");
         assertTrue(cursor.getBoolean(1));
     }
 

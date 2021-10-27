@@ -34,18 +34,15 @@ import com.emc.object.s3.S3Exception;
 import com.emc.object.s3.bean.MetadataSearchDatatype;
 import com.emc.object.s3.bean.MetadataSearchKey;
 import com.emc.object.s3.bean.MetadataSearchList;
-import com.emc.object.s3.bean.S3Object;
 import com.emc.object.s3.jersey.S3JerseyClient;
 import com.facebook.airlift.log.Logger;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.CharMatcher;
 import io.airlift.units.DataSize;
 import org.apache.hadoop.fs.BufferedFSInputStream;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSInputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 
 import javax.inject.Inject;
 import java.io.*;
@@ -114,55 +111,12 @@ public class S3AccessObject
         }
     }
 
-    public boolean bucketExists(String bucket) {
-        return amazonS3Client.doesBucketExistV2(bucket);
+    public AmazonS3 getS3Client() {
+        return amazonS3Client;
     }
 
-    public boolean objectOrDirExists (String bucket, String prefix) {
-        // Just in case this wasn't confirmed prior
-        if (!bucketExists(bucket)) {
-            return false;
-        }
-        // Remove leading '/' from prefix
-        if (prefix.charAt(0) == '/') {
-            prefix = prefix.replaceFirst("/", "");
-        }
-        // Remove trailing '/' to test for object, but append if needed because prefix is a dir
-        prefix = CharMatcher.is('/').trimTrailingFrom(prefix);
-        log.info("Check existance of " + prefix + " in bucket " + bucket);
-        try {
-            ObjectMetadata metadata = amazonS3Client.getObjectMetadata(bucket, prefix);
-            log.debug("Verified object " + prefix + " in bucket " + bucket + " of type "
-                    + metadata.getContentType() + " of length " + metadata.getContentLength());
-            return true;
-        } catch (AmazonS3Exception e) {
-            // Append a slash in case the object is actually a 'directory'
-            try {
-                ObjectMetadata metadata = amazonS3Client.getObjectMetadata(bucket, prefix + "/");
-                log.debug("Verified " + prefix + " in bucket " + bucket + " of type "
-                        + metadata.getContentType() + " of length " + metadata.getContentLength());
-                return true;
-            } catch (AmazonS3Exception e1) {
-                try {
-                    // Oddly, a directory created by Hadoop on S3 will fail the 'getObjectMetadata' call
-                    // Last chance to check for existence, does listObjects work?
-                    // At this point, object is either a directory, or is bogus
-                    // If a directory, then we expect at least one object to be found in the directory
-                    ListObjectsRequest request = new ListObjectsRequest();
-                    request.setMaxKeys(1);
-                    request.setBucketName(bucket);
-                    request.setPrefix(prefix + "/");
-                    ObjectListing listing = amazonS3Client.listObjects(request);
-                    if (listing.getObjectSummaries().size() != 1) {
-                        return false;
-                    }
-                    log.debug("Verified directory " + prefix + " in bucket " + bucket);
-                    return true;
-                } catch (Exception e2) {
-                    return false;
-                }
-            }
-        }
+    public boolean bucketExists(String bucket) {
+        return amazonS3Client.doesBucketExistV2(bucket);
     }
 
     public Long getObjectLength(String bucket, String key)
@@ -173,18 +127,6 @@ public class S3AccessObject
         Long length = amazonS3Client.getObjectMetadata(bucket, key).getContentLength();
         log.info("Object length for bucket " + bucket + " and object " + key + " = " + length);
         return length;
-    }
-
-    public InputStream getObject(String bucket, String key) {
-        return getObject(bucket, key, 0L /* start */);
-    }
-
-    public InputStream getObject(String bucket, String key, long start) {
-        if (key.startsWith("/")) {
-            key = key.replaceFirst("/", "");
-        }
-        GetObjectRequest request = new GetObjectRequest(bucket, key).withRange(start);
-        return amazonS3Client.getObject(request).getObjectContent();
     }
 
     public PutObjectResult putObject (String table, String bucket, String key,  InputStream stream, String file_format) {
@@ -215,88 +157,14 @@ public class S3AccessObject
         return amazonS3Client.putObject(request);
     }
 
-    public List<String> listObjects(String bucket, String prefix){
-        List<String> list = new Vector<>();
-        String newPrefix = CharMatcher.is('/').trimTrailingFrom(prefix);
-        if (newPrefix.startsWith("/")) {
-            newPrefix = newPrefix.replaceFirst("/", "");
-        }
-        try {
-            // If this is an object, getObjectMetadata (no trailing '/') will succeed
-
-            amazonS3Client.getObjectMetadata(bucket, newPrefix);
-            list.add(prefix);
-            return list;
-        } catch (AmazonS3Exception e1) {
-            // Empty catch block
-        }
-        // So prefix must be a 'directory' - append a '/'
-        ObjectListing listing = amazonS3Client.listObjects(bucket, newPrefix + "/");
-        do {
-            listing.getObjectSummaries().forEach(obj -> list.add(obj.getKey()));
-            listing = listing.isTruncated() ? amazonS3Client.listNextBatchOfObjects(listing) : null;
-        } while (listing != null);
-        return list;
-
-    }
-
-    public List<String> listObjects(String bucket) {
-        List<String> list = new Vector<>();
-        ObjectListing listing = amazonS3Client.listObjects(bucket);
-        do {
-            listing.getObjectSummaries().forEach(obj -> list.add(obj.getKey()));
-            listing = listing.isTruncated() ? amazonS3Client.listNextBatchOfObjects(listing) : null;
-        } while (listing != null);
-        return list;
-    }
-
     public List<Bucket> listBuckets() {
-        try {
-            List<Bucket> bucketList = amazonS3Client.listBuckets();
-            return bucketList;
-        } catch (Exception e) {
-            return Collections.EMPTY_LIST;
-        }
+        return amazonS3Client.listBuckets();
     }
 
-    public List<Map<String, Object>> listObjectMetadata(String bucket){
-        MetadataSearchList listOfMetaDataNew;
-        List<S3Object> objectList =  s3Client.listObjects(bucket).getObjects();
-        List<Map<String, Object>> listOfMaps = new ArrayList<>();
-        try {
-            listOfMetaDataNew  = s3Client.listBucketMetadataSearchKeys(bucket);
-            for(S3Object obj: objectList){
-                Map<String,Object> map = new HashMap<>();
-                for(MetadataSearchKey entry: listOfMetaDataNew.getIndexableKeys()){
-                    if(entry.getName().toLowerCase().equals("lastmodified")){
-                        map.put(entry.getName().toLowerCase(), obj.getLastModified());
-                    }
-                    if(entry.getName().toLowerCase().equals("size")){
-                        map.put(entry.getName().toLowerCase(), obj.getSize());
-                    }
-                    if(entry.getName().toLowerCase().equals("owner")){
-                        map.put(entry.getName().toLowerCase(), obj.getOwner().getDisplayName());
-                    }
-                    if(entry.getName().toLowerCase().equals("objectname")){
-                        map.put(entry.getName().toLowerCase(), obj.getKey());
-                    }
-                    if(entry.getName().toLowerCase().equals("createtime")){
-                        map.put(entry.getName().toLowerCase(), null);
-                    }
-                    if(entry.getName().toLowerCase().contains("x-amz-meta-")){
-                        String[] splitArray = entry.getName().toLowerCase().split("-");
-                        Map<String,String> userMetaDataMap = s3Client.getObjectMetadata(bucket, obj.getKey()).getUserMetadata();
-                        map.put(entry.getName().toLowerCase(), userMetaDataMap.get(splitArray[splitArray.length -1].toLowerCase()));
-                    }
-                }
-                listOfMaps.add(map);
-            }
-        }
-        catch (S3Exception ignored) {
-
-        }
-        return listOfMaps;
-
+    public List<Map<String, Object>> searchObjectMetadata(String bucket) {
+        // metadata search API extension
+        // https://github.com/EMCECS/presto-s3-connector/issues/57
+        throw new UnsupportedOperationException("not yet implemented");
     }
 
     public JSONObject getMetaData(String bucketName){
@@ -319,8 +187,8 @@ public class S3AccessObject
                     columns.put(new JSONObject().put("name", entry.getName()).put("type", "VARCHAR"));
                 }
             }
-        }
-        catch (S3Exception ignored) {
+        } catch (S3Exception e){
+            // not all s3 compat. API support listBucketMetadataSearchKeys
         }
         schema.put("name", bucketName);
         schema.put("columns", columns);

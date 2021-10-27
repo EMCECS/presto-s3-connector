@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.fs.FSDataInputStream;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.function.Supplier;
@@ -65,7 +64,7 @@ public class S3RecordSet
         requireNonNull(accessObject, "s3Helper is null");
         this.columnHandles = requireNonNull(columnHandles, "columnHandles is null");
         this.accessObject = requireNonNull(accessObject, "accessObject is null");
-        this.objectDecoder = requireNonNull(objectDecoder, "rowDecoder is null");
+        this.objectDecoder = objectDecoder;
         this.s3TableHandle = requireNonNull(s3TableHandle, "s3TableHandle is null");
         this.objectRange =
                 S3ObjectRange.deserialize(
@@ -100,7 +99,7 @@ public class S3RecordSet
                         inputStreamSupplier);
                 break;
             case JSON:
-                recordReader = new JsonRecordReader(objectDecoder, inputStreamSupplier);
+                recordReader = new JsonRecordReader(objectDecoder, objectRange, readerProps, inputStreamSupplier);
                 break;
             case AVRO:
                 recordReader = new AvroRecordReader(columnHandles, objectRange, inputStreamSupplier);

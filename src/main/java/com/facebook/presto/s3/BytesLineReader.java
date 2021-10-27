@@ -61,7 +61,6 @@ public class BytesLineReader
             // TODO: https://github.com/EMCECS/presto-s3-connector/issues/26
             byte[] tmp = new byte[Math.max(65536, bufSizeBytes)];
             read(tmp);
-            absPos += bufPos;
         }
     }
 
