@@ -12,7 +12,8 @@
  * limitations under the License.
  *
  * Note: This class file is from PrestoDb.
- * https://github.com/prestodb/presto/blob/master/presto-record-decoder/src/main/java/com/facebook/presto/decoder/json/JsonRowDecoderFactory.java
+ * (commit hash 3c5d38f21dc4f8c7d2a8fac49662396aa30637ef)
+ * https://github.com/prestodb/presto/blob/3c5d38f21dc4f8c7d2a8fac49662396aa30637ef/presto-record-decoder/src/main/java/com/facebook/presto/decoder/json/JsonRowDecoderFactory.java
  */
 package com.facebook.presto.s3.decoder;
 
