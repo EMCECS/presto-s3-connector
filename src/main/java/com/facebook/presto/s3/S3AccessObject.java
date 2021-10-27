@@ -106,7 +106,8 @@ public class S3AccessObject
                     .enablePathStyleAccess()
                     .build();
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            log.error("%s",e);
+            throw new IllegalArgumentException(e);
         }
     }
 
