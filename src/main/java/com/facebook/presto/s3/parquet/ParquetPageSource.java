@@ -15,7 +15,7 @@
  *
  * Note: This file contains changes from PrestoDb. Specifically the class is inspired from the
  * Hive Connector.
- * https://github.com/prestodb/presto/blob/master/presto-hive/src/main/java/com/facebook/presto/hive/parquet/ParquetPageSource.java
+ * https://github.com/prestodb/presto/blob/84ade36f51c10c449f62aa840426fa798d4c078d/presto-hive/src/main/java/com/facebook/presto/hive/parquet/ParquetPageSource.java
  */
 
 package com.facebook.presto.s3.parquet;
