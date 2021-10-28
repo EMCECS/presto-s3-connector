@@ -12,6 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Note: This file contains changes from PrestoDb. Specifically the class is inspired from the
+ * Hive Connector.
+ * https://github.com/prestodb/presto/blob/ca09cd31fedba77611975d5717cbaae80d2e984b/presto-hive/src/main/java/com/facebook/presto/hive/IonSqlQueryBuilder.java
  */
 package com.facebook.presto.s3;
 
