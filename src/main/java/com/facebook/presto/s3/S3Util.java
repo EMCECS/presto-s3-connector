@@ -178,16 +178,6 @@ public class S3Util
         }
     }
 
-    public static boolean s3SelectEnabled(ConnectorSession session)
-    {
-        try {
-            return session.getProperty(SESSION_PROP_S3_SELECT_PUSHDOWN, Boolean.class);
-        }
-        catch (PrestoException e) {
-            return false;
-        }
-    }
-
     static boolean delimitedFormat(String format)
     {
         return format.equals(CSV) ||

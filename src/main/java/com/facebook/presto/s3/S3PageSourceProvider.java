@@ -31,6 +31,7 @@ import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.facebook.presto.s3.S3Const.AVRO;
 import static com.facebook.presto.s3.S3Const.PARQUET;
 import static com.facebook.presto.s3.S3HandleResolver.convertSplit;
 import static com.facebook.presto.s3.S3SelectUtil.useS3Pushdown;
@@ -74,41 +75,56 @@ public class S3PageSourceProvider
         S3Split s3Split = convertSplit(split);
         S3TableHandle s3TableHandle = s3Split.getS3TableHandle();
         if(!s3TableHandle.getObjectDataFormat().equalsIgnoreCase(PARQUET)) {
-            List<S3ColumnHandle> s3Columns = columns.stream()
-                    .map(S3HandleResolver::convertColumnHandle)
-                    .collect(Collectors.toList());
+            return notParquetPageSourceHelper(columns, s3Split, s3TableHandle, session);
+        } else {
+           return parquetPageSourceHelper(columns, s3Split, s3TableHandle, session, splitContext);
+        }
 
-            if (useS3Pushdown(s3Split, s3TableHandle.getObjectDataFormat())) {
-                // update relative positions for s3 select so we can properly
-                // get index into returned data
-                for (int i = 0; i < s3Columns.size(); i++) {
-                    s3Columns.set(i, new S3ColumnHandle(s3Columns.get(i), i));
-                }
+    }
+
+    private ConnectorPageSource notParquetPageSourceHelper(List<ColumnHandle> columns, S3Split s3Split, S3TableHandle s3TableHandle, ConnectorSession session){
+        List<S3ColumnHandle> s3Columns = columns.stream()
+                .map(S3HandleResolver::convertColumnHandle)
+                .collect(Collectors.toList());
+
+        if (useS3Pushdown(s3Split, s3TableHandle.getObjectDataFormat())) {
+            // update relative positions for s3 select so we can properly
+            // get index into returned data
+            for (int i = 0; i < s3Columns.size(); i++) {
+                s3Columns.set(i, new S3ColumnHandle(s3Columns.get(i), i));
+            }
+        }
+
+            RowDecoder objectDecoder = null;
+            if (!s3TableHandle.getObjectDataFormat().equalsIgnoreCase(AVRO)) {
+                // factory method below will fail for avro since we don't have the schema right now
+                // but, we don't eve need AvroRowDecoder so just skip it
+                objectDecoder = decoderFactory.create(
+                        s3TableHandle.getObjectDataFormat(),
+                        getDecoderParameters(s3Split.getObjectDataSchemaContents()),
+                        s3Columns.stream()
+                                .filter(col -> !col.isInternal())
+                                .filter(S3ColumnHandle::isKeyDecoder)
+                                .collect(toImmutableSet()));
             }
 
-            RowDecoder objectDecoder = decoderFactory.create(
-                    s3TableHandle.getObjectDataFormat(),
-                    getDecoderParameters(s3Split.getObjectDataSchemaContents()),
-                    s3Columns.stream()
-                            .filter(col -> !col.isInternal())
-                            .filter(S3ColumnHandle::isKeyDecoder)
-                            .collect(toImmutableSet()));
+        return new RecordPageSource(new S3RecordSet(session, s3Split, s3Columns, accessObject, objectDecoder, s3TableHandle));
+    }
 
-            return new RecordPageSource(new S3RecordSet(session, s3Split, s3Columns, accessObject, objectDecoder, s3TableHandle));
-        } else {
-            S3ObjectRange obj  = S3ObjectRange.deserialize(s3Split.getObjectRange());
-            long start = obj.getOffset();
-            int length  = obj.getLength();
-            S3TableLayoutHandle s3Layout = s3Split.getS3TableLayoutHandle();
-            String bucket = s3Layout.getTable().getBucketObjectsMap().keySet().iterator().next();
-            String object = s3Layout.getTable().getBucketObjectsMap().get(bucket).get(0);
-            List<S3ColumnHandle> selectedColumns = columns.stream()
-                    .map(S3ColumnHandle.class::cast)
-                    .collect(toList());
-            TupleDomain<S3ColumnHandle> effectivePredicate = s3Layout.getConstraints()
-                    .transform(S3ColumnHandle.class::cast);
+    private ConnectorPageSource parquetPageSourceHelper(List<ColumnHandle> columns, S3Split s3Split, S3TableHandle s3TableHandle, ConnectorSession session, SplitContext splitContext){
+        S3ObjectRange obj  = S3ObjectRange.deserialize(s3Split.getObjectRange());
+        long start = obj.getOffset();
+        int length  = obj.getLength();
+        S3TableLayoutHandle s3Layout = s3Split.getS3TableLayoutHandle();
+        String bucket = s3Layout.getTable().getBucketObjectsMap().keySet().iterator().next();
+        String object = s3Layout.getTable().getBucketObjectsMap().get(bucket).get(0);
+        List<S3ColumnHandle> selectedColumns = columns.stream()
+                .map(S3ColumnHandle.class::cast)
+                .collect(toList());
+        TupleDomain<S3ColumnHandle> effectivePredicate = s3Layout.getConstraints()
+                .transform(S3ColumnHandle.class::cast);
 
-            Optional<ConnectorPageSource> pageSource = createS3PageSource(
+        Optional<ConnectorPageSource> pageSource = createS3PageSource(
                 pageSourceFactories,
                 session,
                 bucket,
@@ -124,9 +140,8 @@ public class S3PageSourceProvider
             return pageSource.get();
         }
         throw new IllegalStateException("Could not find a file reader for split " + s3Split);
-        }
-
     }
+
 
     public static Optional<ConnectorPageSource> createS3PageSource(
             Set<S3BatchPageSourceFactory> pageSourceFactories,

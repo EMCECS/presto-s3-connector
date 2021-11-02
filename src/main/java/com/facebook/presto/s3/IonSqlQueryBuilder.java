@@ -16,6 +16,7 @@
 package com.facebook.presto.s3;
 
 import com.facebook.presto.common.predicate.Domain;
+import com.facebook.presto.common.predicate.Marker;
 import com.facebook.presto.common.predicate.Range;
 import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.common.type.DecimalType;
@@ -146,32 +147,10 @@ public class IonSqlQueryBuilder
             }
             List<String> rangeConjuncts = new ArrayList<>();
             if (!range.getLow().isLowerUnbounded()) {
-                switch (range.getLow().getBound()) {
-                    case ABOVE:
-                        rangeConjuncts.add(toPredicate(">", range.getLow().getValue(), type, position));
-                        break;
-                    case EXACTLY:
-                        rangeConjuncts.add(toPredicate(">=", range.getLow().getValue(), type, position));
-                        break;
-                    case BELOW:
-                        throw new IllegalArgumentException("Low marker should never use BELOW bound");
-                    default:
-                        throw new AssertionError("Unhandled bound: " + range.getLow().getBound());
-                }
+                notLowerBoundedSwitch(range, rangeConjuncts, type, position);
             }
             if (!range.getHigh().isUpperUnbounded()) {
-                switch (range.getHigh().getBound()) {
-                    case ABOVE:
-                        throw new IllegalArgumentException("High marker should never use ABOVE bound");
-                    case EXACTLY:
-                        rangeConjuncts.add(toPredicate("<=", range.getHigh().getValue(), type, position));
-                        break;
-                    case BELOW:
-                        rangeConjuncts.add(toPredicate("<", range.getHigh().getValue(), type, position));
-                        break;
-                    default:
-                        throw new AssertionError("Unhandled bound: " + range.getHigh().getBound());
-                }
+                notUpperBoundedSwitch(range, rangeConjuncts, type, position);
             }
             // If rangeConjuncts is null, then the range was ALL, which should already have been checked for
             checkState(!rangeConjuncts.isEmpty());
@@ -198,6 +177,36 @@ public class IonSqlQueryBuilder
         }
 
         return "(" + Joiner.on(" OR ").join(disjuncts) + ")";
+    }
+
+    private void notLowerBoundedSwitch(Range range, List<String> rangeConjuncts, Type type, int position){
+        switch (range.getLow().getBound()) {
+            case ABOVE:
+                rangeConjuncts.add(toPredicate(">", range.getLow().getValue(), type, position));
+                break;
+            case EXACTLY:
+                rangeConjuncts.add(toPredicate(">=", range.getLow().getValue(), type, position));
+                break;
+            case BELOW:
+                throw new IllegalArgumentException("Low marker should never use BELOW bound");
+            default:
+                throw new AssertionError("Unhandled bound: " + range.getLow().getBound());
+        }
+    }
+
+    private void notUpperBoundedSwitch(Range range, List<String> rangeConjuncts, Type type, int position){
+        switch (range.getHigh().getBound()) {
+            case ABOVE:
+                throw new IllegalArgumentException("High marker should never use ABOVE bound");
+            case EXACTLY:
+                rangeConjuncts.add(toPredicate("<=", range.getHigh().getValue(), type, position));
+                break;
+            case BELOW:
+                rangeConjuncts.add(toPredicate("<", range.getHigh().getValue(), type, position));
+                break;
+            default:
+                throw new AssertionError("Unhandled bound: " + range.getHigh().getBound());
+        }
     }
 
     private String toPredicate(String operator, Object value, Type type, int position)
