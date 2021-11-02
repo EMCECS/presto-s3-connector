@@ -64,7 +64,7 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
         for(Bucket bucket: listOfBuckets){
             JSONObject sources = new JSONObject();
             S3Table table = this.objectDescriptionCodec.fromJson(
-                    this.accessObject.getMetaData(bucket.getName()).
+                    this.accessObject.loadColumnsFromMetaDataSearchKeys(bucket.getName()).
                             put("sources", sources).
                             put("objectDataFormat", DEFAULT_OBJECT_FILE_TYPE).
                             put("hasHeaderRow", DEFAULT_HAS_HEADER_ROW).
