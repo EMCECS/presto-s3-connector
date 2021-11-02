@@ -114,22 +114,6 @@ public class S3RecordCursorTest {
         return () -> new CountingInputStream(stream);
     }
 
-<<<<<<< HEAD
-    RecordReader newFileReader(List<S3ColumnHandle> columns, String f) {
-        return new CsvRecordReader(columns,
-                new S3ObjectRange("bucket", "key", 0, Integer.MAX_VALUE),
-                table(),
-                new S3ReaderProps(false, 65536),
-                readerStream(f));
-    }
-
-    RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString) {
-        return new CsvRecordReader(columns,
-                new S3ObjectRange("bucket", "key", 0, Integer.MAX_VALUE),
-                table(),
-                new S3ReaderProps(false, 65536),
-                readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8))));
-=======
     RecordReader newCsvFileReader(List<S3ColumnHandle> columns, String f) {
         return newFileReader(columns, f, S3Const.CSV);
     }
@@ -184,7 +168,6 @@ public class S3RecordCursorTest {
             default:
                 throw new UnsupportedOperationException();
         }
->>>>>>> f3c3eccd4d6752aeb6d13bf4c7fead846b8c18b1
     }
 
 
