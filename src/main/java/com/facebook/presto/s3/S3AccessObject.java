@@ -167,12 +167,14 @@ public class S3AccessObject
         throw new UnsupportedOperationException("not yet implemented");
     }
 
-    public JSONObject getMetaData(String bucketName){
+    public JSONObject loadColumnsFromMetaDataSearchKeys(String bucketName){
         JSONObject schema =  new JSONObject();
         JSONArray columns = new JSONArray();
         MetadataSearchList listOfMetaData;
         try {
-            listOfMetaData  = s3Client.listBucketMetadataSearchKeys(bucketName);
+            // effectively disables loading due to issue https://github.com/EMCECS/presto-s3-connector/issues/69
+            // revisit when metadata search fully implemented with https://github.com/EMCECS/presto-s3-connector/issues/57
+            listOfMetaData  = new MetadataSearchList();
             for(MetadataSearchKey entry: listOfMetaData.getIndexableKeys()){
                 if(entry.getDatatype() == MetadataSearchDatatype.string){
                     columns.put(new JSONObject().put("name", entry.getName()).put("type", "VARCHAR"));
