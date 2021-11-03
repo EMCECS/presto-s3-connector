@@ -152,7 +152,7 @@ public class S3RecordCursorTest {
         switch (dataFormat) {
             case S3Const.CSV:
                 return new CsvRecordReader(columns,
-                        new S3ObjectRange("bucket", "key"),
+                        new S3ObjectRange("bucket", "key", S3ObjectRangeOffset, S3ObjectRangeLength),
                         table(dataFormat),
                         new S3ReaderProps(false, 65536),
                         stream);
@@ -162,7 +162,7 @@ public class S3RecordCursorTest {
                         new JsonRowDecoderFactory(new ObjectMapper()).create(ImmutableMap.of(), new HashSet<>(columns));
                 return new JsonRecordReader(rowDecoder,
                         // S3ObjectRange start-end must contain at least 1 full record
-                        new S3ObjectRange("bucket", "key", S3ObjectRangeOffset, S3ObjecRangeLength),
+                        new S3ObjectRange("bucket", "key", S3ObjectRangeOffset, S3ObjectRangeLength),
                         new S3ReaderProps(false, 65536),
                         stream);
             default:
