@@ -15,10 +15,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # 
-#  Note: This file contains changes from PrestoDb. Specifically the PrestoS3InputStream is inspired from the
-#  Hive Connector.
-#  https://github.com/prestodb/presto/blob/master/presto-hive/src/main/java/com/facebook/presto/hive/s3/PrestoS3FileSystem.java
-# 
 
 export S3_DOCKER_NAME=test-s3
 export S3_DOCKER_PORT=8000
