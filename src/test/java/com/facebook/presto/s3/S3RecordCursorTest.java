@@ -144,7 +144,7 @@ public class S3RecordCursorTest {
     }
 
     RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString, String dataFormat,
-            int S3ObjectRangeOffset, int S3ObjecRangeLength) {
+            int S3ObjectRangeOffset, int S3ObjectRangeLength) {
 
         Supplier<CountingInputStream> stream =
                 readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8)));
