@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Note: This file contains changes from PrestoDb. Specifically the class is inspired from the
- * Hive Connector.
- * https://github.com/prestodb/presto/blob/master/presto-hive/src/main/java/com/facebook/presto/hive/parquet/ParquetPageSourceFactory.java
+ * Note: This file is from PrestoDb. Specifically is from the Hive Connector
+ * Minor changes added to work with our code.
+ * https://github.com/prestodb/presto/blob/84ade36f51c10c449f62aa840426fa798d4c078d/presto-hive/src/main/java/com/facebook/presto/hive/parquet/ParquetPageSourceFactory.java
  */
-
 package com.facebook.presto.s3.parquet;
 
 import com.facebook.presto.common.predicate.Domain;

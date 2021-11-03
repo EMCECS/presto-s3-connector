@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Note: This file contains changes from PrestoDb. Specifically the PrestoS3InputStream is inspired from the
- * Hive Connector.
- * https://github.com/prestodb/presto/blob/master/presto-hive/src/main/java/com/facebook/presto/hive/s3/PrestoS3FileSystem.java
+ * Note: This file contains code from PrestoDb. Specifically PrestoS3InputStream is from the Hive Connector.
+ * https://github.com/prestodb/presto/blob/7e4fe3d909a598d561b7e9b8b37c606a9df7241c/presto-hive/src/main/java/com/facebook/presto/hive/s3/PrestoS3FileSystem.java
  */
 package com.facebook.presto.s3;
 
