@@ -122,7 +122,7 @@ public class S3RecordCursorTest {
         switch (dataFormat) {
             case S3Const.CSV:
                 return new CsvRecordReader(columns,
-                        new S3ObjectRange("bucket", "key", 0, (int) new File(f).length()),
+                        new S3ObjectRange("bucket", "key", 0, Integer.MAX_VALUE),
                         table(dataFormat),
                         new S3ReaderProps(false, 65536),
                         readerStream(f));
@@ -140,7 +140,7 @@ public class S3RecordCursorTest {
     }
 
     RecordReader newCsvStringReader(List<S3ColumnHandle> columns, String streamAsString) {
-        return newStringReader(columns, streamAsString, S3Const.CSV, -1, -1);
+        return newStringReader(columns, streamAsString, S3Const.CSV, 0, Integer.MAX_VALUE);
     }
 
     RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString, String dataFormat,
@@ -152,6 +152,7 @@ public class S3RecordCursorTest {
         switch (dataFormat) {
             case S3Const.CSV:
                 return new CsvRecordReader(columns,
+
                         new S3ObjectRange("bucket", "key", S3ObjectRangeOffset, S3ObjectRangeLength),
                         table(dataFormat),
                         new S3ReaderProps(false, 65536),
