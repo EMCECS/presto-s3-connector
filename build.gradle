@@ -88,9 +88,8 @@ dependencies {
     compile "jakarta.ws.rs:jakarta.ws.rs-api:${jakartaRSVersion}"
     compile "com.facebook.presto:presto-main:${prestoVersion}"
 
-    compile "com.sun.xml.bind:jaxb-core:2.3.0"
-    compile "com.sun.xml.bind:jaxb-impl:2.3.0"
-
+    runtime "com.sun.xml.bind:jaxb-core:${javaxXMLBindVersion}"
+    runtime "com.sun.xml.bind:jaxb-impl:${javaxXMLBindVersion}"
     runtime "javax.xml.bind:jaxb-api:${javaxXMLBindVersion}"
     runtime "io.airlift:joda-to-java-time-bridge:${airliftJodaVersion}"
     runtime "org.slf4j:slf4j-simple:${slf4Version}"
