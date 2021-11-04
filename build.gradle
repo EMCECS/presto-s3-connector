@@ -42,6 +42,10 @@ repositories {
     }
 }
 
+configurations {
+    compile.transitive = false
+}
+
 dependencies {
     compile "org.glassfish.hk2.external:jakarta.inject:${glassfishJakartaInjectVersion}"
     compile "org.glassfish.hk2.external:javax.inject:${glassfishJavaxInjectVersion}"
@@ -64,6 +68,7 @@ dependencies {
     compile "com.facebook.presto:presto-spi:${prestoVersion}"
     compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
     compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
     compile "io.airlift:slice:${airliftSliceVersion}"
     compile "io.airlift:units:${airliftUnitsVersion}"
     compile "org.json:json:${jsonVersion}"
@@ -82,6 +87,9 @@ dependencies {
     compile "com.facebook.presto.hadoop:hadoop-apache2:${prestoHadoopVersion}"
     compile "jakarta.ws.rs:jakarta.ws.rs-api:${jakartaRSVersion}"
     compile "com.facebook.presto:presto-main:${prestoVersion}"
+
+    compile "com.sun.xml.bind:jaxb-core:2.3.0"
+    compile "com.sun.xml.bind:jaxb-impl:2.3.0"
 
     runtime "javax.xml.bind:jaxb-api:${javaxXMLBindVersion}"
     runtime "io.airlift:joda-to-java-time-bridge:${airliftJodaVersion}"
