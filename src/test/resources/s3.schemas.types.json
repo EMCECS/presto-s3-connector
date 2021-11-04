@@ -25,7 +25,7 @@
             "dataFormat": "iso8601"
           }
         ],
-        "sources": {"testbucket": ["types.json"] },
+        "sources": {"testbucket": ["types.json.gz"] },
         "objectDataFormat": "json",
         "hasHeaderRow": "false",
         "recordDelimiter": "\n"
