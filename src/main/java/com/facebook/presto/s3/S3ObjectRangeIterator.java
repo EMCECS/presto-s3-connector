@@ -106,7 +106,7 @@ public class S3ObjectRangeIterator
 
             if (rangeBytes == 0) {
                 count++;
-                rangeList.add(new S3ObjectRange(object.getBucketName(), object.getKey()));
+                rangeList.add(new S3ObjectRange(object.getBucketName(), object.getKey(), 0, (int) object.getSize()));
             } else {
                 while (offset == 0 || offset < object.getSize()) {
                     int length = (int) (offset + rangeBytes > object.getSize()
