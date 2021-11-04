@@ -72,7 +72,7 @@ public class S3SplitManager
 
                 @Override
                 public S3ObjectRange next() {
-                    return new S3ObjectRange(null, null);
+                    return new S3ObjectRange(null, null, 0, Integer.MAX_VALUE);
                 }
             };
         }
