@@ -145,7 +145,7 @@
         "objectDataFormat": "avro",
         "hasHeaderRow": "false",
         "recordDelimiter": "\r",
-        "sources": { "testbucket": [ "avro_datafile.gz" ] }
+        "sources": { "testbucket": [ "avro_datafile" ] }
       },
       "schemaTableName": {
         "schema_name": "olympicdb",

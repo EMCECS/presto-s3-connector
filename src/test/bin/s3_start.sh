@@ -146,7 +146,7 @@ put "$S3_BUCKET" "$JSON2" "jsondata/json_datafile"
 put "$S3_BUCKET" "$PARQUET" "customer/customerfile"
 put "$S3_BUCKET" "$PARQUET1" "store/storefile"
 put "$S3_BUCKET" "$TXTFILE" "`basename $TXTFILE`"
-put "$S3_BUCKET" $(readlink --canonicalize $SCRIPTDIR/../resources/avro_datafile.gz) "avro_datafile.gz"
+put "$S3_BUCKET" $(readlink --canonicalize $SCRIPTDIR/../resources/avro_datafile) "avro_datafile"
 put "$S3_BUCKET" $(readlink --canonicalize $SCRIPTDIR/../resources/medical.csv.gz) "medical.csv.gz"
 put "$S3_BUCKET" $(readlink --canonicalize $SCRIPTDIR/../resources/types.json.gz) "types.json.gz"
 
