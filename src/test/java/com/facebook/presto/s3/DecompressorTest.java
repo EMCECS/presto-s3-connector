@@ -59,6 +59,15 @@ public class DecompressorTest {
         assertNull(Compression.getCodec("key"));
     }
 
+    @Test
+    public void testCodecFromType() {
+        assertNull(Compression.getCodecFromType(null));
+        assertNull(Compression.getCodecFromType(".xyz"));
+        assertTrue(Compression.getCodecFromType(".gz") instanceof JdkGzipCodec);
+        assertTrue(Compression.getCodecFromType(".snappy") instanceof SnappyCodec);
+        assertTrue(Compression.getCodecFromType(".lz4") instanceof Lz4Codec);
+    }
+
     private void test(String key, String format) {
         byte[] data = new byte[1024];
         random.nextBytes(data);
@@ -88,9 +97,7 @@ public class DecompressorTest {
         try {
             CompressionCodec codec = Compression.getCodec(f);
             assertNotNull(codec);
-            return codec.createInputStream(compressedData.containsKey(f)
-                    ? new ByteArrayInputStream(compressedData.get(f))
-                    : DecompressorTest.class.getResourceAsStream(f));
+            return codec.createInputStream(new ByteArrayInputStream(compressedData.get(f)));
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);

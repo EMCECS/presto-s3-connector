@@ -216,6 +216,7 @@ public class S3AccessObject
                 .withFileHeaderInfo(props.getUseHeader()
                         ? FileHeaderInfo.USE
                         : FileHeaderInfo.IGNORE));
+        inputSerialization.setCompressionType(mapCompressionType(objectRange.getCompressionType()));
 
         outputSerialization.setCsv(new CSVOutput()
                 .withFieldDelimiter(props.getFieldDelim())
@@ -232,6 +233,17 @@ public class S3AccessObject
                 .selectObjectContent(request)
                 .getPayload()
                 .getRecordsInputStream();
+    }
+
+    private CompressionType mapCompressionType(String compressionCodecType) {
+        switch (compressionCodecType) {
+            case ".gz":
+                return CompressionType.GZIP;
+            case ".bz2":
+                return CompressionType.BZIP2;
+            default:
+                return CompressionType.NONE;
+        }
     }
 
     /**

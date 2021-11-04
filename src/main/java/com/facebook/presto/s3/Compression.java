@@ -43,4 +43,8 @@ public class Compression {
         int idx = key.lastIndexOf(".");
         return idx < 0 ? null : codecMap.get(key.substring(idx));
     }
+
+    public static CompressionCodec getCodecFromType(String type) {
+        return codecMap.get(type);
+    }
 }

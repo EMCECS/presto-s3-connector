@@ -18,6 +18,7 @@ package com.facebook.presto.s3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import org.apache.hadoop.io.compress.CompressionCodec;
 
 import java.util.*;
 
@@ -104,15 +105,27 @@ public class S3ObjectRangeIterator
                 continue;
             }
 
-            if (rangeBytes == 0) {
-                count++;
-                rangeList.add(new S3ObjectRange(object.getBucketName(), object.getKey(), 0, (int) object.getSize()));
+            // offset 0 is start of new object, check if compressed
+            // in this case do not split
+            CompressionCodec codec = offset == 0
+                    ? Compression.getCodec(object.getKey())
+                    : null;
+
+            if (codec != null || rangeBytes == 0) {
+                rangeList.add(new S3ObjectRange(object.getBucketName(),
+                        object.getKey(),
+                        0, (int) object.getSize(),
+                        false,
+                        codec == null ? null : codec.getDefaultExtension()));
+                if (++count >= batchSize) {
+                    break;
+                }
             } else {
                 while (offset == 0 || offset < object.getSize()) {
                     int length = (int) (offset + rangeBytes > object.getSize()
                             ? object.getSize() - offset
                             : rangeBytes);
-                    rangeList.add(new S3ObjectRange(object.getBucketName(), object.getKey(), offset, length));
+                    rangeList.add(new S3ObjectRange(object.getBucketName(), object.getKey(), offset, length, true));
                     offset += rangeBytes;
 
                     if (++count >= batchSize) {
