@@ -15,38 +15,81 @@
  */
 package com.facebook.presto.s3;
 
+import io.airlift.compress.gzip.JdkGzipCodec;
+import io.airlift.compress.lz4.Lz4Codec;
+import io.airlift.compress.snappy.SnappyCodec;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.testng.annotations.Test;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.*;
+import static org.testng.Assert.assertTrue;
 
 public class DecompressorTest {
-    Map<String, InputStream> compressedData = new HashMap<>();
+    private final Map<String, byte[]> compressedData = new HashMap<>();
+
+    private final SecureRandom random = new SecureRandom();
 
     @Test
     public void testGzip() {
-        addCompressedData("key1.gz", "value-for-key1");
-        assertEquals(readToString(getInputStream("key1.gz")), "value-for-key1");
+        test("keyA.gz", "gz");
     }
 
     @Test
     public void testSnappy() {
-        addCompressedData("key2.snappy", "value-for-key2");
-        assertEquals(readToString(getInputStream("key2.snappy")), "value-for-key2");
+        test("keyB.snappy", "snappy");
     }
 
-    InputStream getInputStream(String f) {
+    @Test
+    public void testLz4() {
+        test("keyC.lz4", "lz4");
+    }
+
+    @Test
+    public void testNotSupported() {
+        assertNull(Compression.getCodec("key.bz2"));
+    }
+
+    @Test
+    public void testNoExtension() {
+        assertNull(Compression.getCodec("key"));
+    }
+
+    private void test(String key, String format) {
+        byte[] data = new byte[1024];
+        random.nextBytes(data);
+
+        CompressionCodec codec = addCompressedData(key, data);
+        switch (format) {
+            case "gz":
+                assertTrue(codec instanceof JdkGzipCodec);
+                break;
+            case "snappy":
+                assertTrue(codec instanceof SnappyCodec);
+                break;
+            case "lz4":
+                assertTrue(codec instanceof Lz4Codec);
+                break;
+            default:
+                throw new IllegalArgumentException(format);
+        }
+
+        // sanity check data was compressed
+        assertNotEquals(data, read(new ByteArrayInputStream(compressedData.get(key))));
+        // run through codec, get original data
+        assertEquals(data, read(getInflatingStream(key)));
+    }
+
+    InputStream getInflatingStream(String f) {
         try {
             CompressionCodec codec = Compression.getCodec(f);
             assertNotNull(codec);
             return codec.createInputStream(compressedData.containsKey(f)
-                    ? compressedData.get(f)
+                    ? new ByteArrayInputStream(compressedData.get(f))
                     : DecompressorTest.class.getResourceAsStream(f));
         }
         catch (IOException e) {
@@ -54,34 +97,33 @@ public class DecompressorTest {
         }
     }
 
-    void addCompressedData(String f, String data) {
+    CompressionCodec addCompressedData(String f, byte[] data) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            OutputStream os = Compression.getCodec(f).createOutputStream(baos);
-
-            os.write(data.getBytes(StandardCharsets.UTF_8));
+            CompressionCodec codec = Compression.getCodec(f);
+            OutputStream os = codec.createOutputStream(baos);
+            os.write(data);
             os.close();
-
-            compressedData.put(f, new ByteArrayInputStream(baos.toByteArray()));
+            compressedData.put(f, baos.toByteArray());
+            return codec; // so test case can verify what was used
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    String readToString(InputStream inputStream) {
-        try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-            StringBuilder sb = new StringBuilder();
-
-            int c;
+    byte[] read(InputStream inputStream) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            int n;
+            byte[] buf = new byte[4096];
             do {
-                c = reader.read();
-                if (c == -1) {
-                    break;
+                n = inputStream.read(buf);
+                if (n > 0) {
+                    baos.write(buf, 0, n);
                 }
-                sb.append((char) c);
-            } while (true);
-            return sb.toString();
+            } while (n > 0);
+            return baos.toByteArray();
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);

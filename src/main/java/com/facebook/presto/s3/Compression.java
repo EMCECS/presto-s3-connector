@@ -16,6 +16,7 @@
 package com.facebook.presto.s3;
 
 import io.airlift.compress.gzip.JdkGzipCodec;
+import io.airlift.compress.lz4.Lz4Codec;
 import io.airlift.compress.snappy.SnappyCodec;
 import org.apache.hadoop.io.compress.CompressionCodec;
 
@@ -23,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Compression {
-    private static Map<String, CompressionCodec> codecMap = new HashMap<>();
+    private static final Map<String, CompressionCodec> codecMap = new HashMap<>();
 
     static {
         CompressionCodec codec;
@@ -32,6 +33,9 @@ public class Compression {
         codecMap.put(codec.getDefaultExtension(), codec);
 
         codec = new SnappyCodec();
+        codecMap.put(codec.getDefaultExtension(), codec);
+
+        codec = new Lz4Codec();
         codecMap.put(codec.getDefaultExtension(), codec);
     }
 
