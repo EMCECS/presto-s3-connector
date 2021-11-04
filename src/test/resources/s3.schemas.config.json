@@ -21,7 +21,7 @@
             "type": "DOUBLE"
           }
         ],
-        "sources": {"testbucket": ["medical.csv"] },
+        "sources": {"testbucket": ["medical.csv.gz"] },
         "objectDataFormat": "csv",
         "hasHeaderRow": "true",
         "recordDelimiter": "\n"
@@ -145,7 +145,7 @@
         "objectDataFormat": "avro",
         "hasHeaderRow": "false",
         "recordDelimiter": "\r",
-        "sources": { "testbucket": [ "avro_datafile" ] }
+        "sources": { "testbucket": [ "avro_datafile.gz" ] }
       },
       "schemaTableName": {
         "schema_name": "olympicdb",

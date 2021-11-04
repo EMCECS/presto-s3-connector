@@ -86,16 +86,16 @@ public class S3QueryTest
             s3Server = new SimpleS3Server(8000);
             s3Server.start();
 
-            putToS3Server("testbucket", "medical.csv", "medical.csv");
             putToS3Server("testbucket", "names.csv", "names.csv");
             putToS3Server("testbucket", "grades/grades.csv", "grades.csv");
             putToS3Server("testbucket", "cartoondb/cartoon_table.json", "json_datafile");
             putToS3Server("testbucket", "jsondata/json_datafile", "json_datafile");
-            putToS3Server("testbucket", "types.json", "types.json");
-            putToS3Server("testbucket", "avro_datafile", "avro_datafile");
             putToS3Server("testbucket", "datafile.txt", "datafile.txt");
             putToS3Server("testbucket", "customer/customerfile", "customerfile");
             putToS3Server("testbucket", "store/storefile", "storefile");
+            putToS3Server("testbucket", "avro_datafile.gz", "avro_datafile.gz");
+            putToS3Server("testbucket", "medical.csv.gz", "medical.csv.gz");
+            putToS3Server("testbucket", "types.json.gz", "types.json.gz");
         }
 
         schemaRegistry = new EmbeddedSchemaRegistry();
