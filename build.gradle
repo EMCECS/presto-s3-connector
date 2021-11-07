@@ -52,7 +52,6 @@ dependencies {
     compile "jakarta.validation:jakarta.validation-api:${jakartaValidationVersion}"
     compile "com.facebook.airlift:bootstrap:${airliftVersion}"
     compile "javax.inject:javax.inject:${javaxInjectVersion}"
-    compile "com.facebook.airlift:json:${airliftVersion}"
     compile "com.facebook.airlift:log:${airliftVersion}"
     compile "com.facebook.airlift:concurrent:${airliftVersion}"
     compile "com.facebook.airlift:configuration:${airliftVersion}"
