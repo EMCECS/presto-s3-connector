@@ -325,6 +325,21 @@ public class S3QueryTest
         assertEquals(queryRunner.execute("DESCRIBE s3.newschema.csvtable").getMaterializedRows().size(), 3);
     }
 
+    @Test (dependsOnMethods = "testCreateSchema")
+    public void testCreateTableVarcharLimit() {
+        log.info("Test: testCreateTable");
+        queryRunner.execute("CREATE TABLE s3.newschema.tablevarcharlimit (id123 bigint, name123 varchar(64), balance123 double) WITH (FORMAT='CSV', has_header_row = 'false', external_location='s3a://testbucket/TestDataABC/')");
+        boolean foundColumn= false;
+        List<MaterializedRow> rows = queryRunner.execute("DESCRIBE s3.newschema.tablevarcharlimit").getMaterializedRows();
+        for (MaterializedRow row : rows) {
+            log.debug("Test: testCreateTableVarcharLimit.  Found column: " + row.toString());
+            if (row.toString().contains("varchar(64)")) {
+                foundColumn = true;
+            }
+        }
+        assertTrue(foundColumn);
+    }
+
     @Test (dependsOnMethods = "testCreateTable")
     public void testInsertRow() {
         log.info("Test: testInsertRow");
@@ -347,7 +362,7 @@ public class S3QueryTest
         List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newschema").getMaterializedRows();
         boolean foundTable = false;
         for (MaterializedRow row : rows) {
-            log.info("Test: testDropTable.  Found table: " + row.toString());
+            log.debug("Test: testDropTable.  Found table: " + row.toString());
             if (row.toString().contains("csvtable")) {
                 foundTable = true;
             }
@@ -387,7 +402,7 @@ public class S3QueryTest
         List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newschema").getMaterializedRows();
         boolean foundTable = false;
         for (MaterializedRow row : rows) {
-            log.info("Test: testDropTableJson.  Found table: " + row.toString());
+            log.debug("Test: testDropTableJson.  Found table: " + row.toString());
             if (row.toString().contains("jsontable")) {
                 foundTable = true;
             }

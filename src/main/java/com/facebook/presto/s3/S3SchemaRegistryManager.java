@@ -194,23 +194,26 @@ public class S3SchemaRegistryManager {
             String columnType = "";
             if (column.getType().getDisplayName().equalsIgnoreCase("VARCHAR")) {
                 columnType = "string";
+            } else if (column.getType().getDisplayName().toUpperCase().startsWith("VARCHAR")) {
+                columnType = "string";
+                columnObjectNode.put("format", column.getType().getDisplayName().toUpperCase());
             } else if (column.getType().getDisplayName().equalsIgnoreCase("DOUBLE")) {
                 columnType = "number";
             } else if (column.getType().getDisplayName().equalsIgnoreCase("BIGINT")) {
                 columnType = "integer";
             } else if (column.getType().getDisplayName().equalsIgnoreCase("BOOLEAN")) {
                 columnType = "boolean";
-            } else if(column.getType().getDisplayName().equalsIgnoreCase("integer")){
+            } else if(column.getType().getDisplayName().equalsIgnoreCase("INTEGER")){
                 columnType = "integer";
             } else if(column.getType().getDisplayName().equalsIgnoreCase("DATE")){
                 columnType = "string";
-                columnObjectNode.put("format", "date");
+                columnObjectNode.put("format", FORMAT_VALUE_DATE);
             } else if(column.getType().getDisplayName().equalsIgnoreCase("TIME")){
                 columnType = "string";
-                columnObjectNode.put("format", "time");
+                columnObjectNode.put("format", FORMAT_VALUE_TIME);
             } else if(column.getType().getDisplayName().equalsIgnoreCase("TIMESTAMP")){
                 columnType = "string";
-                columnObjectNode.put("format", "date-time");
+                columnObjectNode.put("format", FORMAT_VALUE_DATE_TIME);
             }
             columnObjectNode.put(JSON_PROP_TYPE, columnType);
             propertyNode.set(column.getName(), columnObjectNode);
@@ -416,7 +419,8 @@ public class S3SchemaRegistryManager {
                         break;
 
                     default:
-                        node.put(JSON_PROP_TYPE, JSON_TYPE_VARCHAR);
+                        // For fixed length VARCHAR, like VARCHAR(20)
+                        node.put(JSON_PROP_TYPE, properties.getString(JSON_PROP_FORMAT));
                         break;
                 }
             } else {
