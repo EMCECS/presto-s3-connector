@@ -332,7 +332,7 @@ public class S3QueryTest
         boolean foundColumn= false;
         List<MaterializedRow> rows = queryRunner.execute("DESCRIBE s3.newschema.tablevarcharlimit").getMaterializedRows();
         for (MaterializedRow row : rows) {
-            log.info("Test: testCreateTableVarcharLimit.  Found column: " + row.toString());
+            log.debug("Test: testCreateTableVarcharLimit.  Found column: " + row.toString());
             if (row.toString().contains("varchar(64)")) {
                 foundColumn = true;
             }
@@ -362,7 +362,7 @@ public class S3QueryTest
         List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newschema").getMaterializedRows();
         boolean foundTable = false;
         for (MaterializedRow row : rows) {
-            log.info("Test: testDropTable.  Found table: " + row.toString());
+            log.debug("Test: testDropTable.  Found table: " + row.toString());
             if (row.toString().contains("csvtable")) {
                 foundTable = true;
             }
@@ -402,7 +402,7 @@ public class S3QueryTest
         List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newschema").getMaterializedRows();
         boolean foundTable = false;
         for (MaterializedRow row : rows) {
-            log.info("Test: testDropTableJson.  Found table: " + row.toString());
+            log.debug("Test: testDropTableJson.  Found table: " + row.toString());
             if (row.toString().contains("jsontable")) {
                 foundTable = true;
             }
