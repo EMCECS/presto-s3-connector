@@ -31,8 +31,7 @@ import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.facebook.presto.s3.S3Const.AVRO;
-import static com.facebook.presto.s3.S3Const.PARQUET;
+import static com.facebook.presto.s3.S3Const.*;
 import static com.facebook.presto.s3.S3HandleResolver.convertSplit;
 import static com.facebook.presto.s3.S3SelectUtil.useS3Pushdown;
 
@@ -95,18 +94,17 @@ public class S3PageSourceProvider
             }
         }
 
-            RowDecoder objectDecoder = null;
-            if (!s3TableHandle.getObjectDataFormat().equalsIgnoreCase(AVRO)) {
-                // factory method below will fail for avro since we don't have the schema right now
-                // but, we don't eve need AvroRowDecoder so just skip it
-                objectDecoder = decoderFactory.create(
-                        s3TableHandle.getObjectDataFormat(),
-                        getDecoderParameters(s3Split.getObjectDataSchemaContents()),
-                        s3Columns.stream()
-                                .filter(col -> !col.isInternal())
-                                .filter(S3ColumnHandle::isKeyDecoder)
-                                .collect(toImmutableSet()));
-            }
+        RowDecoder objectDecoder = null;
+        if (s3TableHandle.getObjectDataFormat().equalsIgnoreCase(JSON)) {
+            // only json uses this
+            objectDecoder = decoderFactory.create(
+                    s3TableHandle.getObjectDataFormat(),
+                    getDecoderParameters(s3Split.getObjectDataSchemaContents()),
+                    s3Columns.stream()
+                            .filter(col -> !col.isInternal())
+                            .filter(S3ColumnHandle::isKeyDecoder)
+                            .collect(toImmutableSet()));
+        }
 
         return new RecordPageSource(new S3RecordSet(session, s3Split, s3Columns, accessObject, objectDecoder, s3TableHandle));
     }
