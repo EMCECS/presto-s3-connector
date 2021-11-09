@@ -21,7 +21,7 @@
             "type": "DOUBLE"
           }
         ],
-        "sources": {"testbucket": ["medical.csv"] },
+        "sources": {"testbucket": ["medical.csv.gz"] },
         "objectDataFormat": "csv",
         "hasHeaderRow": "true",
         "recordDelimiter": "\n"

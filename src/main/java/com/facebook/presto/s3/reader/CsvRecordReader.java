@@ -80,12 +80,12 @@ public class CsvRecordReader
 
     private void init()
     {
-        long end = objectRange.getLength() == -1L
+        long end = objectRange.getCompressionType() != null
                 ? Long.MAX_VALUE
                 : objectRange.getOffset() + objectRange.getLength();
 
         long start = objectRange.getOffset();
-        if (readerProps.getS3SelectEnabled() && objectRange.getLength() > 0) {
+        if (readerProps.getS3SelectEnabled() && objectRange.getSplit()) {
             // if using scan range with s3 select there is no seeking/spillover here
             start = 0;
             end = Long.MAX_VALUE;

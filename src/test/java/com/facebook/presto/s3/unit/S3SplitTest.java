@@ -46,7 +46,7 @@ public class S3SplitTest {
             new S3TableLayoutHandle(s3TableHandle, TupleDomain.all()),
             objectDataSchemaContents,
             false /* s3SelectPushdownEnabled */,
-            S3ObjectRange.serialize(new S3ObjectRange(bucket, key, offset, length))
+            S3ObjectRange.serialize(new S3ObjectRange(bucket, key, offset, length, false))
     );
 
     @Test

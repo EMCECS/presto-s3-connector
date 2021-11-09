@@ -29,18 +29,26 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 public class S3ObjectRange
         implements Serializable
 {
-
     private final String bucket;
     private final String key;
     private final long offset;
     private final int length;
+    private final boolean split;
+    private final String compressionType;
 
-    public S3ObjectRange(String bucket, String key, long offset, int length)
+    public S3ObjectRange(String bucket, String key, long offset, int length, boolean split)
+    {
+        this(bucket, key, offset, length, split, null);
+    }
+
+    public S3ObjectRange(String bucket, String key, long offset, int length, boolean split, String compressionType)
     {
         this.bucket = bucket;
         this.key = key;
         this.offset = offset;
         this.length = length;
+        this.split = split;
+        this.compressionType = compressionType;
     }
 
     public String getBucket()
@@ -61,6 +69,16 @@ public class S3ObjectRange
     public int getLength()
     {
         return length;
+    }
+
+    public boolean getSplit()
+    {
+        return split;
+    }
+
+    public String getCompressionType()
+    {
+        return compressionType;
     }
 
     public static byte[] serialize(com.facebook.presto.s3.S3ObjectRange objectRange)
@@ -92,12 +110,14 @@ public class S3ObjectRange
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return toStringHelper(this)
                 .add("bucket", bucket)
                 .add("key", key)
                 .add("offset", offset)
                 .add("length", length)
+                .add("compressionType", compressionType)
                 .toString();
     }
 }

@@ -59,7 +59,9 @@ public class AvroRecordReader
         this.objectRange = objectRange;
         this.inputStreamSupplier = inputStreamSupplier;
         Preconditions.checkArgument(objectRange.getLength() >= 0);
-        this.lastOffset = objectRange.getOffset() + objectRange.getLength();
+        this.lastOffset = objectRange.getCompressionType() != null
+                ? Long.MAX_VALUE
+                : objectRange.getOffset() + objectRange.getLength();
     }
 
     private AvroColumnDecoder createColumnDecoder(DecoderColumnHandle columnHandle)

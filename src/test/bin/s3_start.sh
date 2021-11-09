@@ -23,17 +23,14 @@ export S3_SECRET_KEY="verySecretKey1"
 export S3_BUCKET=testbucket
 SCRIPT=$(readlink -f $0)
 SCRIPTDIR=$(dirname $SCRIPT)
-export CSV=$(readlink --canonicalize $SCRIPTDIR/../resources/medical.csv)
 export CSV1=$(readlink --canonicalize $SCRIPTDIR/../resources/names.csv)
 export CSV2=$(readlink --canonicalize $SCRIPTDIR/../resources/grades.csv)
 export JSON1=$(readlink --canonicalize $SCRIPTDIR/../resources/json_datafile)
 export JSON2=$(readlink --canonicalize $SCRIPTDIR/../resources/json_datafile)
-export JSON3=$(readlink --canonicalize $SCRIPTDIR/../resources/types.json)
-export AVRODATA1=$(readlink --canonicalize $SCRIPTDIR/../resources/avro_datafile)
 export TXTFILE=$(readlink --canonicalize $SCRIPTDIR/../resources/datafile.txt)
 export PARQUET=$(readlink --canonicalize $SCRIPTDIR/../resources/customerfile)
 export PARQUET1=$(readlink --canonicalize $SCRIPTDIR/../resources/storefile)
-export CSVDIR=$(dirname $CSV)
+export CSVDIR=$(dirname $CSV1)
 
 echo "Starting s3 docker container"
 docker pull scality/s3server
@@ -126,7 +123,7 @@ for i in `seq 20`; do
     createBucket "$S3_BUCKET"
     if [[ $rv -eq 0 ]]; then
         echo "bucket success"
-        put "$S3_BUCKET" "$CSV" "`basename $CSV`" "ok_to_fail"
+        put "$S3_BUCKET" "$CSV1" "`basename $CSV1`" "ok_to_fail"
         if [[ $rv -eq 0 ]]; then
             echo "file success"
             found=1
@@ -144,13 +141,14 @@ fi
 
 put "$S3_BUCKET" "$CSV1" "`basename $CSV1`"
 put "$S3_BUCKET" "$CSV2" "grades/grades.csv"
-put "$S3_BUCKET" "$AVRODATA1" "`basename $AVRODATA1`"
 put "$S3_BUCKET" "$JSON1" "cartoondb/cartoon_table.json"
 put "$S3_BUCKET" "$JSON2" "jsondata/json_datafile"
-put "$S3_BUCKET" "$JSON3" "`basename $JSON3`"
 put "$S3_BUCKET" "$PARQUET" "customer/customerfile"
 put "$S3_BUCKET" "$PARQUET1" "store/storefile"
 put "$S3_BUCKET" "$TXTFILE" "`basename $TXTFILE`"
+put "$S3_BUCKET" $(readlink --canonicalize $SCRIPTDIR/../resources/avro_datafile) "avro_datafile"
+put "$S3_BUCKET" $(readlink --canonicalize $SCRIPTDIR/../resources/medical.csv.gz) "medical.csv.gz"
+put "$S3_BUCKET" $(readlink --canonicalize $SCRIPTDIR/../resources/types.json.gz) "types.json.gz"
 
 head "$S3_BUCKET" "customer/customerfile"
 

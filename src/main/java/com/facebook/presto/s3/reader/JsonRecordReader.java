@@ -64,10 +64,13 @@ public class JsonRecordReader
     private void init() {
         this.line = new byte[bufferSize];
         this.inputStream = inputStreamSupplier.get();
+        long end = objectRange.getCompressionType() != null
+                ? Long.MAX_VALUE
+                : objectRange.getOffset() + objectRange.getLength();
         this.bytesLineReader = new BytesLineReader(inputStream,
                 bufferSize,
                 objectRange.getOffset(),
-                objectRange.getOffset() + objectRange.getLength());
+                end);
     }
 
     @Override

@@ -29,6 +29,7 @@ import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.RecordSet;
 import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.io.compress.CompressionCodec;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -132,11 +133,16 @@ public class S3RecordSet
                     accessObject.getFsDataInputStream(objectRange.getBucket(), objectRange.getKey(), readerProps.getBufferSizeBytes());
             try {
                 stream.seek(objectRange.getOffset()); // changes position, no call yet
+
+                CompressionCodec codec = Compression.getCodecFromType(objectRange.getCompressionType());
+
+                return new CountingInputStream(codec == null
+                        ? stream
+                        : codec.createInputStream(stream));
             }
             catch (IOException  e) {
                 throw new UncheckedIOException(e);
             }
-            return new CountingInputStream(stream);
         }
     }
 
