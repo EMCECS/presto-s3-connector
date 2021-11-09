@@ -30,7 +30,6 @@ import static java.util.Objects.requireNonNull;
 
 public final class S3TableHandle
         implements ConnectorTableHandle {
-    private String bogus;
     private final String connectorId;
     private final String schemaName;
     private final String tableName;
@@ -65,7 +64,6 @@ public final class S3TableHandle
         this.hasHeaderRow = requireNonNull(hasHeaderRow, "hasHeaderRow is null");
         this.tableBucketName = requireNonNull(tableBucketName, "tableBucketName is null");
         this.tableBucketPrefix = tableBucketPrefix != null ? tableBucketPrefix : "/";
-        // TODO: https://github.com/EMCECS/presto-s3-connector/issues/17
         this.bucketObjectsMap = requireNonNull(bucketObjectsMap, "bucketObjectsMap is null");
     }
 
@@ -142,8 +140,6 @@ public final class S3TableHandle
                 Objects.equals(this.schemaName, other.schemaName) &&
                 Objects.equals(this.tableName, other.tableName);
     }
-
-    // Comment
 
     @Override
     public String toString() {
