@@ -71,11 +71,13 @@ public class S3ObjectRange
         return length;
     }
 
-    public boolean getSplit() {
+    public boolean getSplit()
+    {
         return split;
     }
 
-    public String getCompressionType() {
+    public String getCompressionType()
+    {
         return compressionType;
     }
 
@@ -108,7 +110,8 @@ public class S3ObjectRange
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return toStringHelper(this)
                 .add("bucket", bucket)
                 .add("key", key)
