@@ -51,13 +51,6 @@ public class CsvRecord
         this.position = new Position[1024];
     }
 
-    /*
-    private String debug(int field) {
-        return "{" + position[field].pos + "," + position[field].len + "}: " +
-                getSlice(field).toStringUtf8();
-    }
-     */
-
     public void decode()
     {
         positions = 0;
