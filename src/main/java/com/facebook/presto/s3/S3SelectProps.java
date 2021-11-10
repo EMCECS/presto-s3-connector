@@ -18,8 +18,7 @@ package com.facebook.presto.s3;
 
 public class S3SelectProps
 {
-    // TODO: make configurable
-    // https://github.com/pravega/pravega-sql/issues/75
+
     private String fieldDelim = ",";
 
     private String recordDelim = "\n";

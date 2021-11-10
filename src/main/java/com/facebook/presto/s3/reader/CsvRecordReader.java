@@ -23,7 +23,6 @@ import com.facebook.presto.s3.decoder.CsvFieldValueProvider;
 import com.facebook.presto.s3.decoder.CsvRecord;
 
 import java.io.Closeable;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

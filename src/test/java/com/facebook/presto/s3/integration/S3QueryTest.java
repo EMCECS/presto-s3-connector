@@ -343,8 +343,19 @@ public class S3QueryTest
     @Test (dependsOnMethods = "testCreateTable")
     public void testInsertRow() {
         log.info("Test: testInsertRow");
-        queryRunner.execute("INSERT INTO s3.newschema.csvtable VALUES (100, 'GEORGE', 20.0)");
-        assertEquals(queryRunner.execute("SELECT * FROM s3.newschema.csvtable").getMaterializedRows().size(), 1);
+        queryRunner.execute("INSERT INTO s3.newschema.csvtable VALUES (100, 'JOHN, PAUL, GEORGE, RINGO and \"YOKO\"', 20.0)");
+        List<MaterializedRow> rows = queryRunner.execute("SELECT * FROM s3.newschema.csvtable").getMaterializedRows();
+        int numRows = 0;
+        boolean foundBeatles = false;
+        for (MaterializedRow row : rows) {
+            log.debug("Test: testInsertRow.  Found row: " + row.toString());
+            if (row.toString().contains("JOHN, PAUL, GEORGE, RINGO and \"YOKO\"")) {
+                foundBeatles = true;
+            }
+            numRows++;
+        }
+        assertTrue(foundBeatles);
+        assertTrue(numRows == 1);
     }
 
     @Test (dependsOnMethods = "testInsertRow")

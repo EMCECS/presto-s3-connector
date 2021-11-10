@@ -205,7 +205,7 @@ public class S3PageSink
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         OutputStreamWriter osw = new OutputStreamWriter(baos);
         CSVWriter csvWriter = new CSVWriter(osw, field_delimiter.charAt(0),
-                ICSVWriter.NO_QUOTE_CHARACTER,
+                ICSVWriter.DEFAULT_QUOTE_CHARACTER,
                 ICSVWriter.NO_ESCAPE_CHARACTER, record_delimiter);
 
         List<String[]> inputPage = new ArrayList<String[]>();
@@ -238,7 +238,7 @@ public class S3PageSink
             row = ls.toArray(row);
             inputPage.add(row);
         }
-        csvWriter.writeAll(inputPage);
+        csvWriter.writeAll(inputPage, false);
         try {
             csvWriter.flush();
         } catch (Exception e) {
