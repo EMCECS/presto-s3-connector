@@ -16,19 +16,23 @@
 package com.facebook.presto.s3.decoder;
 
 import com.facebook.presto.decoder.FieldValueProvider;
+import com.facebook.presto.s3.S3ColumnHandle;
 import io.airlift.slice.Slice;
 
 public class CsvFieldValueProvider
         extends FieldValueProvider
 {
-    public final int field;
-
     private final CsvRecord record;
 
-    public CsvFieldValueProvider(CsvRecord record, int field)
+    private final S3ColumnHandle columnHandle;
+
+    private final int field;
+
+    public CsvFieldValueProvider(CsvRecord record, S3ColumnHandle columnHandle)
     {
         this.record = record;
-        this.field = field;
+        this.columnHandle = columnHandle;
+        this.field = columnHandle.getOrdinalPosition();
     }
 
     @Override

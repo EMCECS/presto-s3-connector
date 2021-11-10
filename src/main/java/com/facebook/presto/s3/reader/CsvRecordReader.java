@@ -16,11 +16,14 @@
 package com.facebook.presto.s3.reader;
 
 import com.facebook.airlift.log.Logger;
+import com.facebook.presto.common.type.TimestampType;
+import com.facebook.presto.common.type.Type;
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.s3.*;
 import com.facebook.presto.s3.decoder.CsvFieldValueProvider;
 import com.facebook.presto.s3.decoder.CsvRecord;
+import com.facebook.presto.s3.decoder.DateFieldValueProvider;
 
 import java.io.Closeable;
 import java.util.HashMap;
@@ -28,6 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.facebook.presto.common.type.DateType.DATE;
+import static com.facebook.presto.common.type.TimeType.TIME;
+import static com.facebook.presto.common.type.TimestampType.TIMESTAMP;
 import static com.facebook.presto.s3.S3Const.*;
 
 public class CsvRecordReader
@@ -73,8 +79,20 @@ public class CsvRecordReader
         // create col->value provider objects once as all the same underlying objects are used (i.e. record)
         this.row = new HashMap<>();
         for (S3ColumnHandle columnHandle : columnHandles) {
-            this.row.put(columnHandle, new CsvFieldValueProvider(record, columnHandle.getOrdinalPosition()));
+            this.row.put(columnHandle, getFieldValueProvider(columnHandle));
         }
+    }
+
+    private FieldValueProvider getFieldValueProvider(S3ColumnHandle columnHandle)
+    {
+        return isDateOrTimeType(columnHandle.getType())
+                ? new DateFieldValueProvider(record, columnHandle)
+                : new CsvFieldValueProvider(record, columnHandle);
+    }
+
+    private boolean isDateOrTimeType(Type type)
+    {
+        return type == DATE || type== TIME || type == TIMESTAMP;
     }
 
     private void init()

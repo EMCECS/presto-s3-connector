@@ -20,6 +20,7 @@ import com.facebook.airlift.log.Logger;
 import com.facebook.airlift.log.Logging;
 import com.facebook.presto.Session;
 import com.facebook.presto.common.type.DateType;
+import com.facebook.presto.common.type.TimeType;
 import com.facebook.presto.common.type.TimestampType;
 import com.facebook.presto.s3.services.EmbeddedSchemaRegistry;
 import com.facebook.presto.s3.util.SimpleS3Server;
@@ -366,10 +367,30 @@ public class S3QueryTest
     }
 
     @Test (dependsOnMethods = "testCTASInsertRow")
+    public void testCsvDate() {
+        log.info("Test: testCTASInsertRow");
+
+        queryRunner.execute("CREATE TABLE s3.newschema.csvtabledate (id bigint, date_sold date, time_of_date time) WITH (FORMAT='CSV', has_header_row = 'false', external_location='s3a://testbucket/TestDataDate/')");
+        assertEquals(queryRunner.execute("DESCRIBE s3.newschema.csvtabledate").getMaterializedRows().size(), 3);
+
+        queryRunner.execute("INSERT INTO s3.newschema.csvtabledate VALUES (27, date '2021-09-20', time '07:00:00.000')");
+        MaterializedResult result = queryRunner.execute("SELECT * FROM s3.newschema.csvtabledate");
+        assertEquals(result.getRowCount(), 1);
+
+        assertEquals(result.getTypes().get(1), DateType.DATE);
+        assertEquals(result.getTypes().get(2), TimeType.TIME);
+        assertEquals(result.getMaterializedRows().get(0).getField(1).toString(), "2021-09-20");
+        // TODO: check format going in,
+        //       insert time above, time '07:00:00.000' gets written to csv as 10:00, and returned here as 23:00
+        //assertEquals(result.getMaterializedRows().get(0).getField(2).toString(), "07:00:00.000");
+    }
+
+    @Test (dependsOnMethods = "testCsvDate")
     public void testDropTable() {
         log.info("Test: testDropTable");
         queryRunner.execute("DROP TABLE s3.newschema.csvtable");
         queryRunner.execute("DROP TABLE s3.newschema.csvtable1");
+        queryRunner.execute("DROP TABLE s3.newschema.csvtabledate");
         List<MaterializedRow> rows = queryRunner.execute("SHOW TABLES in s3.newschema").getMaterializedRows();
         boolean foundTable = false;
         for (MaterializedRow row : rows) {
