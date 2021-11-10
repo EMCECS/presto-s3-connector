@@ -19,7 +19,6 @@
 package com.facebook.presto.s3;
 
 import com.facebook.presto.common.predicate.Domain;
-import com.facebook.presto.common.predicate.Marker;
 import com.facebook.presto.common.predicate.Range;
 import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.common.type.DecimalType;

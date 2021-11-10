@@ -217,10 +217,6 @@ public class S3SchemaRegistryManager {
             }
             columnObjectNode.put(JSON_PROP_TYPE, columnType);
             propertyNode.set(column.getName(), columnObjectNode);
-            // For now, there are no column properties
-            // for (Map.Entry<String, Object> properties1 : column.getProperties().entrySet()) {
-            //    String propertyName = properties1.getKey();
-            // }
         }
         schemaNode.set(properties_var, propertyNode);
         log.info("Add schema: " + schemaNode);

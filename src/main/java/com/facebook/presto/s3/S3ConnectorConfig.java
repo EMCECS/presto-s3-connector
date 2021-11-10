@@ -143,7 +143,7 @@ public class S3ConnectorConfig
         return this;
     }
 
-    // TODO: https://github.com/pravega/pravega-sql/issues/82
+    // TODO: https://github.com/EMCECS/presto-s3-connector/issues/11
     @Config("s3.schemaRegistryNamespace")
     public com.facebook.presto.s3.S3ConnectorConfig setSchemaRegistryServerNamespace(String SchemaRegistryServerNamespace) {
         this.SchemaRegistryServerNamespace = SchemaRegistryServerNamespace;
