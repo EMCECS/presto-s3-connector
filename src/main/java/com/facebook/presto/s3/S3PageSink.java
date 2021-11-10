@@ -280,6 +280,9 @@ public class S3PageSink
         else if (DATE.equals(type)) {
             values.add(DATE_FORMATTER.format(Instant.ofEpochMilli(TimeUnit.DAYS.toMillis(type.getLong(block, position)))));
         }
+        else if (TIME.equals(type)) {
+            values.add(new Time(type.getLong(block, position)));
+        }
         else if (TIMESTAMP.equals(type)) {
             values.add(new Timestamp(type.getLong(block, position)));
         }
