@@ -330,18 +330,25 @@ public class S3SchemaRegistryManager {
                 log.debug("Found tableName in schema registry: " + schemaName);
                 ByteBuffer schemaData =
                         client.getLatestSchemaVersion(nextGroup.getKey(), schemaName).getSchemaInfo().getSchemaData();
-                byte[] schemaDataByteArray = new byte[schemaData.remaining()];
-                schemaData.get(schemaDataByteArray, 0, schemaDataByteArray.length);
-                String schemaDataByteArrayStr = new String(schemaDataByteArray, Charsets.UTF_8);
-                // Use JsonNode instead of JSONObject to preserve order of table columns in properties
                 JsonNode jsonNodeProperties = null;
-                try {
-                    jsonNodeProperties = new ObjectMapper().readTree(schemaDataByteArrayStr).get(properties_var);
-                } catch (IOException e) {
-                    log.error("Exception: " + e);
-                    return returnJSON;
+                if(schemaData.hasArray()){
+                    try {
+                        jsonNodeProperties = new ObjectMapper().readTree(schemaData.array()).get(properties_var);
+                    } catch (IOException e) {
+                        log.error("Exception: " + e);
+                        return returnJSON;
+                    }
+                    populateSchemaRegistryConfigHelper(schemaData.array(), jsonNodeProperties, arrayOfSchemas);
+                } else {
+                    byte[] schemaDataByteArray = new byte[schemaData.remaining()];
+                    try {
+                        jsonNodeProperties = new ObjectMapper().readTree(schemaDataByteArray).get(properties_var);
+                    } catch (IOException e) {
+                        log.error("Exception: " + e);
+                        return returnJSON;
+                    }
+                    populateSchemaRegistryConfigHelper(schemaDataByteArray, jsonNodeProperties, arrayOfSchemas);
                 }
-                populateSchemaRegistryConfigHelper(schemaDataByteArray, jsonNodeProperties, arrayOfSchemas);
                 }
                 if (!groupHasSchemas) {
                     // DB with no tables - create minimal schema
