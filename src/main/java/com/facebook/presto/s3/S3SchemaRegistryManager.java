@@ -333,21 +333,22 @@ public class S3SchemaRegistryManager {
                 JsonNode jsonNodeProperties = null;
                 if(schemaData.hasArray()){
                     try {
-                        jsonNodeProperties = new ObjectMapper().readTree(schemaData.array()).get(properties_var);
+                        jsonNodeProperties = new ObjectMapper().readTree(schemaData.array(), schemaData.arrayOffset(), schemaData.remaining()).get(properties_var);
                     } catch (IOException e) {
                         log.error("Exception: " + e);
                         return returnJSON;
                     }
-                    populateSchemaRegistryConfigHelper(schemaData.array(), jsonNodeProperties, arrayOfSchemas);
+                    populateSchemaRegistryConfigHelper(schemaData.array(),schemaData.arrayOffset(), schemaData.remaining(), jsonNodeProperties, arrayOfSchemas);
                 } else {
                     byte[] schemaDataByteArray = new byte[schemaData.remaining()];
+                    schemaData.get(schemaDataByteArray, 0, schemaDataByteArray.length);
                     try {
                         jsonNodeProperties = new ObjectMapper().readTree(schemaDataByteArray).get(properties_var);
                     } catch (IOException e) {
                         log.error("Exception: " + e);
                         return returnJSON;
                     }
-                    populateSchemaRegistryConfigHelper(schemaDataByteArray, jsonNodeProperties, arrayOfSchemas);
+                    populateSchemaRegistryConfigHelper(schemaDataByteArray,0,schemaDataByteArray.length, jsonNodeProperties, arrayOfSchemas);
                 }
                 }
                 if (!groupHasSchemas) {
@@ -366,8 +367,8 @@ public class S3SchemaRegistryManager {
         return (returnJSON);
     }
 
-    private void populateSchemaRegistryConfigHelper(byte[] schemaDataByteArray, JsonNode jsonNodeProperties, JSONArray arrayOfSchemas){
-        JSONObject schemaJSON = new JSONObject(new String(schemaDataByteArray, Charsets.UTF_8));
+    private void populateSchemaRegistryConfigHelper(byte[] schemaDataByteArray, int offset, int length, JsonNode jsonNodeProperties, JSONArray arrayOfSchemas){
+        JSONObject schemaJSON = new JSONObject(new String(schemaDataByteArray, offset, length, Charsets.UTF_8));
         JSONObject commentInfo = new JSONObject(schemaJSON.getString(comment_var));
         String database = commentInfo.getString(database_var);
         String tablename = commentInfo.getString(tablename_var);
