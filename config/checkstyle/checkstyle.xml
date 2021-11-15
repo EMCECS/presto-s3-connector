@@ -28,7 +28,6 @@
     <module name="OneStatementPerLine"/>
     <module name="UnnecessaryParentheses" />
     <module name="SimplifyBooleanReturn"/>
-    <module name="DeclarationOrder"/>
     <!--<module name="InnerAssignment"/> This doesn't work with lambdas-->
     <module name="ModifiedControlVariable"/>
     <module name="OverloadMethodsDeclarationOrder"/>
