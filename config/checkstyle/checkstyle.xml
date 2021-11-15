@@ -47,7 +47,6 @@
     </module>
     <module name="LocalVariableName"/>
     <module name="LocalFinalVariableName"/>
-    <module name="MemberName"/>
     <module name="ClassTypeParameterName">
         <!-- Allows type parameters that are a single capital letter (with optional number) or a name that either begins on ends with 'T'
         IE: T, E, E1, TFoo, or FooT -->
