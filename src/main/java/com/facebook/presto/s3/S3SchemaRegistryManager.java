@@ -333,12 +333,12 @@ public class S3SchemaRegistryManager {
                 JsonNode jsonNodeProperties = null;
                 if(schemaData.hasArray()){
                     try {
-                        jsonNodeProperties = new ObjectMapper().readTree(schemaData.array(), schemaData.arrayOffset(), schemaData.remaining()).get(properties_var);
+                        jsonNodeProperties = new ObjectMapper().readTree(schemaData.array(), schemaData.arrayOffset()+schemaData.position(), schemaData.remaining()).get(properties_var);
                     } catch (IOException e) {
                         log.error("Exception: " + e);
                         return returnJSON;
                     }
-                    populateSchemaRegistryConfigHelper(schemaData.array(),schemaData.arrayOffset(), schemaData.remaining(), jsonNodeProperties, arrayOfSchemas);
+                    populateSchemaRegistryConfigHelper(schemaData.array(),schemaData.arrayOffset()+schemaData.position(), schemaData.remaining(), jsonNodeProperties, arrayOfSchemas);
                 } else {
                     byte[] schemaDataByteArray = new byte[schemaData.remaining()];
                     schemaData.get(schemaDataByteArray, 0, schemaDataByteArray.length);
