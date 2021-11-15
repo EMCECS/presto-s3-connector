@@ -23,6 +23,7 @@ plugins {
     id 'distribution'
     id 'maven'
     id 'com.github.davidmc24.gradle.plugin.avro-base' version "1.2.1"
+    id 'checkstyle'
 }
 
 apply from: "$rootDir/gradle/checkstyle.gradle"
