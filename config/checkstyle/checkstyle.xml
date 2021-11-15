@@ -32,10 +32,6 @@
     <!--<module name="InnerAssignment"/> This doesn't work with lambdas-->
     <module name="ModifiedControlVariable"/>
     <module name="OverloadMethodsDeclarationOrder"/>
-    <module name="ReturnCount">
-        <property name="maxForVoid" value="4"/>
-        <property name="max" value="4"/>
-    </module>
     <module name="StringLiteralEquality"/>
 
 
