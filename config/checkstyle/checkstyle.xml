@@ -42,26 +42,8 @@
     <module name="UpperEll"/>
     <module name="LeftCurly"/>
     <module name="RightCurly"/>
-    <module name="ConstantName">
-      <property name="format" value="(^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$)|(^log$)"/>
-    </module>
-    <module name="LocalVariableName"/>
     <module name="LocalFinalVariableName"/>
-    <module name="ClassTypeParameterName">
-        <!-- Allows type parameters that are a single capital letter (with optional number) or a name that either begins on ends with 'T'
-        IE: T, E, E1, TFoo, or FooT -->
-      <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)|(T[a-zA-Z0-9]*$)"/>
-    </module>
-    <module name="MethodTypeParameterName">
-        <!-- Allows type parameters that are a single capital letter (with optional number) or a name that either begins on ends with 'T'
-        IE: T, E, E1, TFoo, or FooT -->
-      <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)|(T[a-zA-Z0-9]*$)"/>
-    </module>
     <module name="PackageName"/>
-    <module name="ParameterName"/>
-    <module name="StaticVariableName">
-        <property name="format" value="Static non-final variables are not allowed."/>
-    </module>
     <module name="TypeName"/>
     <module name="AvoidStarImport">
        <!--    <property name="excludes" value="java.io,java.net,java.lang.Math"/> -->
