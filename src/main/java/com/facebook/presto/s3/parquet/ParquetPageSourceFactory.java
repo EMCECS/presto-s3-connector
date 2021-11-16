@@ -139,8 +139,7 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
             FSDataInputStream inputStream = accessObject.getFsDataInputStream(bucket, key, 65536);
             dataSource = buildS3ParquetDataSource(inputStream, bucket+key);
             long filesize  = accessObject.getObjectLength(bucket, key);
-            ParquetMetadata parquetMetadata = parquetMetadataSource.getParquetMetadata(inputStream, dataSource.getId(), filesize, false).getParquetMetadata();
-
+            ParquetMetadata parquetMetadata = parquetMetadataSource.getParquetMetadata(dataSource, filesize, false).getParquetMetadata();
 
             FileMetaData fileMetaData = parquetMetadata.getFileMetaData();
             MessageType fileSchema = fileMetaData.getSchema();
