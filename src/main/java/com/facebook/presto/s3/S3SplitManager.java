@@ -24,6 +24,7 @@ import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
 import java.util.Iterator;
+
 import javax.inject.Inject;
 
 import static com.facebook.presto.s3.S3Const.*;

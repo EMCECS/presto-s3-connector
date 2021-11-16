@@ -357,7 +357,7 @@ public class S3RecordCursorTest {
         dataFileWriter.setSyncInterval(AVRO_BLOCK_SIZE_BYTES);
 
         // generate our own sync so we can look for+capture it
-        byte[] sync = new byte[]{
+        byte[] sync = new byte[] {
                 'a', 'v', 'r', 'o', 's', 'y', 'n', 'c', 0, 1, 2, 3, 4, 5, 6, 7
         };
 

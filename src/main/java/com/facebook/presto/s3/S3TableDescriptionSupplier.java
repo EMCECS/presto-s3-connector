@@ -23,9 +23,11 @@ import com.facebook.airlift.log.Logger;
 
 import com.facebook.presto.spi.SchemaTableName;
 import com.google.common.collect.ImmutableMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 

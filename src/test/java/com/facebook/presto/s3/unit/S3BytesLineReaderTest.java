@@ -18,6 +18,7 @@ package com.facebook.presto.s3.unit;
 
 import com.facebook.presto.s3.BytesLineReader;
 import org.testng.annotations.Test;
+
 import java.io.ByteArrayInputStream;
 
 import static org.testng.Assert.assertEquals;
@@ -29,7 +30,7 @@ public class S3BytesLineReaderTest {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
-        byte[] data = new byte[]{'a', 'n', 'd', 'r', 'e', 'w', '\n'};
+        byte[] data = new byte[] {'a', 'n', 'd', 'r', 'e', 'w', '\n'};
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
 
         BytesLineReader reader = new BytesLineReader(inputStream);
@@ -46,7 +47,7 @@ public class S3BytesLineReaderTest {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
-        byte[] data = new byte[]{'a', 'n', 'd', 'r', 'e', 'w', '\n', 't', 'i', 'm', '\n'};
+        byte[] data = new byte[] {'a', 'n', 'd', 'r', 'e', 'w', '\n', 't', 'i', 'm', '\n'};
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
 
         BytesLineReader reader = new BytesLineReader(inputStream);
@@ -67,7 +68,7 @@ public class S3BytesLineReaderTest {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
-        byte[] data = new byte[]{'a', 'n', 'd', 'r', 'e', 'w', '\n', 't', 'i', 'm', '\n'};
+        byte[] data = new byte[] {'a', 'n', 'd', 'r', 'e', 'w', '\n', 't', 'i', 'm', '\n'};
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
 
         // buf size of 2 so we have to refill a couple of times
@@ -89,7 +90,7 @@ public class S3BytesLineReaderTest {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
-        byte[] data = new byte[]{'a', 'n', 'd', 'r', 'e', 'w', '\n',
+        byte[] data = new byte[] {'a', 'n', 'd', 'r', 'e', 'w', '\n',
                 't', 'i', 'm', '\r', '\n',
                 'c', 'h', 'a', 'r', 'l', 'e', 's', '\r', '\n'};
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
@@ -117,7 +118,7 @@ public class S3BytesLineReaderTest {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
-        byte[] data = new byte[]{'\n'};
+        byte[] data = new byte[] {'\n'};
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
 
         BytesLineReader reader = new BytesLineReader(inputStream);
@@ -134,7 +135,7 @@ public class S3BytesLineReaderTest {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
-        byte[] data = new byte[]{'x', 'y', 'z', '\n', 'a', 'n', 'd', 'r', 'e', 'w', '\n'};
+        byte[] data = new byte[] {'x', 'y', 'z', '\n', 'a', 'n', 'd', 'r', 'e', 'w', '\n'};
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
 
         BytesLineReader reader = new BytesLineReader(inputStream, 2, 1, Long.MAX_VALUE);
@@ -149,7 +150,7 @@ public class S3BytesLineReaderTest {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
-        byte[] data = new byte[]{'x', 'y', 'z', '\n', 'a', 'n', 'd', 'r', 'e', 'w', '\n'};
+        byte[] data = new byte[] {'x', 'y', 'z', '\n', 'a', 'n', 'd', 'r', 'e', 'w', '\n'};
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
 
         BytesLineReader reader = new BytesLineReader(inputStream, 2, 0, 7);
@@ -168,7 +169,7 @@ public class S3BytesLineReaderTest {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
-        byte[] data = new byte[]{'x', 'y', 'z', '\n', 'a', 'n', 'd', 'r', 'e', 'w', '\n'};
+        byte[] data = new byte[] {'x', 'y', 'z', '\n', 'a', 'n', 'd', 'r', 'e', 'w', '\n'};
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
 
         // test bug fix where absPos was incremented 2x
@@ -187,7 +188,7 @@ public class S3BytesLineReaderTest {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
-        byte[] data = new byte[]{'a', 'n', 'd', 'r'};
+        byte[] data = new byte[] {'a', 'n', 'd', 'r'};
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
 
         BytesLineReader reader = new BytesLineReader(inputStream);

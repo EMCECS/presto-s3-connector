@@ -18,11 +18,13 @@ package com.facebook.presto.s3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.hadoop.io.compress.CompressionCodec;
 
 public class S3ObjectRangeIterator

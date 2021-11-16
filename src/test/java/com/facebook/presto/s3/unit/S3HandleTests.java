@@ -23,12 +23,14 @@ import com.facebook.presto.s3.S3InsertTableHandle;
 import com.facebook.presto.s3.S3OutputTableHandle;
 import com.facebook.presto.s3.S3TableHandle;
 import com.facebook.presto.spi.SchemaTableName;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;

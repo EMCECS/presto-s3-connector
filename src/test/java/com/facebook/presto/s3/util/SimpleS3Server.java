@@ -23,6 +23,7 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.emc.object.s3.bean.MetadataSearchList;
 import com.facebook.presto.s3.Pair;
 import com.google.common.base.Preconditions;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
@@ -47,6 +49,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+
 import org.apache.http.impl.io.ChunkedInputStream;
 import org.apache.http.impl.io.HttpTransportMetricsImpl;
 import org.apache.http.impl.io.SessionInputBufferImpl;
@@ -96,7 +99,7 @@ public class SimpleS3Server extends Application {
         ServerConnector connector = new ServerConnector(server);
         connector.setHost("127.0.0.1");
         connector.setPort(port);
-        server.setConnectors(new Connector[]{connector});
+        server.setConnectors(new Connector[] {connector});
 
         ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         contextHandler.addServlet(new ServletHolder(new ServletContainer(ResourceConfig.forApplication(this))), "/*");

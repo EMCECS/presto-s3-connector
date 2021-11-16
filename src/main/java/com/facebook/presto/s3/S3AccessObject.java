@@ -53,6 +53,7 @@ import com.emc.object.s3.jersey.S3JerseyClient;
 import com.facebook.airlift.log.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import io.airlift.units.DataSize;
+
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -61,6 +62,7 @@ import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.apache.hadoop.fs.BufferedFSInputStream;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSInputStream;

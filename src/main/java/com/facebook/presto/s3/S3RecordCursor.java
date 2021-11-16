@@ -24,6 +24,7 @@ import com.facebook.presto.s3.reader.RecordReader;
 import com.facebook.presto.spi.RecordCursor;
 
 import io.airlift.slice.Slice;
+
 import java.util.List;
 import java.util.Map;
 

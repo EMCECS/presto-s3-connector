@@ -51,14 +51,14 @@ public class S3ObjectRangeIteratorTest {
 
     @Test
     public void testEmptyBucket() {
-        server.putKey("bucket1", "key1-1", new byte[]{'a'});
-        server.putKey("bucket1", "key1-2", new byte[]{'a'});
-        server.putKey("bucket1", "key1-3", new byte[]{'a'});
+        server.putKey("bucket1", "key1-1", new byte[] {'a'});
+        server.putKey("bucket1", "key1-2", new byte[] {'a'});
+        server.putKey("bucket1", "key1-3", new byte[] {'a'});
 
         server.putBucket("bucket2");
 
-        server.putKey("bucket3", "key3-1", new byte[]{'a'});
-        server.putKey("bucket3", "key3-2", new byte[]{'a'});
+        server.putKey("bucket3", "key3-1", new byte[] {'a'});
+        server.putKey("bucket3", "key3-2", new byte[] {'a'});
 
         Map<String, List<String>> sources = new TreeMap<>();
         sources.put("bucket1", null);
