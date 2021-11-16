@@ -146,7 +146,7 @@ public class S3ObjectRangeIterator
 
     @Override
     public boolean hasNext() {
-        return range != null && range.hasNext() || advance();
+        return (range != null && range.hasNext()) || advance();
     }
 
     @Override

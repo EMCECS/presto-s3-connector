@@ -19,7 +19,6 @@ package com.facebook.presto.s3.unit;
 import com.facebook.presto.s3.S3ConnectorId;
 import org.testng.annotations.Test;
 
-
 import java.util.Objects;
 
 import static org.testng.Assert.*;

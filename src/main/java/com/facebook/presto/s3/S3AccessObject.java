@@ -417,12 +417,12 @@ public class S3AccessObject {
 
         private void seekStream()
                 throws IOException {
-            if (in != null && nextReadPosition == streamPosition) {
+            if ((in != null) && (nextReadPosition == streamPosition)) {
                 // already at specified position
                 return;
             }
 
-            if (in != null && nextReadPosition > streamPosition) {
+            if ((in != null) && (nextReadPosition > streamPosition)) {
                 // seeking forwards
                 long skip = nextReadPosition - streamPosition;
                 if (skip <= max(in.available(), MAX_SKIP_SIZE.toBytes())) {

@@ -108,7 +108,7 @@ public class BucketObjectIterator
 
     @Override
     public boolean hasNext() {
-        return iterator != null && iterator.hasNext() || advance();
+        return (iterator != null && iterator.hasNext()) || advance();
     }
 
     @Override

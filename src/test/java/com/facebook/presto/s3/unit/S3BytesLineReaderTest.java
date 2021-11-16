@@ -16,7 +16,6 @@
 
 package com.facebook.presto.s3.unit;
 
-
 import com.facebook.presto.s3.BytesLineReader;
 import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;

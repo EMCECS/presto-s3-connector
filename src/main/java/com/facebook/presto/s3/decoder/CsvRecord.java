@@ -65,7 +65,7 @@ public class CsvRecord {
         // if value starts+ends with quote, trim quotes
         while (idx < len) {
             // terminate field with separator or end of line
-            if (value[idx] == fieldSep && !quoted ||
+            if ((value[idx] == fieldSep && !quoted) ||
                     idx + 1 == len) {
 
                 // code assumes length includes field sep.  adjust if end of line

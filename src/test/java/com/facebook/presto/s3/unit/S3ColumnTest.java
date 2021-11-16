@@ -20,7 +20,6 @@ import com.facebook.presto.s3.S3Column;
 import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
-
 import java.util.List;
 
 import static com.facebook.presto.common.type.BigintType.BIGINT;
