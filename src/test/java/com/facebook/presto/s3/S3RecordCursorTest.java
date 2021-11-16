@@ -51,7 +51,7 @@ import static org.testng.Assert.*;
 
 public class S3RecordCursorTest {
 
-    private static final int AVRO_BLOCK_SIZE_BYTES = 16*1024;
+    private static final int AVRO_BLOCK_SIZE_BYTES = 16 * 1024;
 
     /*
      * start test helpers
@@ -76,8 +76,7 @@ public class S3RecordCursorTest {
             return builder.build();
         }
 
-        S3ColumnHandle column(final String name, final Type type, int position, String mapping)
-        {
+        S3ColumnHandle column(final String name, final Type type, int position, String mapping) {
             return new S3ColumnHandle("s3",
                     position,
                     name,
@@ -134,9 +133,8 @@ public class S3RecordCursorTest {
                         new S3ReaderProps(false, 65536),
                         readerStream(f));
             default:
-        throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException();
         }
-
     }
 
     RecordReader newCsvStringReader(List<S3ColumnHandle> columns, String streamAsString) {
@@ -144,7 +142,7 @@ public class S3RecordCursorTest {
     }
 
     RecordReader newStringReader(List<S3ColumnHandle> columns, String streamAsString, String dataFormat,
-            int offset, int length) {
+                                 int offset, int length) {
 
         Supplier<CountingInputStream> stream =
                 readerStream(new ByteArrayInputStream(streamAsString.getBytes(StandardCharsets.UTF_8)));
@@ -171,7 +169,6 @@ public class S3RecordCursorTest {
                 throw new UnsupportedOperationException();
         }
     }
-
 
     RecordReader newAvroRecordReader(List<S3ColumnHandle> columns, byte[] bytes, int start, int end) {
         final SeekableByteArrayInputStream byteArrayInputStream = new SeekableByteArrayInputStream(bytes);
@@ -205,10 +202,10 @@ public class S3RecordCursorTest {
                         },
                         65536));
 
-            return new AvroRecordReader(columns,
-                    new S3ObjectRange("bucket", "key", start, end-start,
-                            start > 0 || end != Integer.MAX_VALUE),
-                    readerStream(inputStream));
+        return new AvroRecordReader(columns,
+                new S3ObjectRange("bucket", "key", start, end - start,
+                        start > 0 || end != Integer.MAX_VALUE),
+                readerStream(inputStream));
     }
 
     /*
@@ -322,8 +319,8 @@ public class S3RecordCursorTest {
                         .build();
 
         String line = "{\"field1\": \"johnDoe\",\"field2\": true}\n" +      // length: 36   buffer: "field1": "johnDoe","field2": true}
-                      "{\"field1\": \"a\",\"field2\": false}\n" +           // length: 31   buffer: "field1": "a","field2": false}true}     you can see here
-                      "{\"field1\": \"abc\",\"field2\": true}\n";           // length: 32   buffer: "field1": "abc","field2": true}rue}
+                "{\"field1\": \"a\",\"field2\": false}\n" +           // length: 31   buffer: "field1": "a","field2": false}true}     you can see here
+                "{\"field1\": \"abc\",\"field2\": true}\n";           // length: 32   buffer: "field1": "abc","field2": true}rue}
 
         // read entire records
         S3RecordCursor cursor =
@@ -360,7 +357,7 @@ public class S3RecordCursorTest {
         dataFileWriter.setSyncInterval(AVRO_BLOCK_SIZE_BYTES);
 
         // generate our own sync so we can look for+capture it
-        byte[] sync = new byte[] {
+        byte[] sync = new byte[]{
                 'a', 'v', 'r', 'o', 's', 'y', 'n', 'c', 0, 1, 2, 3, 4, 5, 6, 7
         };
 
@@ -372,9 +369,9 @@ public class S3RecordCursorTest {
         int userId = 0;
         while (os.getSyncs() < avroBlocksToWrite) {
             user = User.newBuilder()
-                    .setUserId(userId)
-                    .setFirst("first_" + userId)
-                    .setLast("last_" + userId).build();
+                       .setUserId(userId)
+                       .setFirst("first_" + userId)
+                       .setLast("last_" + userId).build();
             dataFileWriter.append(user);
             userId++;
         }
@@ -399,7 +396,7 @@ public class S3RecordCursorTest {
         do {
             n = readSplit(columnHandles, duplicateSet, avroData, split++);
             records += n;
-            System.out.println("split " + (split-1) + " returned " + n + " records");
+            System.out.println("split " + (split - 1) + " returned " + n + " records");
             if (n > 0) {
                 splitsWithData++;
             }
@@ -424,7 +421,7 @@ public class S3RecordCursorTest {
             // and that always increasing in sequence
             assertTrue(duplicateSet.add(cursor.getLong(0)));
             if (lastId >= 0) {
-                assertEquals(lastId+1, cursor.getLong(0));
+                assertEquals(lastId + 1, cursor.getLong(0));
             }
             lastId = lastId == -1 ? cursor.getLong(0) : lastId + 1;
             records++;

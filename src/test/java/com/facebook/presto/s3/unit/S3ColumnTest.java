@@ -16,11 +16,10 @@
 
 package com.facebook.presto.s3.unit;
 
-
+import com.facebook.presto.s3.S3Column;
 import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
-import com.facebook.presto.s3.*;
 
 import java.util.List;
 
@@ -32,28 +31,28 @@ import static org.testng.Assert.assertEquals;
 
 public class S3ColumnTest {
 
-    private final S3Column column1 = new S3Column (
+    private final S3Column column1 = new S3Column(
             "column1Name",
             BIGINT,
             null
 
     );
 
-    private final S3Column column2 = new S3Column (
+    private final S3Column column2 = new S3Column(
             "column2Name",
             VARCHAR,
             null
     );
 
-    private final S3Column column3 = new S3Column (
+    private final S3Column column3 = new S3Column(
             "column3Name",
             DATE,
             null
     );
 
-    private final S3Column column4 = new S3Column (
-        "column1Name",
-        BIGINT,
+    private final S3Column column4 = new S3Column(
+            "column1Name",
+            BIGINT,
             null
     );
 
@@ -78,7 +77,5 @@ public class S3ColumnTest {
     public void testColumnEquals() {
         assertEquals(column4.equals(column4), true);
         assertEquals(column4.equals(null), false);
-
     }
-
 }

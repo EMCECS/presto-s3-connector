@@ -84,23 +84,21 @@ public class EmbeddedSchemaRegistry
         return URI.create("http://localhost:" + port);
     }
 
-    public SchemaRegistryClient client()
-    {
+    public SchemaRegistryClient client() {
         if (client == null) {
             SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder()
-                    .schemaRegistryUri(getURI())
-                    .build();
+                                                                          .schemaRegistryUri(getURI())
+                                                                          .build();
             client = SchemaRegistryClientFactory.withDefaultNamespace(config);
         }
         return client;
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         try {
             stop();
+        } catch (Exception quiet) {
         }
-        catch (Exception quiet) {}
     }
 }

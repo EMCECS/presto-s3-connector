@@ -18,11 +18,12 @@ package com.facebook.presto.s3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.facebook.presto.s3.util.SimpleS3Server;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 import static org.testng.Assert.*;
 

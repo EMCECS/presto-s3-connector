@@ -19,7 +19,8 @@ import javax.ws.rs.core.Response;
 
 public class S3ErrorUtil {
 
-    private S3ErrorUtil() {}
+    private S3ErrorUtil() {
+    }
 
     public static Response errorResponse(int httpStatus, String code, String message) {
         return Response

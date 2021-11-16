@@ -76,11 +76,11 @@ public class S3ObjectRangeIteratorTest {
         assertEquals(ranges.size(), 5);
 
         int i = 0;
-        assertEquals(ranges.get(i++).getKey(),"key1-1");
-        assertEquals(ranges.get(i++).getKey(),"key1-2");
-        assertEquals(ranges.get(i++).getKey(),"key1-3");
-        assertEquals(ranges.get(i++).getKey(),"key3-1");
-        assertEquals(ranges.get(i).getKey(),"key3-2");
+        assertEquals(ranges.get(i++).getKey(), "key1-1");
+        assertEquals(ranges.get(i++).getKey(), "key1-2");
+        assertEquals(ranges.get(i++).getKey(), "key1-3");
+        assertEquals(ranges.get(i++).getKey(), "key3-1");
+        assertEquals(ranges.get(i).getKey(), "key3-2");
     }
 
     @Test
