@@ -19,14 +19,11 @@ package com.facebook.presto.s3;
 import static com.facebook.presto.s3.S3Const.CSV;
 import static com.facebook.presto.s3.S3Const.TEXT;
 
-public class S3SelectUtil
-{
-    private S3SelectUtil()
-    {
+public class S3SelectUtil {
+    private S3SelectUtil() {
     }
 
-    public static boolean useS3Pushdown(S3Split split, String objectDataFormat)
-    {
+    public static boolean useS3Pushdown(S3Split split, String objectDataFormat) {
         return split.getS3SelectPushdownEnabled() &&
                 (objectDataFormat.equals(CSV) || objectDataFormat.equals(TEXT));
     }

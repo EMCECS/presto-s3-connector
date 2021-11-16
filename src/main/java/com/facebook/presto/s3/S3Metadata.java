@@ -16,10 +16,24 @@
 
 package com.facebook.presto.s3;
 
-
 import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.type.Type;
-import com.facebook.presto.spi.*;
+import com.facebook.presto.spi.ColumnHandle;
+import com.facebook.presto.spi.ColumnMetadata;
+import com.facebook.presto.spi.ConnectorInsertTableHandle;
+import com.facebook.presto.spi.ConnectorNewTableLayout;
+import com.facebook.presto.spi.ConnectorOutputTableHandle;
+import com.facebook.presto.spi.ConnectorSession;
+import com.facebook.presto.spi.ConnectorTableHandle;
+import com.facebook.presto.spi.ConnectorTableLayout;
+import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.facebook.presto.spi.ConnectorTableLayoutResult;
+import com.facebook.presto.spi.ConnectorTableMetadata;
+import com.facebook.presto.spi.Constraint;
+import com.facebook.presto.spi.PrestoException;
+import com.facebook.presto.spi.SchemaTableName;
+import com.facebook.presto.spi.SchemaTablePrefix;
+import com.facebook.presto.spi.TableNotFoundException;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
 import com.facebook.presto.spi.connector.ConnectorOutputMetadata;
 import com.facebook.presto.spi.statistics.ComputedStatistics;
@@ -28,8 +42,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.airlift.slice.Slice;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
-import java.util.*;
+
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -50,7 +69,7 @@ public class S3Metadata
 
     @Inject
     public S3Metadata(S3ConnectorId connectorId,
-                      Supplier<Map<SchemaTableName,S3Table>> s3TableDescriptionSupplier,
+                      Supplier<Map<SchemaTableName, S3Table>> s3TableDescriptionSupplier,
                       S3ConnectorConfig s3ConnectorConfig) {
         this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
         this.s3TableDescriptionSupplier = s3TableDescriptionSupplier;
@@ -68,7 +87,6 @@ public class S3Metadata
         }
         return ImmutableList.copyOf(builder.build());
     }
-
 
     @Override
     public S3TableHandle getTableHandle(ConnectorSession session, SchemaTableName tableName) {
@@ -110,22 +128,31 @@ public class S3Metadata
         return getTableMetadata(tableName);
     }
 
+    private ConnectorTableMetadata getTableMetadata(SchemaTableName tableName) {
+        S3Table table = tableDescriptions.get(tableName);
+        if (table == null) {
+            return null;
+        } else if (table.getColumns().isEmpty() && tableName.getSchemaName().equals("s3_buckets")) {
+            throw new PrestoException(NOT_SUPPORTED, "MetaData Search is not Enabled for this Bucket");
+        } else {
+            return new ConnectorTableMetadata(tableName, table.getColumnsMetadata());
+        }
+    }
+
     @Override
     public List<SchemaTableName> listTables(ConnectorSession session, Optional<String> schemaNameOrNull) {
 
         ImmutableList.Builder<SchemaTableName> builder = ImmutableList.builder();
-        for(SchemaTableName entry : tableDescriptions.keySet()){
+        for (SchemaTableName entry : tableDescriptions.keySet()) {
             if (!entry.getTableName().equalsIgnoreCase(NO_TABLES)) {
                 builder.add(entry);
             }
         }
         return builder.build();
-
     }
 
     @Override
-    public void createSchema(ConnectorSession session, String schemaName, Map<String, Object> properties)
-    {
+    public void createSchema(ConnectorSession session, String schemaName, Map<String, Object> properties) {
         if (schemaRegistryManager.schemaExists(schemaName)) {
             throw new PrestoException(S3ErrorCode.S3_SCHEMA_ALREADY_EXISTS, format("Schema %s already exists", schemaName));
         }
@@ -147,19 +174,17 @@ public class S3Metadata
     }
 
     @Override
-    public void createTable(ConnectorSession session, ConnectorTableMetadata tableMetadata, boolean ignoreExisting)
-    {
-         if (schemaRegistryManager.tableSchemaExists(tableMetadata.getTable().getSchemaName(), tableMetadata.getTable().getTableName())) {
+    public void createTable(ConnectorSession session, ConnectorTableMetadata tableMetadata, boolean ignoreExisting) {
+        if (schemaRegistryManager.tableSchemaExists(tableMetadata.getTable().getSchemaName(), tableMetadata.getTable().getTableName())) {
             throw new PrestoException(S3ErrorCode.S3_TABLE_ALREADY_EXISTS,
                     format("Table %s in schema %s already exists", tableMetadata.getTable().getTableName(), tableMetadata.getTable().getSchemaName()));
-         }
-         schemaRegistryManager.createTable(tableMetadata);
-         this.tableDescriptions = s3TableDescriptionSupplier.get();
+        }
+        schemaRegistryManager.createTable(tableMetadata);
+        this.tableDescriptions = s3TableDescriptionSupplier.get();
     }
 
     @Override
-    public S3OutputTableHandle beginCreateTable(ConnectorSession session, ConnectorTableMetadata tableMetadata, Optional<ConnectorNewTableLayout> layout)
-    {
+    public S3OutputTableHandle beginCreateTable(ConnectorSession session, ConnectorTableMetadata tableMetadata, Optional<ConnectorNewTableLayout> layout) {
         if (schemaRegistryManager.tableSchemaExists(tableMetadata.getTable().getSchemaName(), tableMetadata.getTable().getTableName())) {
             throw new PrestoException(S3ErrorCode.S3_TABLE_ALREADY_EXISTS, format("Table %s in schema %s already exists",
                     tableMetadata.getTable().getTableName(), tableMetadata.getTable().getSchemaName()));
@@ -178,9 +203,8 @@ public class S3Metadata
     }
 
     @Override
-    public Optional<ConnectorOutputMetadata> finishCreateTable(ConnectorSession session, ConnectorOutputTableHandle tableHandle, Collection<Slice> fragments, Collection<ComputedStatistics> computedStatistics)
-    {
-        S3OutputTableHandle handle = (S3OutputTableHandle)tableHandle;
+    public Optional<ConnectorOutputMetadata> finishCreateTable(ConnectorSession session, ConnectorOutputTableHandle tableHandle, Collection<Slice> fragments, Collection<ComputedStatistics> computedStatistics) {
+        S3OutputTableHandle handle = (S3OutputTableHandle) tableHandle;
         ImmutableList.Builder<ColumnMetadata> ctm = ImmutableList.builder();
         for (S3Column s3Column : handle.getColumns()) {
             ctm.add(new ColumnMetadata(s3Column.getName(), s3Column.getType()));
@@ -210,10 +234,8 @@ public class S3Metadata
         this.tableDescriptions = s3TableDescriptionSupplier.get();
     }
 
-
     @Override
-    public S3InsertTableHandle beginInsert(ConnectorSession session, ConnectorTableHandle tableHandle)
-    {
+    public S3InsertTableHandle beginInsert(ConnectorSession session, ConnectorTableHandle tableHandle) {
         S3TableHandle s3TableHandle = checkType(tableHandle, S3TableHandle.class, "tableHandle");
         S3Table s3Table = tableDescriptions.get(s3TableHandle.toSchemaTableName());
         String tableName = s3TableHandle.getTableName();
@@ -226,7 +248,7 @@ public class S3Metadata
         }
         checkArgument(s3TableHandle.getConnectorId().equals(connectorId), "tableHandle is not for this connector");
         log.debug("Begin Insert for table: " + s3TableHandle.getTableName() + " with output format " + objectDataFormat);
-        List<S3ColumnHandle> columns = (List)getColumnHandles(session, s3TableHandle).values();
+        List<S3ColumnHandle> columns = (List) getColumnHandles(session, s3TableHandle).values();
         List<String> columnNames = columns.stream().map(S3ColumnHandle::getName).collect(Collectors.toList());
         List<Type> columnTypes = columns.stream().map(S3ColumnHandle::getType).collect(Collectors.toList());
 
@@ -246,12 +268,10 @@ public class S3Metadata
     }
 
     @Override
-    public Optional<ConnectorOutputMetadata> finishInsert(ConnectorSession session, ConnectorInsertTableHandle insertHandle, Collection<Slice> fragments, Collection<ComputedStatistics> computedStatistics)
-    {
+    public Optional<ConnectorOutputMetadata> finishInsert(ConnectorSession session, ConnectorInsertTableHandle insertHandle, Collection<Slice> fragments, Collection<ComputedStatistics> computedStatistics) {
         this.tableDescriptions = s3TableDescriptionSupplier.get();
         return Optional.empty();
     }
-
 
     @Override
     public Map<String, ColumnHandle> getColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle) {
@@ -297,8 +317,7 @@ public class S3Metadata
         if (prefix.getTableName() == null) {
             tableNames = listTables(session, Optional.of(requireNonNull(prefix.getSchemaName(),
                     "schemaName is null")));
-        }
-        else {
+        } else {
             tableNames = ImmutableList.of(new SchemaTableName(prefix.getSchemaName(), prefix.getTableName()));
         }
         for (SchemaTableName tableName : tableNames) {
@@ -310,27 +329,13 @@ public class S3Metadata
         return columns.build();
     }
 
-    private ConnectorTableMetadata getTableMetadata(SchemaTableName tableName) {
-        S3Table table = tableDescriptions.get(tableName);
-        if (table == null) {
-            return null;
-        } else if(table.getColumns().isEmpty() && tableName.getSchemaName().equals("s3_buckets")){
-            throw new PrestoException(NOT_SUPPORTED,"MetaData Search is not Enabled for this Bucket");
-        }
-        else {
-            return new ConnectorTableMetadata(tableName, table.getColumnsMetadata());
-        }
-
-    }
-
     @Override
     public ColumnMetadata getColumnMetadata(ConnectorSession session, ConnectorTableHandle tableHandle, ColumnHandle columnHandle) {
         checkType(tableHandle, S3TableHandle.class, "tableHandle");
         return checkType(columnHandle, S3ColumnHandle.class, "columnHandle").getColumnMetadata();
     }
 
-    static boolean delimitedFormat(S3Table table)
-    {
+    static boolean delimitedFormat(S3Table table) {
         return table.getObjectDataFormat().equals(CSV) ||
                 table.getObjectDataFormat().equals(TEXT);
     }

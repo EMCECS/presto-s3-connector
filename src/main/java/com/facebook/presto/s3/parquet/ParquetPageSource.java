@@ -53,45 +53,39 @@ public class ParquetPageSource implements ConnectorPageSource {
     public ParquetPageSource(
             ParquetReader parquetReader,
             List<Type> types,
-            List<Optional<Field>> fields)
-    {
+            List<Optional<Field>> fields) {
         this.parquetReader = requireNonNull(parquetReader, "parquetReader is null");
         this.types = ImmutableList.copyOf(requireNonNull(types, "types is null"));
         this.fields = ImmutableList.copyOf(requireNonNull(fields, "fields is null"));
     }
+
     @Override
-    public long getCompletedBytes()
-    {
+    public long getCompletedBytes() {
         return parquetReader.getDataSource().getReadBytes();
     }
 
     @Override
-    public long getCompletedPositions()
-    {
+    public long getCompletedPositions() {
         return completedPositions;
     }
 
     @Override
-    public long getReadTimeNanos()
-    {
+    public long getReadTimeNanos() {
         return parquetReader.getDataSource().getReadTimeNanos();
     }
 
     @Override
-    public boolean isFinished()
-    {
+    public boolean isFinished() {
         return closed;
     }
 
     @Override
-    public long getSystemMemoryUsage()
-    {
+    public long getSystemMemoryUsage() {
         return parquetReader.getSystemMemoryContext().getBytes();
     }
 
     @Override
-    public Page getNextPage()
-    {
+    public Page getNextPage() {
         try {
             batchId++;
             int batchSize = parquetReader.nextBatch();
@@ -108,30 +102,25 @@ public class ParquetPageSource implements ConnectorPageSource {
                 Optional<Field> field = fields.get(fieldId);
                 if (field.isPresent()) {
                     blocks[fieldId] = new LazyBlock(batchSize, new com.facebook.presto.s3.parquet.ParquetPageSource.ParquetBlockLoader(field.get()));
-                }
-                else {
+                } else {
                     blocks[fieldId] = RunLengthEncodedBlock.create(types.get(fieldId), null, batchSize);
                 }
             }
             return new Page(batchSize, blocks);
-        }
-        catch (PrestoException e) {
+        } catch (PrestoException e) {
             closeWithSuppression(e);
             throw e;
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             closeWithSuppression(e);
             throw new PrestoException(S3_CURSOR_ERROR, e);
         }
     }
 
-    private void closeWithSuppression(Throwable throwable)
-    {
+    private void closeWithSuppression(Throwable throwable) {
         requireNonNull(throwable, "throwable is null");
         try {
             close();
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             // Self-suppression not permitted
             if (e != throwable) {
                 throwable.addSuppressed(e);
@@ -140,8 +129,7 @@ public class ParquetPageSource implements ConnectorPageSource {
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         if (closed) {
             return;
         }
@@ -149,27 +137,23 @@ public class ParquetPageSource implements ConnectorPageSource {
 
         try {
             parquetReader.close();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     private final class ParquetBlockLoader
-            implements LazyBlockLoader<LazyBlock>
-    {
+            implements LazyBlockLoader<LazyBlock> {
         private final int expectedBatchId = batchId;
         private final Field field;
         private boolean loaded;
 
-        public ParquetBlockLoader(Field field)
-        {
+        public ParquetBlockLoader(Field field) {
             this.field = requireNonNull(field, "field is null");
         }
 
         @Override
-        public final void load(LazyBlock lazyBlock)
-        {
+        public final void load(LazyBlock lazyBlock) {
             if (loaded) {
                 return;
             }
@@ -179,11 +163,9 @@ public class ParquetPageSource implements ConnectorPageSource {
             try {
                 Block block = parquetReader.readBlock(field);
                 lazyBlock.setBlock(block);
-            }
-            catch (ParquetCorruptionException e) {
+            } catch (ParquetCorruptionException e) {
                 throw new PrestoException(S3_BAD_DATA, e);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new PrestoException(S3_CURSOR_ERROR, e);
             }
             loaded = true;

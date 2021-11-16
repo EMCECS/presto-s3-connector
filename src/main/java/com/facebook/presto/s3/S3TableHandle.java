@@ -39,7 +39,7 @@ public final class S3TableHandle
     private final String hasHeaderRow;
     private final String tableBucketName;
     private final String tableBucketPrefix;
-    private final Map<String,List<String>> bucketObjectsMap;
+    private final Map<String, List<String>> bucketObjectsMap;
 
     @JsonCreator
     public S3TableHandle(
@@ -53,8 +53,7 @@ public final class S3TableHandle
             @JsonProperty("tableBucketName") String tableBucketName,
             @JsonProperty("tableBucketPrefix") String tableBucketPrefix,
             @JsonProperty("bucketObjectsMap") Map<String, List<String>> bucketObjectsMap
-            )
-    {
+    ) {
         this.connectorId = requireNonNull(connectorId, "connectorId is null");
         this.schemaName = requireNonNull(schemaName, "schemaName is null");
         this.tableName = requireNonNull(tableName, "tableName is null");
@@ -93,7 +92,9 @@ public final class S3TableHandle
     }
 
     @JsonProperty
-    public String getRecordDelimiter() { return recordDelimiter; }
+    public String getRecordDelimiter() {
+        return recordDelimiter;
+    }
 
     @JsonProperty
     public String getHasHeaderRow() {
@@ -110,12 +111,10 @@ public final class S3TableHandle
         return tableBucketPrefix;
     }
 
-
     @JsonProperty
     public Map<String, List<String>> getBucketObjectsMap() {
         return bucketObjectsMap;
     }
-
 
     public SchemaTableName toSchemaTableName() {
         return new SchemaTableName(schemaName, tableName);
@@ -131,7 +130,7 @@ public final class S3TableHandle
         if (this == obj) {
             return true;
         }
-        if ((obj == null) || (getClass() != obj.getClass())) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
 

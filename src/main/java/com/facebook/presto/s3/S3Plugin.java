@@ -20,23 +20,23 @@ import com.facebook.presto.spi.Plugin;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.connector.ConnectorFactory;
 import com.google.common.collect.ImmutableList;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+
 import static java.util.Objects.requireNonNull;
 
 public class S3Plugin
-        implements Plugin
-{
+        implements Plugin {
     private Optional<Supplier<Map<SchemaTableName, S3Table>>> tableDescriptionSupplier = Optional.empty();
 
-    public synchronized void setTableDescriptionSupplier(Supplier<Map<SchemaTableName, S3Table>> tableDescriptionSupplier)
-    {
+    public synchronized void setTableDescriptionSupplier(Supplier<Map<SchemaTableName, S3Table>> tableDescriptionSupplier) {
         this.tableDescriptionSupplier = Optional.of(requireNonNull(tableDescriptionSupplier, "tableDescriptionSupplier is null"));
     }
+
     @Override
-    public synchronized Iterable<ConnectorFactory> getConnectorFactories()
-    {
+    public synchronized Iterable<ConnectorFactory> getConnectorFactories() {
         return ImmutableList.of(new S3ConnectorFactory(tableDescriptionSupplier, getClassLoader()));
     }
 

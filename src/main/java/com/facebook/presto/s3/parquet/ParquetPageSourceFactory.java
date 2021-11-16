@@ -53,6 +53,7 @@ import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.PrimitiveType;
 
 import javax.inject.Inject;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
@@ -82,8 +83,7 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
 
     @Inject
     public ParquetPageSourceFactory(ParquetMetadataSource parquetMetadataSource,
-                                    S3AccessObject accessObject)
-    {
+                                    S3AccessObject accessObject) {
         this.parquetMetadataSource = requireNonNull(parquetMetadataSource, "parquetMetadataSource is null");
         this.accessObject = requireNonNull(accessObject, "hdfsEnvironment is null");
     }
@@ -130,27 +130,25 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
             boolean batchReaderEnabled,
             boolean verificationEnabled,
             ParquetMetadataSource parquetMetadataSource,
-            TupleDomain<S3ColumnHandle> effectivePredicate)
-    {
+            TupleDomain<S3ColumnHandle> effectivePredicate) {
         AggregatedMemoryContext systemMemoryContext = newSimpleAggregatedMemoryContext();
 
         ParquetDataSource dataSource = null;
         try {
             FSDataInputStream inputStream = accessObject.getFsDataInputStream(bucket, key, 65536);
-            dataSource = buildS3ParquetDataSource(inputStream, bucket+key);
-            long filesize  = accessObject.getObjectLength(bucket, key);
+            dataSource = buildS3ParquetDataSource(inputStream, bucket + key);
+            long filesize = accessObject.getObjectLength(bucket, key);
             ParquetMetadata parquetMetadata = parquetMetadataSource.getParquetMetadata(inputStream, dataSource.getId(), filesize, false).getParquetMetadata();
-
 
             FileMetaData fileMetaData = parquetMetadata.getFileMetaData();
             MessageType fileSchema = fileMetaData.getSchema();
 
             Optional<MessageType> message = columns.stream()
-                    .map(column -> getColumnType(column.getType(), fileSchema, useParquetColumnNames, column, tableName, bucket+key))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .map(type -> new MessageType(fileSchema.getName(), type))
-                    .reduce(MessageType::union);
+                                                   .map(column -> getColumnType(column.getType(), fileSchema, useParquetColumnNames, column, tableName, bucket + key))
+                                                   .filter(Optional::isPresent)
+                                                   .map(Optional::get)
+                                                   .map(type -> new MessageType(fileSchema.getName(), type))
+                                                   .reduce(MessageType::union);
 
             MessageType requestedSchema = message.orElse(new MessageType(fileSchema.getName(), ImmutableList.of()));
 
@@ -193,23 +191,20 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
                 namesBuilder.add(name);
                 typesBuilder.add(type);
 
-                if (getParquetType(type, fileSchema, useParquetColumnNames, column, tableName, bucket+key).isPresent()) {
+                if (getParquetType(type, fileSchema, useParquetColumnNames, column, tableName, bucket + key).isPresent()) {
                     String columnName = useParquetColumnNames ? name : fileSchema.getFields().get(column.getOrdinalPosition()).getName();
                     fieldsBuilder.add(constructField(type, lookupColumnByName(messageColumnIO, columnName)));
-                }
-                else {
+                } else {
                     fieldsBuilder.add(Optional.empty());
                 }
             }
             return new ParquetPageSource(parquetReader, typesBuilder.build(), fieldsBuilder.build());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             try {
                 if (dataSource != null) {
                     dataSource.close();
                 }
-            }
-            catch (IOException ignored) {
+            } catch (IOException ignored) {
             }
             if (e instanceof PrestoException) {
                 throw (PrestoException) e;
@@ -224,7 +219,7 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
                     e instanceof FileNotFoundException) {
                 throw new PrestoException(S3_CANNOT_OPEN_SPLIT, e);
             }
-            String message = format("Error opening S3 split %s (offset=%s, length=%s): %s", bucket+key, start, length, e.getMessage());
+            String message = format("Error opening S3 split %s (offset=%s, length=%s): %s", bucket + key, start, length, e.getMessage());
             if (e.getClass().getSimpleName().equals("BlockMissingException")) {
                 throw new PrestoException(S3_MISSING_DATA, message, e);
             }
@@ -232,8 +227,7 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
         }
     }
 
-    public static TupleDomain<ColumnDescriptor> getParquetTupleDomain(Map<List<String>, RichColumnDescriptor> descriptorsByPath, TupleDomain<S3ColumnHandle> effectivePredicate)
-    {
+    public static TupleDomain<ColumnDescriptor> getParquetTupleDomain(Map<List<String>, RichColumnDescriptor> descriptorsByPath, TupleDomain<S3ColumnHandle> effectivePredicate) {
 
         ImmutableMap.Builder<ColumnDescriptor, Domain> predicate = ImmutableMap.builder();
         for (Map.Entry<S3ColumnHandle, Domain> entry : effectivePredicate.getDomains().get().entrySet()) {
@@ -248,13 +242,11 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
         return TupleDomain.withColumnDomains(predicate.build());
     }
 
-    public static Optional<org.apache.parquet.schema.Type> getParquetType(Type prestoType, MessageType messageType, boolean useParquetColumnNames, S3ColumnHandle column, SchemaTableName tableName, String bucketObjectName)
-    {
+    public static Optional<org.apache.parquet.schema.Type> getParquetType(Type prestoType, MessageType messageType, boolean useParquetColumnNames, S3ColumnHandle column, SchemaTableName tableName, String bucketObjectName) {
         org.apache.parquet.schema.Type type = null;
         if (useParquetColumnNames) {
             type = getParquetTypeByName(column.getName(), messageType);
-        }
-        else if (column.getOrdinalPosition() < messageType.getFieldCount()) {
+        } else if (column.getOrdinalPosition() < messageType.getFieldCount()) {
             type = messageType.getType(column.getOrdinalPosition());
         }
 
@@ -266,8 +258,7 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
             String parquetTypeName;
             if (type.isPrimitive()) {
                 parquetTypeName = type.asPrimitiveType().getPrimitiveTypeName().toString();
-            }
-            else {
+            } else {
                 GroupType group = type.asGroupType();
                 StringBuilder builder = new StringBuilder();
                 group.writeToStringBuilder(builder, "");
@@ -283,8 +274,7 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
         return Optional.of(type);
     }
 
-    private static boolean checkSchemaMatch(org.apache.parquet.schema.Type parquetType, Type type)
-    {
+    private static boolean checkSchemaMatch(org.apache.parquet.schema.Type parquetType, Type type) {
         String prestoType = type.getTypeSignature().getBase();
         if (parquetType instanceof GroupType) {
             GroupType groupType = parquetType.asGroupType();
@@ -338,7 +328,7 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
                     }
                     GroupType bagGroupType = bagType.asGroupType();
                     return checkSchemaMatch(bagGroupType, type.getTypeParameters().get(0)) ||
-                            (bagGroupType.getFields().size() == 1 && checkSchemaMatch(bagGroupType.getFields().get(0), type.getTypeParameters().get(0)));
+                            bagGroupType.getFields().size() == 1 && checkSchemaMatch(bagGroupType.getFields().get(0), type.getTypeParameters().get(0));
                 default:
                     return false;
             }
@@ -368,8 +358,7 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
         }
     }
 
-    public static Optional<org.apache.parquet.schema.Type> getColumnType(Type prestoType, MessageType messageType, boolean useParquetColumnNames, S3ColumnHandle column, SchemaTableName tableName, String bucketObjectName)
-    {
+    public static Optional<org.apache.parquet.schema.Type> getColumnType(Type prestoType, MessageType messageType, boolean useParquetColumnNames, S3ColumnHandle column, SchemaTableName tableName, String bucketObjectName) {
         return getParquetType(prestoType, messageType, useParquetColumnNames, column, tableName, bucketObjectName);
     }
 }

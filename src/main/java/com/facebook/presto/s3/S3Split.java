@@ -65,31 +65,34 @@ public class S3Split
     }
 
     @JsonProperty
-    public Optional<String> getObjectDataSchemaContents()
-    {
+    public Optional<String> getObjectDataSchemaContents() {
         return objectDataSchemaContents;
     }
 
     @JsonProperty
-    public byte[] getObjectRange()
-    {
+    public byte[] getObjectRange() {
         return objectRange;
     }
 
     @JsonProperty
-    public boolean getS3SelectPushdownEnabled()
-    {
+    public boolean getS3SelectPushdownEnabled() {
         return s3SelectPushdownEnabled;
     }
 
     @JsonProperty
-    public S3TableHandle getS3TableHandle() { return  s3TableLayoutHandle.getTable(); }
+    public S3TableHandle getS3TableHandle() {
+        return s3TableLayoutHandle.getTable();
+    }
 
     @JsonProperty
-    public S3TableLayoutHandle getS3TableLayoutHandle() { return  s3TableLayoutHandle; }
+    public S3TableLayoutHandle getS3TableLayoutHandle() {
+        return s3TableLayoutHandle;
+    }
 
     @Override
-    public NodeSelectionStrategy getNodeSelectionStrategy() { return NO_PREFERENCE; }
+    public NodeSelectionStrategy getNodeSelectionStrategy() {
+        return NO_PREFERENCE;
+    }
 
     @Override
     public List<HostAddress> getPreferredNodes(List<HostAddress> sortedCandidates) {

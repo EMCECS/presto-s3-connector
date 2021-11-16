@@ -23,6 +23,9 @@ import com.facebook.airlift.log.Logger;
 
 import com.facebook.presto.spi.SchemaTableName;
 import com.google.common.collect.ImmutableMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -30,7 +33,6 @@ import javax.inject.Inject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.*;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
@@ -47,7 +49,7 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
 
     @Inject
     S3TableDescriptionSupplier(S3AccessObject accessObject,
-                               JsonCodec<S3Table> objectDescriptionCodec, S3ConnectorConfig s3ConnectorConfig){
+                               JsonCodec<S3Table> objectDescriptionCodec, S3ConnectorConfig s3ConnectorConfig) {
         this.objectDescriptionCodec = requireNonNull(objectDescriptionCodec, "objectDescriptionCodec is null");
 
         this.accessObject = requireNonNull(accessObject, "S3AccessObject is null");
@@ -61,18 +63,18 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
 
         ImmutableMap.Builder<SchemaTableName, S3Table> builder = ImmutableMap.builder();
         List<Bucket> listOfBuckets = this.accessObject.listBuckets();
-        for(Bucket bucket: listOfBuckets){
+        for (Bucket bucket : listOfBuckets) {
             JSONObject sources = new JSONObject();
             S3Table table = this.objectDescriptionCodec.fromJson(
                     this.accessObject.loadColumnsFromMetaDataSearchKeys(bucket.getName()).
-                            put("sources", sources).
-                            put("objectDataFormat", DEFAULT_OBJECT_FILE_TYPE).
-                            put("hasHeaderRow", DEFAULT_HAS_HEADER_ROW).
-                            put("recordDelimiter", DEFAULT_RECORD_DELIMITER).
-                            put("fieldDelimiter", DEFAULT_FIELD_DELIMITER).
-                            put("tableBucketName", bucket.getName()).
-                            put("tableBucketPrefix", "/").
-                            toString()
+                                     put("sources", sources).
+                                     put("objectDataFormat", DEFAULT_OBJECT_FILE_TYPE).
+                                     put("hasHeaderRow", DEFAULT_HAS_HEADER_ROW).
+                                     put("recordDelimiter", DEFAULT_RECORD_DELIMITER).
+                                     put("fieldDelimiter", DEFAULT_FIELD_DELIMITER).
+                                     put("tableBucketName", bucket.getName()).
+                                     put("tableBucketPrefix", "/").
+                                     toString()
             );
             log.info("Adding bucket " + bucket.getName() + " to s3_buckets schema");
             builder.put(new SchemaTableName("s3_buckets", bucket.getName()), table);
@@ -105,12 +107,12 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
         return currentTables;
     }
 
-    private ImmutableMap.Builder<SchemaTableName, S3Table> getSchema (JSONObject schemaJSON) {
+    private ImmutableMap.Builder<SchemaTableName, S3Table> getSchema(JSONObject schemaJSON) {
         ImmutableMap.Builder<SchemaTableName, S3Table> returnBuilder = ImmutableMap.builder();
 
         JSONArray arrayOfObjects = schemaJSON.getJSONArray("schemas");
-        for(int i=0; i<arrayOfObjects.length(); i++){
-            String nameOfSchema =  arrayOfObjects.getJSONObject(i).getJSONObject("schemaTableName").getString("schema_name");
+        for (int i = 0; i < arrayOfObjects.length(); i++) {
+            String nameOfSchema = arrayOfObjects.getJSONObject(i).getJSONObject("schemaTableName").getString("schema_name");
             try {
                 String nameOfTable = arrayOfObjects.getJSONObject(i).getJSONObject("schemaTableName").getString("table_name");
                 S3Table table = this.objectDescriptionCodec.fromJson(arrayOfObjects.getJSONObject(i).getJSONObject("s3Table").toString());

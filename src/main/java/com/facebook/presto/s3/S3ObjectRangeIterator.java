@@ -18,13 +18,15 @@ package com.facebook.presto.s3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.io.compress.CompressionCodec;
 
-import java.util.*;
-
 public class S3ObjectRangeIterator
-        implements Iterator<S3ObjectRange>
-{
+        implements Iterator<S3ObjectRange> {
     private final AmazonS3 s3Client;
     private final long rangeBytes;
     private final int batchSize;
@@ -91,7 +93,7 @@ public class S3ObjectRangeIterator
         List<S3ObjectRange> rangeList = new ArrayList<>();
 
         for (int count = 0; count < batchSize &&
-                continuation != null || bucketObject.hasNext();) {
+                continuation != null || bucketObject.hasNext(); ) {
 
             S3ObjectSummary object = continuation == null
                     ? bucketObject.next()
@@ -144,7 +146,7 @@ public class S3ObjectRangeIterator
 
     @Override
     public boolean hasNext() {
-        return (range != null && range.hasNext()) || advance();
+        return range != null && range.hasNext() || advance();
     }
 
     @Override

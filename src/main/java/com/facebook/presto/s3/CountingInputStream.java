@@ -18,14 +18,12 @@ package com.facebook.presto.s3;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class CountingInputStream extends InputStream
-{
+public class CountingInputStream extends InputStream {
     private final InputStream delegate;
 
     private long bytes = 0;
 
-    public CountingInputStream(InputStream delegate)
-    {
+    public CountingInputStream(InputStream delegate) {
         this.delegate = delegate;
     }
 
@@ -33,21 +31,18 @@ public class CountingInputStream extends InputStream
         return delegate;
     }
 
-    public long getTotalBytes()
-    {
+    public long getTotalBytes() {
         return bytes;
     }
 
     @Override
-    public int read() throws IOException
-    {
+    public int read() throws IOException {
         bytes++;
         return delegate.read();
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException
-    {
+    public int read(byte[] b, int off, int len) throws IOException {
         int n = delegate.read(b, off, len);
         if (n > 0) {
             bytes += n;
@@ -56,8 +51,7 @@ public class CountingInputStream extends InputStream
     }
 
     @Override
-    public int read(byte[] b) throws IOException
-    {
+    public int read(byte[] b) throws IOException {
         int n = delegate.read(b);
         if (n > 0) {
             bytes += n;
