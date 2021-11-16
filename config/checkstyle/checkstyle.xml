@@ -8,7 +8,7 @@
   <module name="FileTabCharacter"/>
 
   <module name="SuppressionFilter">
-    <property name="file" value="${suppressionsFile}"/>
+    <property name="file" value="${config_loc}/suppressions.xml"/>
   </module>
   <!-- header -->
   <module name="SuppressWarningsFilter"/>
