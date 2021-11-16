@@ -7,6 +7,9 @@
 
   <module name="FileTabCharacter"/>
 
+  <module name="SuppressionFilter">
+    <property name="file" value="${suppressionsFile}"/>
+  </module>
   <!-- header -->
   <module name="SuppressWarningsFilter"/>
   <module name="FileTabCharacter"/>
