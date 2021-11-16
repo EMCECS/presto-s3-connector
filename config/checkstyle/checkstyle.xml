@@ -4,18 +4,18 @@
      "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
 <module name="Checker">
   <property name="localeLanguage" value="en"/>
-
   <module name="FileTabCharacter"/>
-
   <module name="SuppressionFilter">
     <property name="file" value="${config_loc}/suppressions.xml"/>
   </module>
+
   <!-- header -->
   <module name="SuppressWarningsFilter"/>
   <module name="FileTabCharacter"/>
   <module name="TreeWalker">
     <module name="SuppressWarningsHolder" />
     <module name="SuppressWarnings"/>
+
     <!-- code cleanup -->
     <module name="UnusedImports"/>
     <module name="RedundantImport"/>
@@ -35,7 +35,6 @@
     <module name="ModifiedControlVariable"/>
     <module name="OverloadMethodsDeclarationOrder"/>
     <module name="StringLiteralEquality"/>
-
 
     <!-- style -->
     <module name="NoLineWrap"/>
