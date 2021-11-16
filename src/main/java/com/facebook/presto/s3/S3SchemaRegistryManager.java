@@ -330,18 +330,26 @@ public class S3SchemaRegistryManager {
                 log.debug("Found tableName in schema registry: " + schemaName);
                 ByteBuffer schemaData =
                         client.getLatestSchemaVersion(nextGroup.getKey(), schemaName).getSchemaInfo().getSchemaData();
-                byte[] schemaDataByteArray = new byte[schemaData.remaining()];
-                schemaData.get(schemaDataByteArray, 0, schemaDataByteArray.length);
-                String schemaDataByteArrayStr = new String(schemaDataByteArray, Charsets.UTF_8);
-                // Use JsonNode instead of JSONObject to preserve order of table columns in properties
                 JsonNode jsonNodeProperties = null;
-                try {
-                    jsonNodeProperties = new ObjectMapper().readTree(schemaDataByteArrayStr).get(properties_var);
-                } catch (IOException e) {
-                    log.error("Exception: " + e);
-                    return returnJSON;
+                if(schemaData.hasArray()){
+                    try {
+                        jsonNodeProperties = new ObjectMapper().readTree(schemaData.array(), schemaData.arrayOffset()+schemaData.position(), schemaData.remaining()).get(properties_var);
+                    } catch (IOException e) {
+                        log.error("Exception: " + e);
+                        return returnJSON;
+                    }
+                    populateSchemaRegistryConfigHelper(schemaData.array(),schemaData.arrayOffset()+schemaData.position(), schemaData.remaining(), jsonNodeProperties, arrayOfSchemas);
+                } else {
+                    byte[] schemaDataByteArray = new byte[schemaData.remaining()];
+                    schemaData.get(schemaDataByteArray, 0, schemaDataByteArray.length);
+                    try {
+                        jsonNodeProperties = new ObjectMapper().readTree(schemaDataByteArray).get(properties_var);
+                    } catch (IOException e) {
+                        log.error("Exception: " + e);
+                        return returnJSON;
+                    }
+                    populateSchemaRegistryConfigHelper(schemaDataByteArray,0,schemaDataByteArray.length, jsonNodeProperties, arrayOfSchemas);
                 }
-                populateSchemaRegistryConfigHelper(schemaDataByteArray, jsonNodeProperties, arrayOfSchemas);
                 }
                 if (!groupHasSchemas) {
                     // DB with no tables - create minimal schema
@@ -359,8 +367,8 @@ public class S3SchemaRegistryManager {
         return (returnJSON);
     }
 
-    private void populateSchemaRegistryConfigHelper(byte[] schemaDataByteArray, JsonNode jsonNodeProperties, JSONArray arrayOfSchemas){
-        JSONObject schemaJSON = new JSONObject(new String(schemaDataByteArray, Charsets.UTF_8));
+    private void populateSchemaRegistryConfigHelper(byte[] schemaDataByteArray, int offset, int length, JsonNode jsonNodeProperties, JSONArray arrayOfSchemas){
+        JSONObject schemaJSON = new JSONObject(new String(schemaDataByteArray, offset, length, Charsets.UTF_8));
         JSONObject commentInfo = new JSONObject(schemaJSON.getString(comment_var));
         String database = commentInfo.getString(database_var);
         String tablename = commentInfo.getString(tablename_var);
