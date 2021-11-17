@@ -29,7 +29,6 @@
     <module name="FallThrough"/>
     <module name="SimplifyBooleanExpression"/>
     <module name="OneStatementPerLine"/>
-    <module name="UnnecessaryParentheses" />
     <module name="SimplifyBooleanReturn"/>
     <!--<module name="InnerAssignment"/> This doesn't work with lambdas-->
     <module name="ModifiedControlVariable"/>
