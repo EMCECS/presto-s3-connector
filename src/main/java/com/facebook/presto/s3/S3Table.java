@@ -29,7 +29,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.requireNonNull;
 import static com.facebook.presto.s3.S3Const.*;
 
-
 public class S3Table {
     private final String name;
     private final List<S3Column> columns;
@@ -67,8 +66,8 @@ public class S3Table {
             // Using JSON, it's possible to define multiple buckets and prefix locations
             // Using Presto CLI, you specify one external location 's3a://bucket/prefix
             // Be able to parse this: "testbucket":["cvdata/VehicleLog1.csv", "cvdata/VehicleLog2.csv" ]
-            this.tableBucketName = (String)sources.keySet().toArray()[0];
-            this.tableBucketPrefix = (String)sources.get(this.tableBucketName).toArray()[0];
+            this.tableBucketName = (String) sources.keySet().toArray()[0];
+            this.tableBucketPrefix = (String) sources.get(this.tableBucketName).toArray()[0];
         } else {
             this.tableBucketName = tableBucketName;
             this.tableBucketPrefix = tableBucketPrefix;
@@ -99,7 +98,9 @@ public class S3Table {
     }
 
     @JsonProperty
-    public String getObjectDataFormat() { return objectDataFormat; }
+    public String getObjectDataFormat() {
+        return objectDataFormat;
+    }
 
     @JsonProperty
     public List<S3Column> getColumns() {
@@ -111,20 +112,32 @@ public class S3Table {
     }
 
     @JsonProperty
-    public Map<String, List<String>> getSources() { return sources; }
+    public Map<String, List<String>> getSources() {
+        return sources;
+    }
 
     @JsonProperty
-    public String getHasHeaderRow() { return hasHeaderRow; }
+    public String getHasHeaderRow() {
+        return hasHeaderRow;
+    }
 
     @JsonProperty
-    public String getRecordDelimiter() { return  recordDelimiter; }
+    public String getRecordDelimiter() {
+        return recordDelimiter;
+    }
 
     @JsonProperty
-    public String getFieldDelimiter() { return  fieldDelimiter; }
+    public String getFieldDelimiter() {
+        return fieldDelimiter;
+    }
 
     @JsonProperty
-    public String getTableBucketName() { return  tableBucketName; }
+    public String getTableBucketName() {
+        return tableBucketName;
+    }
 
     @JsonProperty
-    public String getTableBucketPrefix() { return  tableBucketPrefix; }
+    public String getTableBucketPrefix() {
+        return tableBucketPrefix;
+    }
 }

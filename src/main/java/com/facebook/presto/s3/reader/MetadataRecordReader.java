@@ -28,33 +28,28 @@ import java.util.List;
 import java.util.Map;
 
 public class MetadataRecordReader
-        implements RecordReader
-{
+        implements RecordReader {
     private final List<S3ColumnHandle> columnHandles;
 
     private final Iterator<Map<String, Object>> lines;
 
-    public MetadataRecordReader(List<S3ColumnHandle> columnHandles, S3AccessObject accessObject, S3TableLayoutHandle table)
-    {
+    public MetadataRecordReader(List<S3ColumnHandle> columnHandles, S3AccessObject accessObject, S3TableLayoutHandle table) {
         this.columnHandles = columnHandles;
         this.lines = accessObject.searchObjectMetadata(table.getTable().getTableName()).iterator();
     }
 
     @Override
-    public long getTotalBytes()
-    {
+    public long getTotalBytes() {
         return 0;
     }
 
     @Override
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         return lines.hasNext();
     }
 
     @Override
-    public Map<DecoderColumnHandle, FieldValueProvider> next()
-    {
+    public Map<DecoderColumnHandle, FieldValueProvider> next() {
         Map<String, Object> values = lines.next();
 
         Map<DecoderColumnHandle, FieldValueProvider> valueProviderMap = new HashMap<>();
@@ -68,7 +63,6 @@ public class MetadataRecordReader
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
     }
 }

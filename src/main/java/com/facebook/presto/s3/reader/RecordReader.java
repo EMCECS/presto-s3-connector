@@ -20,8 +20,7 @@ import com.facebook.presto.decoder.FieldValueProvider;
 
 import java.util.Map;
 
-public interface RecordReader
-{
+public interface RecordReader {
     long getTotalBytes();
 
     boolean hasNext();

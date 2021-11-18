@@ -26,7 +26,23 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.CSVInput;
+import com.amazonaws.services.s3.model.CSVOutput;
+import com.amazonaws.services.s3.model.CompressionType;
+import com.amazonaws.services.s3.model.ExpressionType;
+import com.amazonaws.services.s3.model.FileHeaderInfo;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.InputSerialization;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.OutputSerialization;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.RequestProgress;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.ScanRange;
+import com.amazonaws.services.s3.model.SelectObjectContentRequest;
 import com.emc.object.s3.S3Client;
 import com.emc.object.s3.S3Config;
 import com.emc.object.s3.S3Exception;
@@ -37,6 +53,16 @@ import com.emc.object.s3.jersey.S3JerseyClient;
 import com.facebook.airlift.log.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import io.airlift.units.DataSize;
+
+import java.io.ByteArrayInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.apache.hadoop.fs.BufferedFSInputStream;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSInputStream;
@@ -44,11 +70,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
-import java.io.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.facebook.presto.s3.S3Const.CSV;
@@ -64,8 +88,7 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.util.Objects.requireNonNull;
 import static org.apache.hadoop.fs.FSExceptionMessages.*;
 
-public class S3AccessObject
-{
+public class S3AccessObject {
     private final S3ConnectorConfig s3ConnectorConfig;
     private static S3Client s3Client;
     private static String URL_PATTERN = "http://%s:%s/";
@@ -76,36 +99,35 @@ public class S3AccessObject
     private static final Logger log = Logger.get(S3AccessObject.class);
 
     @Inject
-    public S3AccessObject(S3ConnectorConfig s3ConnectorConfig)
-    {
+    public S3AccessObject(S3ConnectorConfig s3ConnectorConfig) {
         log.info("create AmazonS3Client with " + s3ConnectorConfig.getMaxConnections() + " max connections");
         this.s3ConnectorConfig = requireNonNull(s3ConnectorConfig, "config is null");
         S3Config s3Config;
         try {
             URI s3Node = new URI(String.format(URL_PATTERN, s3ConnectorConfig.getRandomS3Node(), s3ConnectorConfig.getS3Port()));
 
-            s3Config =  new S3Config(s3Node);
+            s3Config = new S3Config(s3Node);
             s3Config.withIdentity(s3ConnectorConfig.getS3UserKey()).withSecretKey(s3ConnectorConfig.getS3UserSecretKey());
-            s3Client =  new S3JerseyClient(s3Config);
+            s3Client = new S3JerseyClient(s3Config);
 
             amazonS3Client = AmazonS3Client.builder()
-                    .withCredentials(
-                            new AWSStaticCredentialsProvider(
-                                    new BasicAWSCredentials(
-                                            s3ConnectorConfig.getS3UserKey(), s3ConnectorConfig.getS3UserSecretKey())))
-                    .withClientConfiguration(
-                            new ClientConfiguration()
-                                    .withProtocol(Protocol.HTTP)
-                                    .withMaxConnections(s3ConnectorConfig.getMaxConnections())
-                                    .withClientExecutionTimeout(s3ConnectorConfig.getS3ClientExecutionTimeout())
-                                    .withSocketTimeout(s3ConnectorConfig.getS3SocketTimeout())
-                                    .withConnectionTimeout(s3ConnectorConfig.getS3ConnectionTimeout()))
-                    .withEndpointConfiguration(
-                            new AwsClientBuilder.EndpointConfiguration(s3Node.toString(), null))
-                    .enablePathStyleAccess()
-                    .build();
+                                           .withCredentials(
+                                                   new AWSStaticCredentialsProvider(
+                                                           new BasicAWSCredentials(
+                                                                   s3ConnectorConfig.getS3UserKey(), s3ConnectorConfig.getS3UserSecretKey())))
+                                           .withClientConfiguration(
+                                                   new ClientConfiguration()
+                                                           .withProtocol(Protocol.HTTP)
+                                                           .withMaxConnections(s3ConnectorConfig.getMaxConnections())
+                                                           .withClientExecutionTimeout(s3ConnectorConfig.getS3ClientExecutionTimeout())
+                                                           .withSocketTimeout(s3ConnectorConfig.getS3SocketTimeout())
+                                                           .withConnectionTimeout(s3ConnectorConfig.getS3ConnectionTimeout()))
+                                           .withEndpointConfiguration(
+                                                   new AwsClientBuilder.EndpointConfiguration(s3Node.toString(), null))
+                                           .enablePathStyleAccess()
+                                           .build();
         } catch (URISyntaxException e) {
-            log.error("%s",e);
+            log.error("%s", e);
             throw new IllegalArgumentException(e);
         }
     }
@@ -118,8 +140,7 @@ public class S3AccessObject
         return amazonS3Client.doesBucketExistV2(bucket);
     }
 
-    public Long getObjectLength(String bucket, String key)
-    {
+    public Long getObjectLength(String bucket, String key) {
         if (key.startsWith("/")) {
             key = key.replaceFirst("/", "");
         }
@@ -128,7 +149,7 @@ public class S3AccessObject
         return length;
     }
 
-    public PutObjectResult putObject (String table, String bucket, String key,  InputStream stream, String file_format) {
+    public PutObjectResult putObject(String table, String bucket, String key, InputStream stream, String file_format) {
         ObjectMetadata metadata = new ObjectMetadata();
         try {
             metadata.setContentLength(stream.available());
@@ -146,9 +167,9 @@ public class S3AccessObject
         String objName = key + table + "_" + System.currentTimeMillis()
                 + "_" + UUID.randomUUID();
         String finalStr = objName;
-        if(file_format.equalsIgnoreCase(JSON)){
+        if (file_format.equalsIgnoreCase(JSON)) {
             finalStr = objName.concat(".json");
-        } else if(file_format.equalsIgnoreCase(CSV)){
+        } else if (file_format.equalsIgnoreCase(CSV)) {
             finalStr = objName.concat(".csv");
         }
         log.info("Put object " + objName + " into bucket " + bucket);
@@ -166,28 +187,28 @@ public class S3AccessObject
         throw new UnsupportedOperationException("not yet implemented");
     }
 
-    public JSONObject loadColumnsFromMetaDataSearchKeys(String bucketName){
-        JSONObject schema =  new JSONObject();
+    public JSONObject loadColumnsFromMetaDataSearchKeys(String bucketName) {
+        JSONObject schema = new JSONObject();
         JSONArray columns = new JSONArray();
         MetadataSearchList listOfMetaData;
         try {
             // revisit when metadata search fully implemented with https://github.com/EMCECS/presto-s3-connector/issues/57
-            listOfMetaData  = new MetadataSearchList();
-            for(MetadataSearchKey entry: listOfMetaData.getIndexableKeys()){
-                if(entry.getDatatype() == MetadataSearchDatatype.string){
+            listOfMetaData = new MetadataSearchList();
+            for (MetadataSearchKey entry : listOfMetaData.getIndexableKeys()) {
+                if (entry.getDatatype() == MetadataSearchDatatype.string) {
                     columns.put(new JSONObject().put("name", entry.getName()).put("type", "VARCHAR"));
                 }
-                if(entry.getDatatype() == MetadataSearchDatatype.integer){
+                if (entry.getDatatype() == MetadataSearchDatatype.integer) {
                     columns.put(new JSONObject().put("name", entry.getName()).put("type", "INTEGER"));
                 }
-                if(entry.getDatatype() == MetadataSearchDatatype.decimal){
+                if (entry.getDatatype() == MetadataSearchDatatype.decimal) {
                     columns.put(new JSONObject().put("name", entry.getName()).put("type", "DOUBLE"));
                 }
-                if(entry.getDatatype() == MetadataSearchDatatype.datetime){
+                if (entry.getDatatype() == MetadataSearchDatatype.datetime) {
                     columns.put(new JSONObject().put("name", entry.getName()).put("type", "VARCHAR"));
                 }
             }
-        } catch (S3Exception e){
+        } catch (S3Exception e) {
             // not all s3 compat. API support listBucketMetadataSearchKeys
         }
         schema.put("name", bucketName);
@@ -195,8 +216,7 @@ public class S3AccessObject
         return schema;
     }
 
-    public InputStream selectObjectContent(S3ObjectRange objectRange, String query, S3SelectProps props)
-    {
+    public InputStream selectObjectContent(S3ObjectRange objectRange, String query, S3SelectProps props) {
         SelectObjectContentRequest request = new SelectObjectContentRequest();
         request.setBucketName(objectRange.getBucket());
         request.setKey(objectRange.getKey());
@@ -251,16 +271,14 @@ public class S3AccessObject
      */
     @VisibleForTesting
     static class UnrecoverableS3OperationException
-            extends IOException
-    {
-        public UnrecoverableS3OperationException(String key, Throwable cause)
-        {
+            extends IOException {
+        public UnrecoverableS3OperationException(String key, Throwable cause) {
             // append the path info to the message
             super(format("%s (key: %s)", cause, key), cause);
         }
     }
-    public FSDataInputStream getFsDataInputStream(String bucket, String key, int bufferSize)
-    {
+
+    public FSDataInputStream getFsDataInputStream(String bucket, String key, int bufferSize) {
         return new FSDataInputStream(
                 new BufferedFSInputStream(
                         new PrestoS3InputStream(amazonS3Client, bucket, key),
@@ -268,8 +286,7 @@ public class S3AccessObject
     }
 
     private static class PrestoS3InputStream
-            extends FSInputStream
-    {
+            extends FSInputStream {
         private final AmazonS3 s3;
         private final String host;
         private final String key;
@@ -280,25 +297,44 @@ public class S3AccessObject
         private long streamPosition;
         private long nextReadPosition;
 
-        public PrestoS3InputStream(AmazonS3 s3, String host, String key)
-        {
+        public PrestoS3InputStream(AmazonS3 s3, String host, String key) {
             this.s3 = requireNonNull(s3, "s3 is null");
             this.host = requireNonNull(host, "host is null");
             this.key = requireNonNull(key, "path is null");
-
         }
 
         @Override
-        public void close()
-        {
+        public void close() {
             closed.set(true);
             closeStream();
         }
 
         @Override
+        public void seek(long pos)
+                throws IOException {
+            checkClosed();
+            if (pos < 0) {
+                throw new EOFException(NEGATIVE_SEEK);
+            }
+
+            // this allows a seek beyond the end of the stream but the next read will fail
+            nextReadPosition = pos;
+        }
+
+        @Override
+        public long getPos() {
+            return nextReadPosition;
+        }
+
+        @Override
+        public int read() {
+            // This stream is wrapped with BufferedInputStream, so this method should never be called
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public int read(long position, byte[] buffer, int offset, int length)
-                throws IOException
-        {
+                throws IOException {
             checkClosed();
             if (position < 0) {
                 throw new EOFException(NEGATIVE_SEEK);
@@ -314,8 +350,7 @@ public class S3AccessObject
                     GetObjectRequest request = new GetObjectRequest(host, key)
                             .withRange(position, (position + length) - 1);
                     stream = s3.getObject(request).getObjectContent();
-                }
-                catch (RuntimeException e) {
+                } catch (RuntimeException e) {
                     if (e instanceof AmazonS3Exception) {
                         switch (((AmazonS3Exception) e).getStatusCode()) {
                             case HTTP_RANGE_NOT_SATISFIABLE:
@@ -342,58 +377,27 @@ public class S3AccessObject
                         read += n;
                     }
                     return read;
-                }
-                catch (Throwable t) {
+                } catch (Throwable t) {
                     abortStream(stream);
                     throw t;
-                }
-                finally {
+                } finally {
                     stream.close();
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw propagate(e);
             }
         }
 
         @Override
-        public void seek(long pos)
-                throws IOException
-        {
-            checkClosed();
-            if (pos < 0) {
-                throw new EOFException(NEGATIVE_SEEK);
-            }
-
-            // this allows a seek beyond the end of the stream but the next read will fail
-            nextReadPosition = pos;
-        }
-
-        @Override
-        public long getPos()
-        {
-            return nextReadPosition;
-        }
-
-        @Override
-        public int read()
-        {
-            // This stream is wrapped with BufferedInputStream, so this method should never be called
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public int read(byte[] buffer, int offset, int length)
-                throws IOException
-        {
+                throws IOException {
             checkClosed();
             int bytesRead;
             try {
                 seekStream();
                 try {
                     bytesRead = in.read(buffer, offset, length);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     closeStream();
                     throw e;
                 }
@@ -403,21 +407,18 @@ public class S3AccessObject
                     nextReadPosition += bytesRead;
                 }
                 return bytesRead;
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw propagate(e);
             }
         }
 
         @Override
-        public boolean seekToNewSource(long targetPos)
-        {
+        public boolean seekToNewSource(long targetPos) {
             return false;
         }
 
         private void seekStream()
-                throws IOException
-        {
+                throws IOException {
             if ((in != null) && (nextReadPosition == streamPosition)) {
                 // already at specified position
                 return;
@@ -433,8 +434,7 @@ public class S3AccessObject
                             streamPosition = nextReadPosition;
                             return;
                         }
-                    }
-                    catch (IOException ignored) {
+                    } catch (IOException ignored) {
                         // will retry by re-opening the stream
                     }
                 }
@@ -447,8 +447,7 @@ public class S3AccessObject
         }
 
         private void openStream()
-                throws IOException
-        {
+                throws IOException {
             if (in == null) {
                 in = openStream(key, nextReadPosition);
                 streamPosition = nextReadPosition;
@@ -456,13 +455,11 @@ public class S3AccessObject
         }
 
         private InputStream openStream(String key, long start)
-                throws IOException
-        {
+                throws IOException {
             try {
                 GetObjectRequest request = new GetObjectRequest(host, key).withRange(start);
                 return s3.getObject(request).getObjectContent();
-            }
-            catch (RuntimeException e) {
+            } catch (RuntimeException e) {
                 if (e instanceof AmazonS3Exception) {
                     switch (((AmazonS3Exception) e).getStatusCode()) {
                         case HTTP_RANGE_NOT_SATISFIABLE:
@@ -478,8 +475,7 @@ public class S3AccessObject
             }
         }
 
-        private void closeStream()
-        {
+        private void closeStream() {
             if (in != null) {
                 abortStream(in);
                 in = null;
@@ -487,31 +483,26 @@ public class S3AccessObject
         }
 
         private void checkClosed()
-                throws IOException
-        {
+                throws IOException {
             if (closed.get()) {
                 throw new IOException(STREAM_IS_CLOSED);
             }
         }
 
-        private static void abortStream(InputStream in)
-        {
+        private static void abortStream(InputStream in) {
             try {
                 if (in instanceof S3ObjectInputStream) {
                     ((S3ObjectInputStream) in).abort();
-                }
-                else {
+                } else {
                     in.close();
                 }
-            }
-            catch (IOException | AbortedException ignored) {
+            } catch (IOException | AbortedException ignored) {
                 // thrown if the current thread is in the interrupted state
             }
         }
 
         private static RuntimeException propagate(Exception e)
-                throws IOException
-        {
+                throws IOException {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
                 throw new InterruptedIOException();

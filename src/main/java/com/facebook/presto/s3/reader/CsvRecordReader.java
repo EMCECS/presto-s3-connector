@@ -16,11 +16,15 @@
 package com.facebook.presto.s3.reader;
 
 import com.facebook.airlift.log.Logger;
-import com.facebook.presto.common.type.TimestampType;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldValueProvider;
-import com.facebook.presto.s3.*;
+import com.facebook.presto.s3.BytesLineReader;
+import com.facebook.presto.s3.CountingInputStream;
+import com.facebook.presto.s3.S3ColumnHandle;
+import com.facebook.presto.s3.S3ObjectRange;
+import com.facebook.presto.s3.S3ReaderProps;
+import com.facebook.presto.s3.S3TableLayoutHandle;
 import com.facebook.presto.s3.decoder.CsvFieldValueProvider;
 import com.facebook.presto.s3.decoder.CsvRecord;
 import com.facebook.presto.s3.decoder.DateFieldValueProvider;
@@ -37,8 +41,7 @@ import static com.facebook.presto.common.type.TimestampType.TIMESTAMP;
 import static com.facebook.presto.s3.S3Const.*;
 
 public class CsvRecordReader
-        implements RecordReader, Closeable
-{
+        implements RecordReader, Closeable {
     private static final Logger log = Logger.get(CsvRecordReader.class);
 
     private final S3ReaderProps readerProps;
@@ -63,8 +66,7 @@ public class CsvRecordReader
                            S3ObjectRange objectRange,
                            S3TableLayoutHandle table,
                            S3ReaderProps readerProps,
-                           Supplier<CountingInputStream> inputStreamSupplier)
-    {
+                           Supplier<CountingInputStream> inputStreamSupplier) {
         if (table.getTable().getFieldDelimiter().length() != 1) {
             throw new IllegalArgumentException(table.getTable().getFieldDelimiter());
         }
@@ -83,20 +85,17 @@ public class CsvRecordReader
         }
     }
 
-    private FieldValueProvider getFieldValueProvider(S3ColumnHandle columnHandle)
-    {
+    private FieldValueProvider getFieldValueProvider(S3ColumnHandle columnHandle) {
         return isDateOrTimeType(columnHandle.getType())
                 ? new DateFieldValueProvider(record, columnHandle)
                 : new CsvFieldValueProvider(record, columnHandle);
     }
 
-    private boolean isDateOrTimeType(Type type)
-    {
-        return type == DATE || type== TIME || type == TIMESTAMP;
+    private boolean isDateOrTimeType(Type type) {
+        return type == DATE || type == TIME || type == TIMESTAMP;
     }
 
-    private void init()
-    {
+    private void init() {
         long end = objectRange.getCompressionType() != null
                 ? Long.MAX_VALUE
                 : objectRange.getOffset() + objectRange.getLength();
@@ -115,7 +114,7 @@ public class CsvRecordReader
                 readerProps.getBufferSizeBytes(),
                 start, end);
 
-        if(!readerProps.getS3SelectEnabled() &&
+        if (!readerProps.getS3SelectEnabled() &&
                 objectRange.getOffset() == 0 &&
                 table.getTable().getHasHeaderRow().equals(LC_TRUE)) {
             // eat the header
@@ -124,24 +123,21 @@ public class CsvRecordReader
     }
 
     @Override
-    public long getTotalBytes()
-    {
+    public long getTotalBytes() {
         return inputStream == null
                 ? 0
                 : inputStream.getTotalBytes();
     }
 
     @Override
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         if (haveRow) {
             return true;
         }
         return advance();
     }
 
-    private boolean advance()
-    {
+    private boolean advance() {
         if (lineReader == null) {
             init();
         }
@@ -154,8 +150,7 @@ public class CsvRecordReader
     }
 
     @Override
-    public Map<DecoderColumnHandle, FieldValueProvider> next()
-    {
+    public Map<DecoderColumnHandle, FieldValueProvider> next() {
         if (!haveRow) {
             if (!advance()) {
                 return null;
@@ -166,8 +161,7 @@ public class CsvRecordReader
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         if (lineReader != null) {
             lineReader.close();
         }

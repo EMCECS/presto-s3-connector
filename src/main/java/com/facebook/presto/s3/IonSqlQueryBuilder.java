@@ -56,25 +56,22 @@ import static org.joda.time.format.ISODateTimeFormat.date;
  * S3 Select uses Ion SQL++ query language. This class is used to construct a valid Ion SQL++ query
  * to be evaluated with S3 Select on an S3 object.
  */
-public class IonSqlQueryBuilder
-{
+public class IonSqlQueryBuilder {
     private static final DateTimeFormatter FORMATTER = date().withChronology(getInstanceUTC());
     private static final String DATA_SOURCE = "S3Object s";
 
     public String buildSql(Function<ColumnHandle, Integer> indexMapper,
                            Function<ColumnHandle, Type> typeMapper,
                            List<? extends ColumnHandle> columns,
-                           TupleDomain<? extends ColumnHandle> tupleDomain)
-    {
+                           TupleDomain<? extends ColumnHandle> tupleDomain) {
         StringBuilder sql = new StringBuilder("SELECT ");
 
         if (columns.isEmpty()) {
             sql.append("' '");
-        }
-        else {
+        } else {
             String columnNames = columns.stream()
-                    .map(column -> format("s._%d", indexMapper.apply(column) + 1))
-                    .collect(joining(", "));
+                                        .map(column -> format("s._%d", indexMapper.apply(column) + 1))
+                                        .collect(joining(", "));
             sql.append(columnNames);
         }
 
@@ -84,7 +81,7 @@ public class IonSqlQueryBuilder
         List<String> clauses = toConjuncts(indexMapper, typeMapper, columns, tupleDomain);
         if (!clauses.isEmpty()) {
             sql.append(" WHERE ")
-                    .append(Joiner.on(" AND ").join(clauses));
+               .append(Joiner.on(" AND ").join(clauses));
         }
 
         return sql.toString();
@@ -93,8 +90,7 @@ public class IonSqlQueryBuilder
     private List<String> toConjuncts(Function<ColumnHandle, Integer> indexMapper,
                                      Function<ColumnHandle, Type> typeMapper,
                                      List<? extends ColumnHandle> columns,
-                                     TupleDomain<? extends ColumnHandle> tupleDomain)
-    {
+                                     TupleDomain<? extends ColumnHandle> tupleDomain) {
         Builder<String> builder = builder();
         for (ColumnHandle column : columns) {
             Type type = typeMapper.apply(column);
@@ -108,8 +104,7 @@ public class IonSqlQueryBuilder
         return builder.build();
     }
 
-    private static boolean isSupported(Type type)
-    {
+    private static boolean isSupported(Type type) {
         Type validType = requireNonNull(type, "type is null");
         return validType.equals(BIGINT) ||
                 validType.equals(TINYINT) ||
@@ -121,8 +116,7 @@ public class IonSqlQueryBuilder
                 validType instanceof VarcharType;
     }
 
-    private String toPredicate(Domain domain, Type type, int position)
-    {
+    private String toPredicate(Domain domain, Type type, int position) {
         checkArgument(domain.getType().isOrderable(), "Domain type must be orderable");
 
         if (domain.getValues().isNone()) {
@@ -162,8 +156,7 @@ public class IonSqlQueryBuilder
         // Add back all of the possible single values either as an equality or an IN predicate
         if (singleValues.size() == 1) {
             disjuncts.add(toPredicate("=", getOnlyElement(singleValues), type, position));
-        }
-        else if (singleValues.size() > 1) {
+        } else if (singleValues.size() > 1) {
             List<String> values = new ArrayList<>();
             for (Object value : singleValues) {
                 checkType(type);
@@ -181,7 +174,13 @@ public class IonSqlQueryBuilder
         return "(" + Joiner.on(" OR ").join(disjuncts) + ")";
     }
 
-    private void notLowerBoundedSwitch(Range range, List<String> rangeConjuncts, Type type, int position){
+    private String toPredicate(String operator, Object value, Type type, int position) {
+        checkType(type);
+
+        return format("%s %s %s", createColumn(type, position), operator, valueToQuery(type, value));
+    }
+
+    private void notLowerBoundedSwitch(Range range, List<String> rangeConjuncts, Type type, int position) {
         switch (range.getLow().getBound()) {
             case ABOVE:
                 rangeConjuncts.add(toPredicate(">", range.getLow().getValue(), type, position));
@@ -196,7 +195,7 @@ public class IonSqlQueryBuilder
         }
     }
 
-    private void notUpperBoundedSwitch(Range range, List<String> rangeConjuncts, Type type, int position){
+    private void notUpperBoundedSwitch(Range range, List<String> rangeConjuncts, Type type, int position) {
         switch (range.getHigh().getBound()) {
             case ABOVE:
                 throw new IllegalArgumentException("High marker should never use ABOVE bound");
@@ -211,20 +210,11 @@ public class IonSqlQueryBuilder
         }
     }
 
-    private String toPredicate(String operator, Object value, Type type, int position)
-    {
-        checkType(type);
-
-        return format("%s %s %s", createColumn(type, position), operator, valueToQuery(type, value));
-    }
-
-    private static void checkType(Type type)
-    {
+    private static void checkType(Type type) {
         checkArgument(isSupported(type), "Type not supported: %s", type);
     }
 
-    private static String valueToQuery(Type type, Object value)
-    {
+    private static String valueToQuery(Type type, Object value) {
         if (type.equals(BIGINT)) {
             return String.valueOf(((Number) value).longValue());
         }
@@ -255,8 +245,7 @@ public class IonSqlQueryBuilder
         return "'" + ((Slice) value).toStringUtf8() + "'";
     }
 
-    private String createColumn(Type type, int position)
-    {
+    private String createColumn(Type type, int position) {
         String column = format("s._%d", position + 1);
 
         if (type.equals(BIGINT) || type.equals(INTEGER) || type.equals(SMALLINT) || type.equals(TINYINT)) {
@@ -275,8 +264,7 @@ public class IonSqlQueryBuilder
         return column;
     }
 
-    private String formatPredicate(String column, String type)
-    {
+    private String formatPredicate(String column, String type) {
         return format("case %s when '' then null else CAST(%s AS %s) end", column, column, type);
     }
 }

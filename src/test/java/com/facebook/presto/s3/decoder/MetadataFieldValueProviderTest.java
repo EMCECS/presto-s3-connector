@@ -28,13 +28,11 @@ import static com.facebook.presto.common.type.BigintType.BIGINT;
 import static org.testng.Assert.*;
 
 @Test
-public class MetadataFieldValueProviderTest
-{
+public class MetadataFieldValueProviderTest {
     private final Map<String, Object> valueMap = new HashMap<>();
 
     @BeforeSuite
-    public void beforeSuite()
-    {
+    public void beforeSuite() {
         valueMap.put("booleanfield", "true");
         valueMap.put("longfield", "27");
         valueMap.put("doublefield", "27.89");
@@ -43,44 +41,37 @@ public class MetadataFieldValueProviderTest
     }
 
     @Test
-    public void testBoolean()
-    {
+    public void testBoolean() {
         assertTrue(new MetadataFieldValueProvider(column("booleanField"), valueMap).getBoolean());
     }
 
     @Test
-    public void testLong()
-    {
+    public void testLong() {
         assertEquals(new MetadataFieldValueProvider(column("longField"), valueMap).getLong(), 27L);
     }
 
     @Test
-    public void testDouble()
-    {
+    public void testDouble() {
         assertEquals(new MetadataFieldValueProvider(column("doubleField"), valueMap).getDouble(), 27.89);
     }
 
     @Test
-    public void testSlice()
-    {
+    public void testSlice() {
         assertEquals(new MetadataFieldValueProvider(column("sliceField"), valueMap).getSlice(), Slices.utf8Slice("john smith"));
     }
 
     @Test
-    public void testIsNull()
-    {
+    public void testIsNull() {
         assertTrue(new MetadataFieldValueProvider(column("nullField"), valueMap).isNull());
         assertTrue(new MetadataFieldValueProvider(column("fieldDoesNotExist"), valueMap).isNull());
     }
 
     @Test(expectedExceptions = {PrestoException.class})
-    public void testBlock()
-    {
+    public void testBlock() {
         new MetadataFieldValueProvider(column("blockField"), valueMap).getBlock();
     }
 
-    private S3ColumnHandle column(final String name)
-    {
+    private S3ColumnHandle column(final String name) {
         // only name is used in this testing path
         return new S3ColumnHandle("unused-connectorId",
                 0,

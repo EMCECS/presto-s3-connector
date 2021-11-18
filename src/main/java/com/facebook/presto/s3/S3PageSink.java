@@ -28,17 +28,24 @@ import com.opencsv.CSVWriter;
 import com.opencsv.ICSVWriter;
 import io.airlift.slice.Slice;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.facebook.airlift.log.Logger;
+
 import static com.facebook.presto.common.type.BigintType.BIGINT;
 import static com.facebook.presto.common.type.BooleanType.BOOLEAN;
 import static com.facebook.presto.common.type.DateType.DATE;
@@ -57,12 +64,12 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static com.facebook.presto.s3.S3Const.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class S3PageSink
-        implements ConnectorPageSink
-{
+        implements ConnectorPageSink {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneId.of("UTC"));
     private static final Logger log = Logger.get(com.facebook.presto.s3.S3PageSink.class);
@@ -91,8 +98,7 @@ public class S3PageSink
             String record_delimiter,
             String field_delimiter,
             boolean generateUUID,
-            S3AccessObject accessObject)
-    {
+            S3AccessObject accessObject) {
         requireNonNull(schemaName, "schemaName is null");
         requireNonNull(tableName, "tableName is null");
         this.columnNames = requireNonNull(columnNames, "columnNames is null");
@@ -119,15 +125,14 @@ public class S3PageSink
 
         if (file_format.equalsIgnoreCase(S3Const.CSV)) {
             return appendCSVPage(page, file_format);
-        } else if(file_format.equalsIgnoreCase(JSON)) {
+        } else if (file_format.equalsIgnoreCase(JSON)) {
             return appendJsonPage(page, file_format);
-        }
-        else {
+        } else {
             throw new PrestoException(S3ErrorCode.S3_UNSUPPORTED_FORMAT, format("File format %s is not supported", file_format));
         }
     }
 
-    private CompletableFuture<?> appendJsonPage(Page page, String file_format){
+    private CompletableFuture<?> appendJsonPage(Page page, String file_format) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         for (int position = 0; position < page.getPositionCount(); position++) {
             ObjectMapper mapper = new ObjectMapper();
@@ -142,7 +147,7 @@ public class S3PageSink
             try {
                 String newLine = System.getProperty("line.separator");
                 mapper.writeValue(baos, rootNode);
-                for (int i = 0; i < newLine.length(); ++i){
+                for (int i = 0; i < newLine.length(); ++i) {
                     baos.write(newLine.charAt(i));
                 }
             } catch (IOException e) {
@@ -159,44 +164,33 @@ public class S3PageSink
         return NOT_BLOCKED;
     }
 
-    private void populateJsonObjects(ObjectNode jsonMap, Page page, int position, int channel){
+    private void populateJsonObjects(ObjectNode jsonMap, Page page, int position, int channel) {
         Block block = page.getBlock(channel);
         Type type = columnTypes.get(channel);
         String name = columnNames.get(channel);
         if (block.isNull(position)) {
             jsonMap.put(null, (byte[]) null);
-        }
-        else if (BOOLEAN.equals(type)) {
+        } else if (BOOLEAN.equals(type)) {
             jsonMap.put(name, type.getBoolean(block, position));
-        }
-        else if (BIGINT.equals(type)) {
+        } else if (BIGINT.equals(type)) {
             jsonMap.put(name, type.getLong(block, position));
-        }
-        else if (INTEGER.equals(type)) {
+        } else if (INTEGER.equals(type)) {
             jsonMap.put(name, toIntExact(type.getLong(block, position)));
-        }
-        else if (DOUBLE.equals(type)) {
+        } else if (DOUBLE.equals(type)) {
             jsonMap.put(name, type.getDouble(block, position));
-        }
-        else if (REAL.equals(type)) {
+        } else if (REAL.equals(type)) {
             jsonMap.put(name, intBitsToFloat(toIntExact(type.getLong(block, position))));
-        }
-        else if (DATE.equals(type)) {
+        } else if (DATE.equals(type)) {
             jsonMap.put(name, DATE_FORMATTER.format(Instant.ofEpochMilli(TimeUnit.DAYS.toMillis(type.getLong(block, position)))));
-        }
-        else if (TIME.equals(type)) {
+        } else if (TIME.equals(type)) {
             jsonMap.put(name, String.valueOf(new Time(type.getLong(block, position))));
-        }
-        else if (TIMESTAMP.equals(type)) {
+        } else if (TIMESTAMP.equals(type)) {
             jsonMap.put(name, String.valueOf(new Timestamp(type.getLong(block, position))));
-        }
-        else if (isVarcharType(type)) {
+        } else if (isVarcharType(type)) {
             jsonMap.put(name, type.getSlice(block, position).toStringUtf8());
-        }
-        else if (VARBINARY.equals(type)) {
+        } else if (VARBINARY.equals(type)) {
             jsonMap.put(name, String.valueOf(type.getSlice(block, position).toByteBuffer()));
-        }
-        else {
+        } else {
             throw new PrestoException(NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
         }
     }
@@ -209,7 +203,7 @@ public class S3PageSink
                 ICSVWriter.NO_ESCAPE_CHARACTER, record_delimiter);
 
         List<String[]> inputPage = new ArrayList<String[]>();
-        if (has_header_row.equalsIgnoreCase(TRUE)){
+        if (has_header_row.equalsIgnoreCase(TRUE)) {
             List<String> headerRow = new ArrayList<>(columnNames.size() + 1);
             if (generateUUID) {
                 headerRow.add("UUID");
@@ -251,61 +245,46 @@ public class S3PageSink
         }
         accessObject.putObject(tableName, tableBucketName, tableBucketPrefix, bais, file_format);
 
-
         return NOT_BLOCKED;
     }
 
-    private void appendColumn(List<Object> values, Page page, int position, int channel)
-    {
+    private void appendColumn(List<Object> values, Page page, int position, int channel) {
         Block block = page.getBlock(channel);
         Type type = columnTypes.get(channel);
         if (block.isNull(position)) {
             values.add(null);
-        }
-        else if (BOOLEAN.equals(type)) {
+        } else if (BOOLEAN.equals(type)) {
             values.add(type.getBoolean(block, position));
-        }
-        else if (BIGINT.equals(type)) {
+        } else if (BIGINT.equals(type)) {
             values.add(type.getLong(block, position));
-        }
-        else if (INTEGER.equals(type)) {
+        } else if (INTEGER.equals(type)) {
             values.add(toIntExact(type.getLong(block, position)));
-        }
-        else if (DOUBLE.equals(type)) {
+        } else if (DOUBLE.equals(type)) {
             values.add(type.getDouble(block, position));
-        }
-        else if (REAL.equals(type)) {
+        } else if (REAL.equals(type)) {
             values.add(intBitsToFloat(toIntExact(type.getLong(block, position))));
-        }
-        else if (DATE.equals(type)) {
+        } else if (DATE.equals(type)) {
             values.add(DATE_FORMATTER.format(Instant.ofEpochMilli(TimeUnit.DAYS.toMillis(type.getLong(block, position)))));
-        }
-        else if (TIME.equals(type)) {
+        } else if (TIME.equals(type)) {
             values.add(new Time(type.getLong(block, position)));
-        }
-        else if (TIMESTAMP.equals(type)) {
+        } else if (TIMESTAMP.equals(type)) {
             values.add(new Timestamp(type.getLong(block, position)));
-        }
-        else if (isVarcharType(type)) {
+        } else if (isVarcharType(type)) {
             values.add(type.getSlice(block, position).toStringUtf8());
-        }
-        else if (VARBINARY.equals(type)) {
+        } else if (VARBINARY.equals(type)) {
             values.add(type.getSlice(block, position).toByteBuffer());
-        }
-        else {
+        } else {
             throw new PrestoException(NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
         }
     }
 
     @Override
-    public CompletableFuture<Collection<Slice>> finish()
-    {
+    public CompletableFuture<Collection<Slice>> finish() {
         // the committer does not need any additional info
         return completedFuture(ImmutableList.of());
     }
 
     @Override
-    public void abort() {}
-
-
+    public void abort() {
+    }
 }

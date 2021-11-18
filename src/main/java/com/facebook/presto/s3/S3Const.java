@@ -23,8 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class S3Const
-{
+public class S3Const {
     public static final String CSV = "csv";
     public static final String TEXT = "text";
     public static final String AVRO = "avro";
@@ -72,7 +71,6 @@ public class S3Const
     public static final String TRUE = "true";
     public static final String FALSE = "false";
 
-
     public static final String JSON_PROP_TYPE = "type";
     public static final String JSON_PROP_FORMAT = "format";
     public static final String JSON_PROP_DATA_FORMAT = "dataFormat";
@@ -94,7 +92,6 @@ public class S3Const
     public static final String FORMAT_VALUE_DATE = "date";
     public static final String FORMAT_VALUE_TIME = "time";
 
-
     private static final List<String> validFormatsQuery = new ArrayList<>(
             Arrays.asList(CSV, TEXT, AVRO, JSON, PARQUET)
     );
@@ -102,8 +99,7 @@ public class S3Const
             Arrays.asList(CSV, JSON)
     );
 
-    public S3Const()
-    {
+    public S3Const() {
     }
 
     public static boolean isValidFormatForQuery(String format) {
@@ -124,28 +120,23 @@ public class S3Const
         return false;
     }
 
-    public static boolean isParquetBatchReadsEnabled(ConnectorSession session)
-    {
+    public static boolean isParquetBatchReadsEnabled(ConnectorSession session) {
         return session.getProperty(PARQUET_BATCH_READ_OPTIMIZATION_ENABLED, Boolean.class);
     }
 
-    public static boolean isUseParquetColumnNames(ConnectorSession session)
-    {
+    public static boolean isUseParquetColumnNames(ConnectorSession session) {
         return session.getProperty(PARQUET_USE_COLUMN_NAME, Boolean.class);
     }
 
-    public static boolean isParquetBatchReaderVerificationEnabled(ConnectorSession session)
-    {
+    public static boolean isParquetBatchReaderVerificationEnabled(ConnectorSession session) {
         return session.getProperty(PARQUET_BATCH_READER_VERIFICATION_ENABLED, Boolean.class);
     }
 
-    public static boolean isFailOnCorruptedParquetStatistics(ConnectorSession session)
-    {
+    public static boolean isFailOnCorruptedParquetStatistics(ConnectorSession session) {
         return session.getProperty(PARQUET_FAIL_WITH_CORRUPTED_STATISTICS, Boolean.class);
     }
 
-    public static DataSize getParquetMaxReadBlockSize(ConnectorSession session)
-    {
+    public static DataSize getParquetMaxReadBlockSize(ConnectorSession session) {
         return session.getProperty(PARQUET_MAX_READ_BLOCK_SIZE, DataSize.class);
     }
 }

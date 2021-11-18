@@ -16,10 +16,10 @@
 
 package com.facebook.presto.s3.unit;
 
+import com.facebook.presto.s3.S3Column;
+import com.facebook.presto.s3.S3Table;
 import com.facebook.presto.spi.ColumnMetadata;
 import org.testng.annotations.Test;
-
-import com.facebook.presto.s3.*;
 
 import java.util.Arrays;
 import java.util.Collections;

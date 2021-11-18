@@ -16,9 +16,8 @@
 
 package com.facebook.presto.s3.unit;
 
+import com.facebook.presto.s3.S3ConnectorId;
 import org.testng.annotations.Test;
-
-import com.facebook.presto.s3.*;
 
 import java.util.Objects;
 
@@ -29,7 +28,6 @@ public class S3ConnectorIdTest {
     private final String id1 = "connectorId1";
     private final String id2 = "connectorId";
 
-
     public final S3ConnectorId s3ConnectorId = new S3ConnectorId(id);
 
     public final S3ConnectorId s3ConnectorId1 = new S3ConnectorId(id1);
@@ -37,10 +35,14 @@ public class S3ConnectorIdTest {
     public final S3ConnectorId s3ConnectorId2 = new S3ConnectorId(id2);
 
     @Test
-    public void testEquals() {assertTrue(s3ConnectorId.equals(s3ConnectorId2));}
+    public void testEquals() {
+        assertTrue(s3ConnectorId.equals(s3ConnectorId2));
+    }
 
     @Test
-    public void testNotEqual() {assertFalse(s3ConnectorId.equals(s3ConnectorId1));}
+    public void testNotEqual() {
+        assertFalse(s3ConnectorId.equals(s3ConnectorId1));
+    }
 
     @Test
     public void testToString() {

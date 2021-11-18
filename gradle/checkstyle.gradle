@@ -21,11 +21,4 @@ plugins.withId('checkstyle') {
         configFile = new File(rootDir, "config/checkstyle/checkstyle.xml")
         configProperties = [suppressionsFile: "$rootDir/config/checkstyle/suppressions.xml"]
     }
-
-    plugins.withId('java') {
-        checkstyle {
-            // Exclude generated code from Checkstyle checks
-            checkstyleMain.exclude '**/rest/generated/**'
-        }
-    }
 }

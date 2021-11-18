@@ -50,6 +50,7 @@ public class S3ConnectorFactory
     private final ClassLoader classLoader;
 
     private final Optional<Supplier<Map<SchemaTableName, S3Table>>> tableDescriptionSupplier;
+
     public S3ConnectorFactory(Optional<Supplier<Map<SchemaTableName, S3Table>>> tableDescriptionSupplier, ClassLoader classLoader) {
 
         this.classLoader = classLoader;
@@ -79,10 +80,11 @@ public class S3ConnectorFactory
                         binder.bind(TypeManager.class).toInstance(context.getTypeManager());
                         binder.bind(NodeManager.class).toInstance(context.getNodeManager());
                         if (tableDescriptionSupplier.isPresent()) {
-                            binder.bind(new TypeLiteral<Supplier<Map<SchemaTableName, S3Table>>>() {}).toInstance(tableDescriptionSupplier.get());
-                        }
-                        else {
-                            binder.bind(new TypeLiteral<Supplier<Map<SchemaTableName, S3Table>>>() {}).to(S3TableDescriptionSupplier.class).in(Scopes.SINGLETON);
+                            binder.bind(new TypeLiteral<Supplier<Map<SchemaTableName, S3Table>>>() {
+                            }).toInstance(tableDescriptionSupplier.get());
+                        } else {
+                            binder.bind(new TypeLiteral<Supplier<Map<SchemaTableName, S3Table>>>() {
+                            }).to(S3TableDescriptionSupplier.class).in(Scopes.SINGLETON);
                         }
                     });
 
@@ -99,15 +101,13 @@ public class S3ConnectorFactory
 
             // Use classLoader because of some conflicts with jersey library versions
             return new S3Connector(lifeCycleManager,
-                   new ClassLoaderSafeConnectorMetadata(s3Metadata, classLoader),
-                   new ClassLoaderSafeConnectorSplitManager(s3SplitManager, classLoader),
-                   new ClassLoaderSafeConnectorPageSourceProvider(pageSourceProvider, classLoader),
-                   new ClassLoaderSafeConnectorPageSinkProvider(pageSinkProvider, classLoader));
-
+                    new ClassLoaderSafeConnectorMetadata(s3Metadata, classLoader),
+                    new ClassLoaderSafeConnectorSplitManager(s3SplitManager, classLoader),
+                    new ClassLoaderSafeConnectorPageSourceProvider(pageSourceProvider, classLoader),
+                    new ClassLoaderSafeConnectorPageSinkProvider(pageSinkProvider, classLoader));
         } catch (Exception e) {
             throwIfUnchecked(e);
             throw new RuntimeException(e);
         }
-
     }
 }

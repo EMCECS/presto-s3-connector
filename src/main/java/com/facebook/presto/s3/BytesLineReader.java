@@ -21,8 +21,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 
 public class BytesLineReader
-        implements Closeable
-{
+        implements Closeable {
     private final InputStream inputStream;
     private boolean skip = false;
     private int bufPos;
@@ -35,19 +34,16 @@ public class BytesLineReader
     private boolean spillover = false;
     private boolean eof;
 
-    public BytesLineReader(InputStream inputStream)
-    {
+    public BytesLineReader(InputStream inputStream) {
         this(inputStream, 65536);
     }
 
-    public BytesLineReader(InputStream inputStream, int bufSizeBytes)
-    {
+    public BytesLineReader(InputStream inputStream, int bufSizeBytes) {
         this(inputStream, bufSizeBytes, 0L, Long.MAX_VALUE);
     }
 
     // TODO: https://github.com/EMCECS/presto-s3-connector/issues/26
-    public BytesLineReader(InputStream inputStream, int bufSizeBytes, long start, long end)
-    {
+    public BytesLineReader(InputStream inputStream, int bufSizeBytes, long start, long end) {
         this.inputStream = inputStream;
         this.bufPos = 0;
         this.bufLen = 0;
@@ -64,35 +60,29 @@ public class BytesLineReader
         }
     }
 
-    public long bytesProcessed()
-    {
+    public long bytesProcessed() {
         return absPos - start;
     }
 
-    private void fill()
-    {
+    private void fill() {
         try {
-            long toRead = end-absPos <= 0 ? buf.length : end-absPos;
+            long toRead = end - absPos <= 0 ? buf.length : end - absPos;
             toRead = Math.min(buf.length, toRead);
             bufPos = 0;
             bufLen = inputStream.read(buf, 0, (int) toRead);
             if (bufLen == -1) {
                 eof = true;
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-
-    private boolean spillover()
-    {
+    private boolean spillover() {
         return !eof && spillover;
     }
 
-    public int read(byte[] value)
-    {
+    public int read(byte[] value) {
         int valuePos = 0;
 
         while (absPos <= end || spillover()) {
@@ -151,12 +141,10 @@ public class BytesLineReader
         return valuePos > 0 ? valuePos : -1;
     }
 
-    public void close()
-    {
+    public void close() {
         try {
             inputStream.close();
-        }
-        catch (IOException ignore) {
+        } catch (IOException ignore) {
         }
     }
 }

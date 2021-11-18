@@ -29,8 +29,7 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 
 public class S3OutputTableHandle
-        implements ConnectorOutputTableHandle
-{
+        implements ConnectorOutputTableHandle {
     private final String connectorId;
     private final SchemaTableName schemaTableName;
     private final Map<String, Object> properties;
@@ -41,8 +40,7 @@ public class S3OutputTableHandle
             @JsonProperty("connectorId") String connectorId,
             @JsonProperty("schemaTableName") SchemaTableName schemaTableName,
             @JsonProperty("properties") Map<String, Object> properties,
-            @JsonProperty("columns") List<S3Column> columns)
-    {
+            @JsonProperty("columns") List<S3Column> columns) {
         this.connectorId = requireNonNull(connectorId, "clientId is null");
         this.properties = requireNonNull(properties, "tableProperties is null");
         this.schemaTableName = requireNonNull(schemaTableName, "schemaTableName is null");
@@ -51,23 +49,22 @@ public class S3OutputTableHandle
     }
 
     @JsonProperty
-    public String getConnectorId()
-    {
+    public String getConnectorId() {
         return connectorId;
     }
 
     @JsonProperty
-    public Map<String, Object> getProperties() { return properties; }
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
 
     @JsonProperty
-    public SchemaTableName getSchemaTableName()
-    {
+    public SchemaTableName getSchemaTableName() {
         return schemaTableName;
     }
 
     @JsonProperty
-    public List<S3Column> getColumns()
-    {
+    public List<S3Column> getColumns() {
         return columns;
     }
 
@@ -88,8 +85,7 @@ public class S3OutputTableHandle
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "s3:" + schemaTableName.getSchemaName() + "." + schemaTableName.getTableName();
     }
 }

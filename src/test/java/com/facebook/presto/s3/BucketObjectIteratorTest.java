@@ -18,11 +18,14 @@ package com.facebook.presto.s3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.facebook.presto.s3.util.SimpleS3Server;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 import static org.testng.Assert.*;
 
@@ -64,7 +67,7 @@ public class BucketObjectIteratorTest {
     public void testSingleKey() {
         String bucket = "test-single-key";
 
-        server.putKey(bucket, "key1", new byte[]{'a'});
+        server.putKey(bucket, "key1", new byte[] {'a'});
 
         BucketObjectIterator iterator =
                 new BucketObjectIterator(client, bucket, Collections.singletonList("key1"));
@@ -76,10 +79,10 @@ public class BucketObjectIteratorTest {
     @Test
     public void testPrefix() {
         String bucket = "test-prefix";
-        server.putKey(bucket, "2021-10-11/hour00", new byte[]{'a'});
-        server.putKey(bucket, "2021-10-11/hour01", new byte[]{'a'});
-        server.putKey(bucket, "2021-10-11/hour02", new byte[]{'a'});
-        server.putKey(bucket, "2021-10-11/hour03", new byte[]{'a'});
+        server.putKey(bucket, "2021-10-11/hour00", new byte[] {'a'});
+        server.putKey(bucket, "2021-10-11/hour01", new byte[] {'a'});
+        server.putKey(bucket, "2021-10-11/hour02", new byte[] {'a'});
+        server.putKey(bucket, "2021-10-11/hour03", new byte[] {'a'});
 
         BucketObjectIterator iterator =
                 new BucketObjectIterator(client, bucket, Collections.singletonList("2021-10-11"));
@@ -94,9 +97,9 @@ public class BucketObjectIteratorTest {
     public void testMix() {
         String bucket = "test-mix";
 
-        server.putKey(bucket, "key1", new byte[]{'a'});
-        server.putKey(bucket, "2021-10-11/hour00", new byte[]{'a'});
-        server.putKey(bucket, "2021-10-11/hour01", new byte[]{'a'});
+        server.putKey(bucket, "key1", new byte[] {'a'});
+        server.putKey(bucket, "2021-10-11/hour00", new byte[] {'a'});
+        server.putKey(bucket, "2021-10-11/hour01", new byte[] {'a'});
 
         List<String> subObjects = new ArrayList<>();
         subObjects.add("key1");
@@ -123,7 +126,7 @@ public class BucketObjectIteratorTest {
 
         int count = 9;
         for (int i = 0; i < count; i++) {
-            server.putKey(bucket, "key" + i, new byte[]{'a'});
+            server.putKey(bucket, "key" + i, new byte[] {'a'});
         }
 
         // single, empty object in list means all objects

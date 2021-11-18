@@ -41,28 +41,24 @@ import static java.util.Objects.requireNonNull;
  * JSON specific row decoder.
  */
 public class JsonRowDecoder
-        implements RowDecoder
-{
+        implements RowDecoder {
     public static final String NAME = "json";
 
     private final ObjectMapper objectMapper;
     private final Map<DecoderColumnHandle, JsonFieldDecoder> fieldDecoders;
 
-    JsonRowDecoder(ObjectMapper objectMapper, Map<DecoderColumnHandle, JsonFieldDecoder> fieldDecoders)
-    {
+    JsonRowDecoder(ObjectMapper objectMapper, Map<DecoderColumnHandle, JsonFieldDecoder> fieldDecoders) {
         this.objectMapper = requireNonNull(objectMapper, "objectMapper is null");
         this.fieldDecoders = ImmutableMap.copyOf(fieldDecoders);
     }
 
     @Override
     public Optional<Map<DecoderColumnHandle, FieldValueProvider>> decodeRow(byte[] data,
-        Map<String, String> dataMap)
-    {
+                                                                            Map<String, String> dataMap) {
         JsonNode tree;
         try {
             tree = objectMapper.readTree(data);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return Optional.empty();
         }
 
@@ -79,15 +75,13 @@ public class JsonRowDecoder
     }
 
     public Optional<Map<DecoderColumnHandle, FieldValueProvider>> decodeRow(byte[] data,
-        int offset,
-        int length,
-        Map<String, String> dataMap)
-    {
+                                                                            int offset,
+                                                                            int length,
+                                                                            Map<String, String> dataMap) {
         JsonNode tree;
         try {
             tree = objectMapper.readTree(data, offset, length);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return Optional.empty();
         }
 
@@ -103,8 +97,7 @@ public class JsonRowDecoder
         return Optional.of(decodedRow);
     }
 
-    private static JsonNode locateNode(JsonNode tree, DecoderColumnHandle columnHandle)
-    {
+    private static JsonNode locateNode(JsonNode tree, DecoderColumnHandle columnHandle) {
         String mapping = columnHandle.getMapping();
         checkState(mapping != null, "No mapping for %s", columnHandle.getName());
 

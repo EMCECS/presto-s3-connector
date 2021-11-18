@@ -23,6 +23,33 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.emc.object.s3.bean.MetadataSearchList;
 import com.facebook.presto.s3.Pair;
 import com.google.common.base.Preconditions;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+
 import org.apache.http.impl.io.ChunkedInputStream;
 import org.apache.http.impl.io.HttpTransportMetricsImpl;
 import org.apache.http.impl.io.SessionInputBufferImpl;
@@ -36,12 +63,8 @@ import org.glassfish.jersey.servlet.ServletContainer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.io.*;
 
 import java.net.URI;
-import java.util.*;
 
 import static com.facebook.presto.s3.util.S3ErrorUtil.errorResponse;
 
@@ -76,7 +99,7 @@ public class SimpleS3Server extends Application {
         ServerConnector connector = new ServerConnector(server);
         connector.setHost("127.0.0.1");
         connector.setPort(port);
-        server.setConnectors(new Connector[]{connector});
+        server.setConnectors(new Connector[] {connector});
 
         ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         contextHandler.addServlet(new ServletHolder(new ServletContainer(ResourceConfig.forApplication(this))), "/*");
@@ -104,13 +127,13 @@ public class SimpleS3Server extends Application {
 
     public AmazonS3 getClient() {
         return AmazonS3Client.builder()
-                .withClientConfiguration(
-                        new ClientConfiguration()
-                                .withProtocol(Protocol.HTTP))
-                .withEndpointConfiguration(
-                        new AwsClientBuilder.EndpointConfiguration("http://127.0.0.1:" + port, null))
-                .enablePathStyleAccess()
-                .build();
+                             .withClientConfiguration(
+                                     new ClientConfiguration()
+                                             .withProtocol(Protocol.HTTP))
+                             .withEndpointConfiguration(
+                                     new AwsClientBuilder.EndpointConfiguration("http://127.0.0.1:" + port, null))
+                             .enablePathStyleAccess()
+                             .build();
     }
 
     class S3Data {
@@ -209,6 +232,46 @@ public class SimpleS3Server extends Application {
         dataStore.addKey(bucket, key, bytes);
     }
 
+    @PUT
+    @Path("{bucket}/{key: .+}")
+    public Response putKey(@Context HttpServletRequest request,
+                           @PathParam("bucket") String bucket,
+                           @PathParam("key") String key) {
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        try {
+            SessionInputBufferImpl sessionInputBuffer =
+                    new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65536);
+            sessionInputBuffer.bind(request.getInputStream());
+            InputStream inputStream = new ChunkedInputStream(sessionInputBuffer);
+
+            int n;
+            byte[] b = new byte[4096];
+
+            do {
+                n = inputStream.read(b);
+                if (n > 0) {
+                    os.write(b, 0, n);
+                }
+            } while (n > 0);
+        } catch (IOException e) {
+            return Response.serverError().build();
+        }
+
+        S3Data data = dataStore.getKey(bucket, key);
+
+        if (data != null) {
+            data.bytes = os.toByteArray();
+            data.f = null;
+            return Response.ok().build();
+        } else {
+            dataStore.addKey(bucket, key, os.toByteArray());
+            URI location = URI.create("http://127.0.0.1:" + port + "/" + bucket + "/" + key);
+            return Response.created(location).build();
+        }
+    }
+
     public void putBucket(String bucket) {
         dataStore.addKey(bucket, "", (byte[]) null);
     }
@@ -232,7 +295,7 @@ public class SimpleS3Server extends Application {
             offset = Integer.parseInt(parts[0]);
             if (parts.length == 2) {
                 long end = Long.parseLong(parts[1]);
-                len = (int) Math.min(Integer.MAX_VALUE-1, end) - offset + 1;
+                len = (int) Math.min(Integer.MAX_VALUE - 1, end) - offset + 1;
                 Preconditions.checkState(len >= 0);
             }
         }
@@ -253,9 +316,9 @@ public class SimpleS3Server extends Application {
         }
         sb.append("</Buckets>");
         sb.append("<Owner>")
-                .append("<ID>").append("user1").append("</ID>")
-                .append("<DisplayName>").append("user1").append("</DisplayName>")
-                .append("</Owner>");
+          .append("<ID>").append("user1").append("</ID>")
+          .append("<DisplayName>").append("user1").append("</DisplayName>")
+          .append("</Owner>");
         sb.append("</ListAllMyBucketsResult>");
         return Response.ok(sb.toString()).build();
     }
@@ -302,46 +365,6 @@ public class SimpleS3Server extends Application {
                 data.writeTo(output, range.getLeft(), range.getRight())).build();
     }
 
-    @PUT
-    @Path("{bucket}/{key: .+}")
-    public Response putKey(@Context HttpServletRequest request,
-                           @PathParam("bucket") String bucket,
-                           @PathParam("key") String key) {
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-        try {
-            SessionInputBufferImpl sessionInputBuffer =
-                    new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65536);
-            sessionInputBuffer.bind(request.getInputStream());
-            InputStream inputStream = new ChunkedInputStream(sessionInputBuffer);
-
-            int n;
-            byte[] b = new byte[4096];
-
-            do {
-                n = inputStream.read(b);
-                if (n > 0) {
-                    os.write(b, 0, n);
-                }
-            } while (n > 0);
-        } catch (IOException e) {
-            return Response.serverError().build();
-        }
-
-        S3Data data = dataStore.getKey(bucket, key);
-
-        if (data != null) {
-            data.bytes = os.toByteArray();
-            data.f = null;
-            return Response.ok().build();
-        } else {
-            dataStore.addKey(bucket, key, os.toByteArray());
-            URI location = URI.create("http://127.0.0.1:" + port + "/" + bucket + "/" + key);
-            return Response.created(location).build();
-        }
-    }
-
     @GET
     @Path("{bucket}")
     public Response list(@Context HttpServletRequest request,
@@ -375,7 +398,6 @@ public class SimpleS3Server extends Application {
         sb.append("<Prefix>").append(prefix == null ? "" : prefix).append("</Prefix>");
         sb.append("<Marker>").append(marker == null ? "" : marker).append("</Marker>");
 
-
         data.sort(Comparator.comparing(s3Data -> s3Data.key));
 
         for (S3Data key : data) {
@@ -396,9 +418,9 @@ public class SimpleS3Server extends Application {
         sb.append("<LastModified>").append("2021-10-01T12:00:00.000Z").append("</LastModified>");
         sb.append("<StorageClass>").append("STANDARD").append("</StorageClass>");
         sb.append("<Owner>")
-                .append("<ID>").append("user1").append("</ID>")
-                .append("<DisplayName>").append("user1").append("</DisplayName>")
-                .append("</Owner>");
+          .append("<ID>").append("user1").append("</ID>")
+          .append("<DisplayName>").append("user1").append("</DisplayName>")
+          .append("</Owner>");
         sb.append("</Contents>");
         return sb;
     }

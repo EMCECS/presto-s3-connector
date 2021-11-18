@@ -112,8 +112,7 @@ public class S3RecordSet
         return new S3RecordCursor(recordReader, columnHandles);
     }
 
-    private CountingInputStream objectStream(S3ReaderProps readerProps)
-    {
+    private CountingInputStream objectStream(S3ReaderProps readerProps) {
         if (readerProps.getS3SelectEnabled() && delimitedFormat(s3TableHandle.getObjectDataFormat())) {
             String sql = new IonSqlQueryBuilder()
                     .buildSql(S3RecordSet::s3SelectColumnMapper,
@@ -127,8 +126,7 @@ public class S3RecordSet
 
             return new CountingInputStream(accessObject.selectObjectContent(objectRange, sql,
                     new S3SelectProps(hasHeaderRow, recordDelimiter, fieldDelimiter)));
-        }
-        else {
+        } else {
             FSDataInputStream stream =
                     accessObject.getFsDataInputStream(objectRange.getBucket(), objectRange.getKey(), readerProps.getBufferSizeBytes());
             try {
@@ -139,20 +137,17 @@ public class S3RecordSet
                 return new CountingInputStream(codec == null
                         ? stream
                         : codec.createInputStream(stream));
-            }
-            catch (IOException  e) {
+            } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
     }
 
-    static Integer s3SelectColumnMapper(ColumnHandle columnHandle)
-    {
+    static Integer s3SelectColumnMapper(ColumnHandle columnHandle) {
         return ((S3ColumnHandle) columnHandle).getAbsoluteSchemaPosition();
     }
 
-    static Type s3SelectTypeMapper(ColumnHandle columnHandle)
-    {
+    static Type s3SelectTypeMapper(ColumnHandle columnHandle) {
         return ((S3ColumnHandle) columnHandle).getType();
     }
 }

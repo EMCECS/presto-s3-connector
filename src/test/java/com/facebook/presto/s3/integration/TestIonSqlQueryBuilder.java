@@ -38,39 +38,32 @@ import static com.facebook.presto.common.type.IntegerType.INTEGER;
 import static com.facebook.presto.common.type.VarcharType.VARCHAR;
 import static org.testng.Assert.assertEquals;
 
-public class TestIonSqlQueryBuilder
-{
+public class TestIonSqlQueryBuilder {
     private static class TestColumnHandle
-            implements ColumnHandle
-    {
+            implements ColumnHandle {
         final int order;
         final Type type;
 
-        TestColumnHandle(Type type, int order)
-        {
+        TestColumnHandle(Type type, int order) {
             this.type = type;
             this.order = order;
         }
     }
 
-    static Integer columnIndex(ColumnHandle columnHandle)
-    {
+    static Integer columnIndex(ColumnHandle columnHandle) {
         return ((TestColumnHandle) columnHandle).order;
     }
 
-    static Type columnType(ColumnHandle columnHandle)
-    {
+    static Type columnType(ColumnHandle columnHandle) {
         return ((TestColumnHandle) columnHandle).type;
     }
 
-    static ColumnHandle newHandle(Type type, int order)
-    {
+    static ColumnHandle newHandle(Type type, int order) {
         return new TestColumnHandle(type, order);
     }
 
     @Test
-    public void testBuildSQL()
-    {
+    public void testBuildSQL() {
         List<ColumnHandle> columns = ImmutableList.of(
                 newHandle(INTEGER, 0),
                 newHandle(VARCHAR, 1),
@@ -84,14 +77,12 @@ public class TestIonSqlQueryBuilder
     }
 
     @Test
-    public void testEmptyColumns()
-    {
+    public void testEmptyColumns() {
         assertEquals("SELECT ' ' FROM S3Object s", buildSql(ImmutableList.of(), TupleDomain.all()));
     }
 
     private static String buildSql(List<? extends ColumnHandle> columns,
-                                   TupleDomain<ColumnHandle> tupleDomain)
-    {
+                                   TupleDomain<ColumnHandle> tupleDomain) {
         return new IonSqlQueryBuilder().buildSql(TestIonSqlQueryBuilder::columnIndex,
                 TestIonSqlQueryBuilder::columnType,
                 columns,

@@ -39,8 +39,7 @@ import static com.google.common.base.Functions.identity;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 public class AvroRecordReader
-        implements RecordReader
-{
+        implements RecordReader {
     private final Map<DecoderColumnHandle, AvroColumnDecoder> columnDecoders;
 
     private final Supplier<CountingInputStream> inputStreamSupplier;
@@ -53,8 +52,7 @@ public class AvroRecordReader
 
     private CountingInputStream inputStream;
 
-    public AvroRecordReader(List<S3ColumnHandle> columnHandles, final S3ObjectRange objectRange, final Supplier<CountingInputStream> inputStreamSupplier)
-    {
+    public AvroRecordReader(List<S3ColumnHandle> columnHandles, final S3ObjectRange objectRange, final Supplier<CountingInputStream> inputStreamSupplier) {
         this.columnDecoders = columnHandles.stream().collect(toImmutableMap(identity(), this::createColumnDecoder));
         this.objectRange = objectRange;
         this.inputStreamSupplier = inputStreamSupplier;
@@ -64,19 +62,16 @@ public class AvroRecordReader
                 : objectRange.getOffset() + objectRange.getLength();
     }
 
-    private AvroColumnDecoder createColumnDecoder(DecoderColumnHandle columnHandle)
-    {
+    private AvroColumnDecoder createColumnDecoder(DecoderColumnHandle columnHandle) {
         return new AvroColumnDecoder(columnHandle);
     }
 
-    private void init()
-    {
+    private void init() {
         try {
             this.inputStream = inputStreamSupplier.get();
             this.reader = DataFileReader.openReader(seekableInput(inputStream, lastOffset), new SpecificDatumReader<>());
             this.reader.sync(objectRange.getOffset());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -113,16 +108,14 @@ public class AvroRecordReader
     }
 
     @Override
-    public long getTotalBytes()
-    {
+    public long getTotalBytes() {
         return inputStream == null
                 ? 0
                 : inputStream.getTotalBytes();
     }
 
     @Override
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         if (reader == null) {
             init();
         }
@@ -136,8 +129,7 @@ public class AvroRecordReader
     }
 
     @Override
-    public Map<DecoderColumnHandle, FieldValueProvider> next()
-    {
+    public Map<DecoderColumnHandle, FieldValueProvider> next() {
         if (reader == null) {
             init();
         }
@@ -145,17 +137,16 @@ public class AvroRecordReader
         final GenericRecord record = reader.next();
 
         return columnDecoders.entrySet().stream()
-                .collect(toImmutableMap(Map.Entry::getKey, entry -> entry.getValue().decodeField(record)));
+                             .collect(toImmutableMap(Map.Entry::getKey, entry -> entry.getValue().decodeField(record)));
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         if (reader != null) {
             try {
                 reader.close();
+            } catch (IOException ignore) {
             }
-            catch (IOException ignore) {}
         }
     }
 }

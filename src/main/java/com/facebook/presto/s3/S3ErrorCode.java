@@ -24,31 +24,26 @@ import static com.facebook.presto.spi.ErrorType.EXTERNAL;
 import static com.facebook.presto.spi.ErrorType.USER_ERROR;
 
 public enum S3ErrorCode
-        implements ErrorCodeSupplier
-{
-    S3_INVALID_METADATA (0, USER_ERROR),
+        implements ErrorCodeSupplier {
+    S3_INVALID_METADATA(0, USER_ERROR),
     S3_UNSUPPORTED_FORMAT(1, USER_ERROR),
     S3_TABLE_ALREADY_EXISTS(2, USER_ERROR),
     S3_SCHEMA_ALREADY_EXISTS(3, USER_ERROR),
-    S3_FILESYSTEM_ERROR(4,EXTERNAL),
+    S3_FILESYSTEM_ERROR(4, EXTERNAL),
     S3_CURSOR_ERROR(5, EXTERNAL),
     S3_BAD_DATA(6, EXTERNAL),
     S3_CANNOT_OPEN_SPLIT(7, EXTERNAL),
     S3_MISSING_DATA(8, EXTERNAL),
-    S3_PARTITION_SCHEMA_MISMATCH(9, EXTERNAL)
-    ;
+    S3_PARTITION_SCHEMA_MISMATCH(9, EXTERNAL);
 
     private final ErrorCode errorCode;
 
-    S3ErrorCode(int code, ErrorType type)
-    {
+    S3ErrorCode(int code, ErrorType type) {
         errorCode = new ErrorCode(code + 0x0508_0000, name(), type);
     }
 
     @Override
-    public ErrorCode toErrorCode()
-    {
+    public ErrorCode toErrorCode() {
         return errorCode;
     }
-
 }

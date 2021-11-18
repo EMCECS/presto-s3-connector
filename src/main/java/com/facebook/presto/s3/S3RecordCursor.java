@@ -25,7 +25,8 @@ import com.facebook.presto.spi.RecordCursor;
 
 import io.airlift.slice.Slice;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -39,16 +40,14 @@ public class S3RecordCursor
     private final RecordReader recordReader;
 
     public S3RecordCursor(RecordReader recordReader,
-                          List<S3ColumnHandle> columnHandles)
-    {
+                          List<S3ColumnHandle> columnHandles) {
         this.recordReader = recordReader;
         this.columnHandles = columnHandles;
         this.currentRowValues = new FieldValueProvider[columnHandles.size()];
     }
 
     @Override
-    public long getCompletedBytes()
-    {
+    public long getCompletedBytes() {
         return recordReader.getTotalBytes();
     }
 
@@ -109,8 +108,7 @@ public class S3RecordCursor
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         recordReader.close();
     }
 }

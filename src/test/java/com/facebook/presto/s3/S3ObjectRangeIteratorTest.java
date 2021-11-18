@@ -51,14 +51,14 @@ public class S3ObjectRangeIteratorTest {
 
     @Test
     public void testEmptyBucket() {
-        server.putKey("bucket1", "key1-1", new byte[]{'a'});
-        server.putKey("bucket1", "key1-2", new byte[]{'a'});
-        server.putKey("bucket1", "key1-3", new byte[]{'a'});
+        server.putKey("bucket1", "key1-1", new byte[] {'a'});
+        server.putKey("bucket1", "key1-2", new byte[] {'a'});
+        server.putKey("bucket1", "key1-3", new byte[] {'a'});
 
         server.putBucket("bucket2");
 
-        server.putKey("bucket3", "key3-1", new byte[]{'a'});
-        server.putKey("bucket3", "key3-2", new byte[]{'a'});
+        server.putKey("bucket3", "key3-1", new byte[] {'a'});
+        server.putKey("bucket3", "key3-2", new byte[] {'a'});
 
         Map<String, List<String>> sources = new TreeMap<>();
         sources.put("bucket1", null);
@@ -76,11 +76,11 @@ public class S3ObjectRangeIteratorTest {
         assertEquals(ranges.size(), 5);
 
         int i = 0;
-        assertEquals(ranges.get(i++).getKey(),"key1-1");
-        assertEquals(ranges.get(i++).getKey(),"key1-2");
-        assertEquals(ranges.get(i++).getKey(),"key1-3");
-        assertEquals(ranges.get(i++).getKey(),"key3-1");
-        assertEquals(ranges.get(i).getKey(),"key3-2");
+        assertEquals(ranges.get(i++).getKey(), "key1-1");
+        assertEquals(ranges.get(i++).getKey(), "key1-2");
+        assertEquals(ranges.get(i++).getKey(), "key1-3");
+        assertEquals(ranges.get(i++).getKey(), "key3-1");
+        assertEquals(ranges.get(i).getKey(), "key3-2");
     }
 
     @Test

@@ -49,8 +49,7 @@ public class JsonRecordReader
 
     private final int bufferSize;
 
-    public JsonRecordReader(RowDecoder rowDecoder, S3ObjectRange objectRange, S3ReaderProps readerProps, final Supplier<CountingInputStream> inputStreamSupplier)
-    {
+    public JsonRecordReader(RowDecoder rowDecoder, S3ObjectRange objectRange, S3ReaderProps readerProps, final Supplier<CountingInputStream> inputStreamSupplier) {
         if (!(rowDecoder instanceof JsonRowDecoder)) {
             throw new IllegalArgumentException();
         }
@@ -74,16 +73,14 @@ public class JsonRecordReader
     }
 
     @Override
-    public long getTotalBytes()
-    {
+    public long getTotalBytes() {
         return inputStream == null
                 ? 0
                 : inputStream.getTotalBytes();
     }
 
     @Override
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         if (bytesLineReader == null) {
             init();
         }
@@ -93,19 +90,17 @@ public class JsonRecordReader
     }
 
     @Override
-    public Map<DecoderColumnHandle, FieldValueProvider> next()
-    {
+    public Map<DecoderColumnHandle, FieldValueProvider> next() {
         Optional<Map<DecoderColumnHandle, FieldValueProvider>> fieldValueProviderMap =
-        rowDecoder.decodeRow(line, 0, length, Collections.EMPTY_MAP);
+                rowDecoder.decodeRow(line, 0, length, Collections.EMPTY_MAP);
         return fieldValueProviderMap.get();
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         try {
             inputStream.close();
+        } catch (IOException ignore) {
         }
-        catch (IOException ignore) {}
     }
 }

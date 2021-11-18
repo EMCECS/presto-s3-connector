@@ -18,10 +18,17 @@ package com.facebook.presto.s3;
 import io.airlift.compress.gzip.JdkGzipCodec;
 import io.airlift.compress.lz4.Lz4Codec;
 import io.airlift.compress.snappy.SnappyCodec;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.testng.annotations.Test;
 
-import java.io.*;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
@@ -98,8 +105,7 @@ public class DecompressorTest {
             CompressionCodec codec = Compression.getCodec(f);
             assertNotNull(codec);
             return codec.createInputStream(new ByteArrayInputStream(compressedData.get(f)));
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -113,8 +119,7 @@ public class DecompressorTest {
             os.close();
             compressedData.put(f, baos.toByteArray());
             return codec; // so test case can verify what was used
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -131,8 +136,7 @@ public class DecompressorTest {
                 }
             } while (n > 0);
             return baos.toByteArray();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }

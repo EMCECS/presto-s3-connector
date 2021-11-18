@@ -16,19 +16,16 @@
 
 package com.facebook.presto.s3.unit;
 
+import com.facebook.presto.s3.S3Const;
+import com.facebook.presto.s3.S3ErrorCode;
 import org.testng.annotations.Test;
 
-import com.facebook.presto.s3.*;
-
 import static org.testng.Assert.*;
-import static com.facebook.presto.spi.ErrorType.USER_ERROR;
-
 
 public class S3TestMisc {
 
     @Test
-    public void testS3Const()
-    {
+    public void testS3Const() {
         assertTrue(S3Const.isValidFormatForInsert("CsV"));
         assertFalse(S3Const.isValidFormatForInsert(S3Const.AVRO));
         assertFalse(S3Const.isValidFormatForQuery("Bogus"));
@@ -41,5 +38,4 @@ public class S3TestMisc {
         S3ErrorCode code1 = S3ErrorCode.S3_INVALID_METADATA;
         assertEquals(code1.toErrorCode(), S3ErrorCode.S3_INVALID_METADATA.toErrorCode());
     }
-
 }

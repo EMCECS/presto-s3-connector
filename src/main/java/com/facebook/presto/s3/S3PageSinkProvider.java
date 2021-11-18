@@ -17,7 +17,12 @@
 package com.facebook.presto.s3;
 
 import com.facebook.airlift.log.Logger;
-import com.facebook.presto.spi.*;
+import com.facebook.presto.spi.ConnectorInsertTableHandle;
+import com.facebook.presto.spi.ConnectorOutputTableHandle;
+import com.facebook.presto.spi.ConnectorPageSink;
+import com.facebook.presto.spi.ConnectorSession;
+import com.facebook.presto.spi.PageSinkContext;
+import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.connector.ConnectorPageSinkProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
@@ -33,23 +38,19 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
-
 public class S3PageSinkProvider
-        implements ConnectorPageSinkProvider
-{
+        implements ConnectorPageSinkProvider {
 
     private final S3AccessObject accessObject;
     private static final Logger log = Logger.get(com.facebook.presto.s3.S3PageSinkProvider.class);
 
     @Inject
-    public S3PageSinkProvider(S3AccessObject accessObject)
-    {
+    public S3PageSinkProvider(S3AccessObject accessObject) {
         this.accessObject = accessObject;
     }
 
     @Override
-    public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorOutputTableHandle tableHandle, PageSinkContext pageSinkProperties)
-    {
+    public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorOutputTableHandle tableHandle, PageSinkContext pageSinkProperties) {
         requireNonNull(tableHandle, "tableHandle is null");
         checkArgument(tableHandle instanceof S3OutputTableHandle, "tableHandle is not an instance of S3OutputTableHandle");
         S3OutputTableHandle handle = (S3OutputTableHandle) tableHandle;
@@ -62,7 +63,7 @@ public class S3PageSinkProvider
 
         for (Map.Entry<String, Object> property : handle.getProperties().entrySet()) {
             if (property.getKey().equalsIgnoreCase(EXTERNAL_LOCATION_DEF)) {
-                String location = (String)property.getValue();
+                String location = (String) property.getValue();
                 try {
                     prefix = new URI(location).getPath();
                     if (prefix.startsWith("/")) {
@@ -76,23 +77,21 @@ public class S3PageSinkProvider
                 }
                 log.debug("Table location. Bucket: " + bucket + ", prefix: " + prefix);
             } else if (property.getKey().equalsIgnoreCase(OBJECT_FILE_TYPE_DEF)) {
-                file_format = (String)property.getValue();
-                if (!S3Const.isValidFormatForInsert(file_format)){
+                file_format = (String) property.getValue();
+                if (!S3Const.isValidFormatForInsert(file_format)) {
                     throw new PrestoException(S3ErrorCode.S3_UNSUPPORTED_FORMAT,
-                            format("Unsupported table format for insert: %s", (String)property.getValue()));
+                            format("Unsupported table format for insert: %s", (String) property.getValue()));
                 }
             } else if (property.getKey().equalsIgnoreCase(HAS_HEADER_ROW_DEF)) {
-                has_header_row = (String)property.getValue();
+                has_header_row = (String) property.getValue();
                 log.debug("OutputTableHandle property. HasHeaderRow: " + has_header_row);
             } else if (property.getKey().equalsIgnoreCase(FIELD_DELIMITER_DEF)) {
-                field_delimiter = (String)property.getValue();
+                field_delimiter = (String) property.getValue();
                 log.debug("OutputTableHandle property. FieldDelimiter: " + field_delimiter);
             } else if (property.getKey().equalsIgnoreCase(RECORD_DELIMITER_DEF)) {
-                record_delimiter = (String)property.getValue();
+                record_delimiter = (String) property.getValue();
                 log.debug("OutputTableHandle property. RecordDelimiter: " + record_delimiter);
-
             }
-
         }
 
         return new S3PageSink(
@@ -111,8 +110,7 @@ public class S3PageSinkProvider
     }
 
     @Override
-    public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorInsertTableHandle tableHandle, PageSinkContext pageSinkProperties)
-    {
+    public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorInsertTableHandle tableHandle, PageSinkContext pageSinkProperties) {
         requireNonNull(tableHandle, "tableHandle is null");
         checkArgument(tableHandle instanceof S3InsertTableHandle, "tableHandle is not an instance of ConnectorInsertTableHandle");
         S3InsertTableHandle handle = (S3InsertTableHandle) tableHandle;
@@ -134,6 +132,4 @@ public class S3PageSinkProvider
                 false,
                 accessObject);
     }
-
-
 }

@@ -27,8 +27,7 @@ import java.io.UncheckedIOException;
 import static com.google.common.base.MoreObjects.toStringHelper;
 
 public class S3ObjectRange
-        implements Serializable
-{
+        implements Serializable {
     private final String bucket;
     private final String key;
     private final long offset;
@@ -36,13 +35,11 @@ public class S3ObjectRange
     private final boolean split;
     private final String compressionType;
 
-    public S3ObjectRange(String bucket, String key, long offset, int length, boolean split)
-    {
+    public S3ObjectRange(String bucket, String key, long offset, int length, boolean split) {
         this(bucket, key, offset, length, split, null);
     }
 
-    public S3ObjectRange(String bucket, String key, long offset, int length, boolean split, String compressionType)
-    {
+    public S3ObjectRange(String bucket, String key, long offset, int length, boolean split, String compressionType) {
         this.bucket = bucket;
         this.key = key;
         this.offset = offset;
@@ -51,67 +48,55 @@ public class S3ObjectRange
         this.compressionType = compressionType;
     }
 
-    public String getBucket()
-    {
+    public String getBucket() {
         return bucket;
     }
 
-    public String getKey()
-    {
+    public String getKey() {
         return key;
     }
 
-    public long getOffset()
-    {
+    public long getOffset() {
         return offset;
     }
 
-    public int getLength()
-    {
+    public int getLength() {
         return length;
     }
 
-    public boolean getSplit()
-    {
+    public boolean getSplit() {
         return split;
     }
 
-    public String getCompressionType()
-    {
+    public String getCompressionType() {
         return compressionType;
     }
 
-    public static byte[] serialize(com.facebook.presto.s3.S3ObjectRange objectRange)
-    {
+    public static byte[] serialize(com.facebook.presto.s3.S3ObjectRange objectRange) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(objectRange);
             return baos.toByteArray();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public static com.facebook.presto.s3.S3ObjectRange deserialize(byte[] objectRangeBytes)
-    {
+    public static com.facebook.presto.s3.S3ObjectRange deserialize(byte[] objectRangeBytes) {
         try {
             ByteArrayInputStream bais = new ByteArrayInputStream(objectRangeBytes);
             ObjectInputStream bis = new ObjectInputStream(bais);
             return (com.facebook.presto.s3.S3ObjectRange) bis.readObject();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return toStringHelper(this)
                 .add("bucket", bucket)
                 .add("key", key)
