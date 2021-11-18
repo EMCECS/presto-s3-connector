@@ -33,8 +33,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class S3SplitSource
-        implements ConnectorSplitSource
-{
+        implements ConnectorSplitSource {
     private static final Logger log = Logger.get(com.facebook.presto.s3.S3SplitSource.class);
 
     private final Iterator<S3ObjectRange> ranges;
@@ -56,8 +55,7 @@ public class S3SplitSource
                          boolean s3SelectEnabled,
                          int max,
                          int throttleMs,
-                         Iterator<S3ObjectRange> ranges)
-    {
+                         Iterator<S3ObjectRange> ranges) {
         this.connectorId = connectorId;
         this.config = config;
         this.layoutHandle = layoutHandle;
@@ -68,8 +66,7 @@ public class S3SplitSource
     }
 
     @Override
-    public CompletableFuture<ConnectorSplitBatch> getNextBatch(ConnectorPartitionHandle partitionHandle, int maxSize)
-    {
+    public CompletableFuture<ConnectorSplitBatch> getNextBatch(ConnectorPartitionHandle partitionHandle, int maxSize) {
         ListenableScheduledFuture<ConnectorSplitBatch> future = tp.schedule(() -> {
             List<ConnectorSplit> results = new ArrayList<>();
             int size = Math.min(max, maxSize);
@@ -94,13 +91,11 @@ public class S3SplitSource
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
     }
 
     @Override
-    public boolean isFinished()
-    {
+    public boolean isFinished() {
         return !ranges.hasNext();
     }
 }

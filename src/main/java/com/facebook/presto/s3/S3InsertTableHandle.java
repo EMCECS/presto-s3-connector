@@ -22,12 +22,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 
-
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkArgument;
-
 
 public class S3InsertTableHandle
         implements ConnectorInsertTableHandle {
@@ -55,8 +53,7 @@ public class S3InsertTableHandle
             @JsonProperty("hasHeaderRow") String HasHeaderRow,
             @JsonProperty("recordDelimiter") String RecordDelimiter,
             @JsonProperty("fieldDelimiter") String FieldDelimiter,
-            @JsonProperty("objectDataFormat") String objectDataFormat)
-    {
+            @JsonProperty("objectDataFormat") String objectDataFormat) {
         this.connectorId = requireNonNull(connectorId, "clientId is null");
         this.schemaName = requireNonNull(schemaName, "schemaName is null");
         this.tableName = requireNonNull(tableName, "tableName is null");
@@ -72,63 +69,64 @@ public class S3InsertTableHandle
         this.columnNames = ImmutableList.copyOf(columnNames);
         this.columnTypes = ImmutableList.copyOf(columnTypes);
     }
+
     @JsonProperty
-    public String getConnectorId()
-    {
+    public String getConnectorId() {
         return connectorId;
     }
 
     @JsonProperty
-    public String getSchemaName()
-    {
+    public String getSchemaName() {
         return schemaName;
     }
 
     @JsonProperty
-    public String getTableBucketName()
-    {
+    public String getTableBucketName() {
         return tableBucketName;
     }
 
     @JsonProperty
-    public String getTableBucketPrefix()
-    {
+    public String getTableBucketPrefix() {
         return tableBucketPrefix;
     }
 
     @JsonProperty
-    public String getTableName()
-    {
+    public String getTableName() {
         return tableName;
     }
 
     @JsonProperty
-    public List<String> getColumnNames()
-    {
+    public List<String> getColumnNames() {
         return columnNames;
     }
 
     @JsonProperty
-    public List<Type> getColumnTypes()
-    {
+    public List<Type> getColumnTypes() {
         return columnTypes;
     }
 
     @JsonProperty
-    public String getObjectDataFormat() { return objectDataFormat; }
+    public String getObjectDataFormat() {
+        return objectDataFormat;
+    }
 
     @JsonProperty
-    public String getHasHeaderRow() { return HasHeaderRow; }
+    public String getHasHeaderRow() {
+        return HasHeaderRow;
+    }
 
     @JsonProperty
-    public String getRecordDelimiter() { return RecordDelimiter; }
+    public String getRecordDelimiter() {
+        return RecordDelimiter;
+    }
 
     @JsonProperty
-    public String getFieldDelimiter() { return FieldDelimiter; }
+    public String getFieldDelimiter() {
+        return FieldDelimiter;
+    }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "s3:" + schemaName + "." + tableName;
     }
 }

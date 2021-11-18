@@ -32,12 +32,17 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
-import io.pravega.schemaregistry.contract.data.*;
+import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.ws.rs.ProcessingException;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -74,10 +79,10 @@ public class S3SchemaRegistryManager {
         client = initializeClient("http://" + schemaRegistryServerHost.getHostText() + ":" + schemaRegistryServerPort);
     }
 
-    public void createGroup (String schemaName, String owner) {
+    public void createGroup(String schemaName, String owner) {
 
         log.info("Create S3 schema " + schemaName + ", with owner: " + owner
-                + " to schema registry host: " +  schemaRegistryServerHost
+                + " to schema registry host: " + schemaRegistryServerHost
                 + " using namespace: " + schemaRegistryServerNamespace);
         GroupProperties newGroupProperties = new GroupProperties(SerializationFormat.Json,
                 Compatibility.allowAny(), true);
@@ -85,20 +90,20 @@ public class S3SchemaRegistryManager {
         client.addGroup(schemaName, newGroupProperties);
     }
 
-    private SchemaRegistryClient initializeClient(String url){
+    private SchemaRegistryClient initializeClient(String url) {
         return SchemaRegistryClientFactory.withNamespace(schemaRegistryServerNamespace,
                 SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create(url)).build());
     }
 
-    public void dropGroup (String schemaName) {
+    public void dropGroup(String schemaName) {
 
         log.info("Drop S3 schema " + schemaName
-                + " from schema registry host: " +  schemaRegistryServerHost
+                + " from schema registry host: " + schemaRegistryServerHost
                 + " using namespace: " + schemaRegistryServerNamespace);
         client.removeGroup(schemaName);
     }
 
-    public void dropTable (S3TableHandle tableHandle) {
+    public void dropTable(S3TableHandle tableHandle) {
         log.info("Dropping table " + tableHandle.getTableName() + " on schema " + tableHandle.getSchemaName());
         try {
             // Remember - a "schema" in Presto is a "group" in Schema Registry
@@ -117,7 +122,7 @@ public class S3SchemaRegistryManager {
         }
     }
 
-    private ObjectNode populateObjectNode(Map<String, Object> properties, String database, String tableName){
+    private ObjectNode populateObjectNode(Map<String, Object> properties, String database, String tableName) {
         String location;
         String file_format = null;
         String bucket = null;
@@ -127,23 +132,19 @@ public class S3SchemaRegistryManager {
         String fieldDelimiter = DEFAULT_FIELD_DELIMITER;
         for (Map.Entry<String, Object> property : properties.entrySet()) {
             if (property.getKey().equalsIgnoreCase("format")) {
-                file_format = (String)property.getValue();
+                file_format = (String) property.getValue();
                 if (!S3Const.isValidFormatForQuery(file_format)) {
                     throw new PrestoException(S3ErrorCode.S3_UNSUPPORTED_FORMAT,
                             format("Unsupported table format for query: %s", file_format));
                 }
-            }
-            else if (property.getKey().equalsIgnoreCase("field_delimiter")) {
-                fieldDelimiter = (String)property.getValue();
-            }
-            else if (property.getKey().equalsIgnoreCase("record_delimiter")) {
-                recordDelimiter = (String)property.getValue();
-            }
-            else if (property.getKey().equalsIgnoreCase("has_header_row")) {
-                hasHeaderRow = (String)property.getValue();
-            }
-            else if (property.getKey().equalsIgnoreCase("external_location")) {
-                location = (String)property.getValue();
+            } else if (property.getKey().equalsIgnoreCase("field_delimiter")) {
+                fieldDelimiter = (String) property.getValue();
+            } else if (property.getKey().equalsIgnoreCase("record_delimiter")) {
+                recordDelimiter = (String) property.getValue();
+            } else if (property.getKey().equalsIgnoreCase("has_header_row")) {
+                hasHeaderRow = (String) property.getValue();
+            } else if (property.getKey().equalsIgnoreCase("external_location")) {
+                location = (String) property.getValue();
                 try {
                     prefix = new URI(location).getPath();
                     bucket = new URI(location).getHost();
@@ -157,30 +158,30 @@ public class S3SchemaRegistryManager {
         }
         ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
         JSONObject commentDetails = new JSONObject().put(database_var, database)
-                .put(tablename_var, tableName);
+                                                    .put(tablename_var, tableName);
         JSONArray prefixArray = new JSONArray().put(prefix);
         JSONObject sourceDetail = new JSONObject().put(bucket, prefixArray);
         assert file_format != null;
         commentDetails.put("sources", sourceDetail)
-                .put("hasHeaderRow", hasHeaderRow)
-                .put("fieldDelimiter", fieldDelimiter)
-                .put("recordDelimiter", recordDelimiter)
-                .put("objectDataFormat", file_format.toLowerCase());
+                      .put("hasHeaderRow", hasHeaderRow)
+                      .put("fieldDelimiter", fieldDelimiter)
+                      .put("recordDelimiter", recordDelimiter)
+                      .put("objectDataFormat", file_format.toLowerCase());
         log.debug("Comment Details: " + commentDetails.toString());
         schemaNode.put(comment_var, commentDetails.toString().replaceAll("\"", "\\\""))
-                .put("description", "Format of row of data")
-                .put("type", "object");
+                  .put("description", "Format of row of data")
+                  .put("type", "object");
         return schemaNode;
     }
 
-    public void createTable (ConnectorTableMetadata tableMetadata) {
+    public void createTable(ConnectorTableMetadata tableMetadata) {
 
         // Note, this method uses a combination of JSONObject and JsonNode objects
         // JSONObject is typically fine, but when the schema properties are added,
         // it does not report the properties in any expected order, but JsonNode objects do
         log.info("Create S3 table schema " + tableMetadata.getTable().getTableName()
                 + ", in group " + tableMetadata.getTable().getSchemaName()
-                + " to schema registry host: " +  schemaRegistryServerHost
+                + " to schema registry host: " + schemaRegistryServerHost
                 + " using namespace: " + schemaRegistryServerNamespace);
         String database = tableMetadata.getTable().getSchemaName();
         String tablename = tableMetadata.getTable().getTableName();
@@ -203,15 +204,15 @@ public class S3SchemaRegistryManager {
                 columnType = "integer";
             } else if (column.getType().getDisplayName().equalsIgnoreCase("BOOLEAN")) {
                 columnType = "boolean";
-            } else if(column.getType().getDisplayName().equalsIgnoreCase("INTEGER")){
+            } else if (column.getType().getDisplayName().equalsIgnoreCase("INTEGER")) {
                 columnType = "integer";
-            } else if(column.getType().getDisplayName().equalsIgnoreCase("DATE")){
+            } else if (column.getType().getDisplayName().equalsIgnoreCase("DATE")) {
                 columnType = "string";
                 columnObjectNode.put("format", FORMAT_VALUE_DATE);
-            } else if(column.getType().getDisplayName().equalsIgnoreCase("TIME")){
+            } else if (column.getType().getDisplayName().equalsIgnoreCase("TIME")) {
                 columnType = "string";
                 columnObjectNode.put("format", FORMAT_VALUE_TIME);
-            } else if(column.getType().getDisplayName().equalsIgnoreCase("TIMESTAMP")){
+            } else if (column.getType().getDisplayName().equalsIgnoreCase("TIMESTAMP")) {
                 columnType = "string";
                 columnObjectNode.put("format", FORMAT_VALUE_DATE_TIME);
             }
@@ -240,7 +241,6 @@ public class S3SchemaRegistryManager {
                         + schemaRegistryServerHost.getHostText() + " at port " + schemaRegistryServerPort + ", or it is down");
                 return false;
             }
-
         } catch (ProcessingException e) {
             log.error("Cannot connect to schema registry");
             return false;
@@ -267,7 +267,6 @@ public class S3SchemaRegistryManager {
                         + schemaRegistryServerHost.getHostText() + " at port " + schemaRegistryServerPort + ", or it is down");
                 return false;
             }
-
         } catch (ProcessingException e) {
             log.error("Cannot connect to schema registry");
             return false;
@@ -291,8 +290,7 @@ public class S3SchemaRegistryManager {
         return false;
     }
 
-    public JSONObject getSchemaRegistryConfig()
-    {
+    public JSONObject getSchemaRegistryConfig() {
         // Return the schemas defined in Schema Registry using same format
         // as defined in static JSON config file defined in presto-main/etc/s3.schemas.config.json
         Iterator<Map.Entry<String, GroupProperties>> configuredGroups;
@@ -306,8 +304,7 @@ public class S3SchemaRegistryManager {
                         + schemaRegistryServerHost.getHostText() + " at port " + schemaRegistryServerPort + ", or it is down");
                 return new JSONObject();
             }
-        }
-        catch (ProcessingException e) {
+        } catch (ProcessingException e) {
             // Not necessarily an error
             log.debug("Cannot connect to schema registry server "
                     + schemaRegistryServerHost.getHostText() + " at port " + schemaRegistryServerPort);
@@ -316,7 +313,7 @@ public class S3SchemaRegistryManager {
         return populateSchemaRegistryConfig(configuredGroups);
     }
 
-    private JSONObject populateSchemaRegistryConfig(Iterator<Map.Entry<String, GroupProperties>> configuredGroups){
+    private JSONObject populateSchemaRegistryConfig(Iterator<Map.Entry<String, GroupProperties>> configuredGroups) {
 
         JSONObject returnJSON = new JSONObject();
         JSONArray arrayOfSchemas = new JSONArray();
@@ -331,14 +328,14 @@ public class S3SchemaRegistryManager {
                 ByteBuffer schemaData =
                         client.getLatestSchemaVersion(nextGroup.getKey(), schemaName).getSchemaInfo().getSchemaData();
                 JsonNode jsonNodeProperties = null;
-                if(schemaData.hasArray()){
+                if (schemaData.hasArray()) {
                     try {
-                        jsonNodeProperties = new ObjectMapper().readTree(schemaData.array(), schemaData.arrayOffset()+schemaData.position(), schemaData.remaining()).get(properties_var);
+                        jsonNodeProperties = new ObjectMapper().readTree(schemaData.array(), schemaData.arrayOffset() + schemaData.position(), schemaData.remaining()).get(properties_var);
                     } catch (IOException e) {
                         log.error("Exception: " + e);
                         return returnJSON;
                     }
-                    populateSchemaRegistryConfigHelper(schemaData.array(),schemaData.arrayOffset()+schemaData.position(), schemaData.remaining(), jsonNodeProperties, arrayOfSchemas);
+                    populateSchemaRegistryConfigHelper(schemaData.array(), schemaData.arrayOffset() + schemaData.position(), schemaData.remaining(), jsonNodeProperties, arrayOfSchemas);
                 } else {
                     byte[] schemaDataByteArray = new byte[schemaData.remaining()];
                     schemaData.get(schemaDataByteArray, 0, schemaDataByteArray.length);
@@ -348,8 +345,7 @@ public class S3SchemaRegistryManager {
                         log.error("Exception: " + e);
                         return returnJSON;
                     }
-                    populateSchemaRegistryConfigHelper(schemaDataByteArray,0,schemaDataByteArray.length, jsonNodeProperties, arrayOfSchemas);
-                }
+                    populateSchemaRegistryConfigHelper(schemaDataByteArray, 0, schemaDataByteArray.length, jsonNodeProperties, arrayOfSchemas);
                 }
                 if (!groupHasSchemas) {
                     // DB with no tables - create minimal schema
@@ -361,20 +357,30 @@ public class S3SchemaRegistryManager {
                     arrayOfSchemas.put(schemaObject);
                 }
             }
+            if (!groupHasSchemas) {
+                // DB with no tables - create minimal schema
+                log.debug("No tables defined for group/DB: " + nextGroup.getKey());
+                JSONObject schemaTableName = new JSONObject();
+                schemaTableName.put(schema_name_var, nextGroup.getKey());
+                JSONObject schemaObject = new JSONObject();
+                schemaObject.put(schemaTableName_var, schemaTableName);
+                arrayOfSchemas.put(schemaObject);
+            }
+        }
         if (arrayOfSchemas.length() > 0) {
             returnJSON.put("schemas", arrayOfSchemas);
         }
-        return (returnJSON);
+        return returnJSON;
     }
 
-    private void populateSchemaRegistryConfigHelper(byte[] schemaDataByteArray, int offset, int length, JsonNode jsonNodeProperties, JSONArray arrayOfSchemas){
+    private void populateSchemaRegistryConfigHelper(byte[] schemaDataByteArray, int offset, int length, JsonNode jsonNodeProperties, JSONArray arrayOfSchemas) {
         JSONObject schemaJSON = new JSONObject(new String(schemaDataByteArray, offset, length, Charsets.UTF_8));
         JSONObject commentInfo = new JSONObject(schemaJSON.getString(comment_var));
         String database = commentInfo.getString(database_var);
         String tablename = commentInfo.getString(tablename_var);
         JSONObject properties = schemaJSON.getJSONObject(properties_var);
         JSONObject schemaTableName = new JSONObject().put(schema_name_var, database)
-                .put(table_name_var, tablename);
+                                                     .put(table_name_var, tablename);
         JSONObject schemaObject = new JSONObject().put(schemaTableName_var, schemaTableName);
         JSONArray columns = new JSONArray();
         Iterator<String> propertyKeys = jsonNodeProperties.fieldNames();
@@ -385,19 +391,25 @@ public class S3SchemaRegistryManager {
             columns.put(newObject);
         }
         JSONObject s3Table = new JSONObject().put(JSON_PROP_NAME, tablename)
-                .put("columns", columns);
-        if (commentInfo.has("objectDataFormat"))
+                                             .put("columns", columns);
+        if (commentInfo.has("objectDataFormat")) {
             s3Table.put("objectDataFormat", commentInfo.getString("objectDataFormat"));
-        if (commentInfo.has("hasHeaderRow"))
+        }
+        if (commentInfo.has("hasHeaderRow")) {
             s3Table.put("hasHeaderRow", commentInfo.getString("hasHeaderRow"));
-        if (commentInfo.has("hasFooterRow"))
+        }
+        if (commentInfo.has("hasFooterRow")) {
             s3Table.put("hasFooterRow", commentInfo.getString("hasFooterRow"));
-        if (commentInfo.has("recordDelimiter"))
+        }
+        if (commentInfo.has("recordDelimiter")) {
             s3Table.put("recordDelimiter", commentInfo.getString("recordDelimiter"));
-        if (commentInfo.has("fieldDelimiter"))
+        }
+        if (commentInfo.has("fieldDelimiter")) {
             s3Table.put("fieldDelimiter", commentInfo.getString("fieldDelimiter"));
-        if (commentInfo.has("sources"))
+        }
+        if (commentInfo.has("sources")) {
             s3Table.put("sources", commentInfo.getJSONObject("sources"));
+        }
         schemaObject.put("s3Table", s3Table);
         arrayOfSchemas.put(schemaObject);
     }

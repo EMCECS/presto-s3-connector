@@ -17,5 +17,6 @@ package com.facebook.presto.s3.util;
 
 public interface SeekableStream {
     void seek(long l);
+
     int read(byte[] b, int off, int len);
 }

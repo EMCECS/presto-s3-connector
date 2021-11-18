@@ -20,7 +20,13 @@ package com.facebook.presto.s3.decoder;
 import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.RowDecoder;
 import com.facebook.presto.decoder.RowDecoderFactory;
-import com.facebook.presto.decoder.json.*;
+import com.facebook.presto.decoder.json.CustomDateTimeJsonFieldDecoder;
+import com.facebook.presto.decoder.json.DefaultJsonFieldDecoder;
+import com.facebook.presto.decoder.json.ISO8601JsonFieldDecoder;
+import com.facebook.presto.decoder.json.JsonFieldDecoder;
+import com.facebook.presto.decoder.json.MillisecondsSinceEpochJsonFieldDecoder;
+import com.facebook.presto.decoder.json.RFC2822JsonFieldDecoder;
+import com.facebook.presto.decoder.json.SecondsSinceEpochJsonFieldDecoder;
 import com.facebook.presto.spi.PrestoException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,31 +44,26 @@ import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
 public class JsonRowDecoderFactory
-        implements RowDecoderFactory
-{
+        implements RowDecoderFactory {
     private final ObjectMapper objectMapper;
 
     @Inject
-    public JsonRowDecoderFactory(ObjectMapper objectMapper)
-    {
+    public JsonRowDecoderFactory(ObjectMapper objectMapper) {
         this.objectMapper = requireNonNull(objectMapper, "objectMapper is null");
     }
 
     @Override
-    public RowDecoder create(Map<String, String> decoderParams, Set<DecoderColumnHandle> columns)
-    {
+    public RowDecoder create(Map<String, String> decoderParams, Set<DecoderColumnHandle> columns) {
         requireNonNull(columns, "columnHandles is null");
         return new JsonRowDecoder(objectMapper, chooseFieldDecoders(columns));
     }
 
-    private Map<DecoderColumnHandle, JsonFieldDecoder> chooseFieldDecoders(Set<DecoderColumnHandle> columns)
-    {
+    private Map<DecoderColumnHandle, JsonFieldDecoder> chooseFieldDecoders(Set<DecoderColumnHandle> columns) {
         return columns.stream()
-                .collect(toImmutableMap(identity(), this::chooseFieldDecoder));
+                      .collect(toImmutableMap(identity(), this::chooseFieldDecoder));
     }
 
-    private JsonFieldDecoder chooseFieldDecoder(DecoderColumnHandle column)
-    {
+    private JsonFieldDecoder chooseFieldDecoder(DecoderColumnHandle column) {
         try {
             requireNonNull(column);
             checkArgument(!column.isInternal(), "unexpected internal column '%s'", column.getName());
@@ -84,14 +85,12 @@ public class JsonRowDecoderFactory
                 default:
                     throw new IllegalArgumentException(format("unknown data format '%s' used for column '%s'", column.getDataFormat(), column.getName()));
             }
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             throw new PrestoException(GENERIC_USER_ERROR, e);
         }
     }
 
-    public static JsonFieldDecoder throwUnsupportedColumnType(DecoderColumnHandle column)
-    {
+    public static JsonFieldDecoder throwUnsupportedColumnType(DecoderColumnHandle column) {
         if (column.getDataFormat() == null) {
             throw new IllegalArgumentException(format("unsupported column type '%s' for column '%s'", column.getType().getDisplayName(), column.getName()));
         }

@@ -33,44 +33,37 @@ import static java.time.temporal.ChronoField.EPOCH_DAY;
 import static java.time.temporal.ChronoField.MILLI_OF_DAY;
 
 public class DateFieldValueProvider
-        extends FieldValueProvider
-{
+        extends FieldValueProvider {
     private final CsvRecord record;
 
     private final S3ColumnHandle columnHandle;
 
     private final int field;
 
-    public DateFieldValueProvider(CsvRecord record, S3ColumnHandle columnHandle)
-    {
+    public DateFieldValueProvider(CsvRecord record, S3ColumnHandle columnHandle) {
         this.record = record;
         this.columnHandle = columnHandle;
         this.field = columnHandle.getOrdinalPosition();
     }
 
     @Override
-    public long getLong()
-    {
+    public long getLong() {
         String s = record.getSlice(field).toStringUtf8();
 
         if (columnHandle.getType() == DATE) {
             return ISO_DATE.parse(s).getLong(EPOCH_DAY);
-        }
-        else if (columnHandle.getType() == TIMESTAMP) {
+        } else if (columnHandle.getType() == TIMESTAMP) {
             TemporalAccessor parseResult = ISO_DATE_TIME.parse(s);
             return TimeUnit.DAYS.toMillis(parseResult.getLong(EPOCH_DAY)) + parseResult.getLong(MILLI_OF_DAY);
-        }
-        else if (columnHandle.getType() == TIME) {
+        } else if (columnHandle.getType() == TIME) {
             return ISO_TIME.parse(s).getLong(MILLI_OF_DAY);
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("invalid or unhandled type " + columnHandle);
         }
     }
 
     @Override
-    public boolean isNull()
-    {
+    public boolean isNull() {
         return record.isNull(field);
     }
 }

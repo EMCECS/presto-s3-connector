@@ -18,10 +18,10 @@ package com.facebook.presto.s3.util;
 import java.io.ByteArrayOutputStream;
 
 /**
- * helper to check how many blocks have been written to avro data
+ * helper to check how many blocks have been written to avro data.
  */
 public class AvroByteArrayOutputStream
-        extends ByteArrayOutputStream  {
+        extends ByteArrayOutputStream {
 
     private final byte[] sync;
 
@@ -36,7 +36,7 @@ public class AvroByteArrayOutputStream
         if (len == sync.length) {
             int i = 0;
             for (; i < sync.length; i++) {
-                if (b[off+i] != sync[i]) {
+                if (b[off + i] != sync[i]) {
                     break;
                 }
             }

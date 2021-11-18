@@ -34,42 +34,34 @@ import java.util.List;
 import static com.facebook.presto.s3.S3Const.*;
 import static io.airlift.units.DataSize.Unit.MEGABYTE;
 
-public class S3Util
-{
-    private S3Util()
-    {
+public class S3Util {
+    private S3Util() {
     }
 
-    public static byte[] serialize(Serializable s)
-    {
+    public static byte[] serialize(Serializable s) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(s);
             return baos.toByteArray();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public static <T> T deserialize(byte[] bytes, Class<T> clazz)
-    {
+    public static <T> T deserialize(byte[] bytes, Class<T> clazz) {
         try {
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             ObjectInputStream bis = new ObjectInputStream(bais);
             return (T) bis.readObject();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(e);
         }
     }
 
-    public static List<PropertyMetadata<?>> buildSessionPropertyList()
-    {
+    public static List<PropertyMetadata<?>> buildSessionPropertyList() {
         List<PropertyMetadata<?>> propertyMetadataList = new LinkedList<>();
 
         propertyMetadataList.add(
@@ -152,34 +144,28 @@ public class S3Util
         return propertyMetadataList;
     }
 
-    public static S3ReaderProps constructReaderProps(ConnectorSession session)
-    {
+    public static S3ReaderProps constructReaderProps(ConnectorSession session) {
         return new S3ReaderProps(boolProp(session, SESSION_PROP_S3_SELECT_PUSHDOWN, false),
                 intProp(session, SESSION_PROP_READER_BUFFER_SIZE_BYTES, 65536));
     }
 
-    public static boolean boolProp(ConnectorSession session, String prop, boolean dflt)
-    {
+    public static boolean boolProp(ConnectorSession session, String prop, boolean dflt) {
         try {
             return session.getProperty(prop, Boolean.class);
-        }
-        catch (PrestoException e) {
+        } catch (PrestoException e) {
             return dflt;
         }
     }
 
-    public static int intProp(ConnectorSession session, String prop, int dflt)
-    {
+    public static int intProp(ConnectorSession session, String prop, int dflt) {
         try {
             return session.getProperty(prop, Integer.class);
-        }
-        catch (PrestoException e) {
+        } catch (PrestoException e) {
             return dflt;
         }
     }
 
-    static boolean delimitedFormat(String format)
-    {
+    static boolean delimitedFormat(String format) {
         return format.equals(CSV) ||
                 format.equals(TEXT);
     }

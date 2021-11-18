@@ -20,48 +20,41 @@ import com.facebook.presto.s3.S3ColumnHandle;
 import io.airlift.slice.Slice;
 
 public class CsvFieldValueProvider
-        extends FieldValueProvider
-{
+        extends FieldValueProvider {
     private final CsvRecord record;
 
     private final S3ColumnHandle columnHandle;
 
     private final int field;
 
-    public CsvFieldValueProvider(CsvRecord record, S3ColumnHandle columnHandle)
-    {
+    public CsvFieldValueProvider(CsvRecord record, S3ColumnHandle columnHandle) {
         this.record = record;
         this.columnHandle = columnHandle;
         this.field = columnHandle.getOrdinalPosition();
     }
 
     @Override
-    public boolean getBoolean()
-    {
+    public boolean getBoolean() {
         return record.getBoolean(field);
     }
 
     @Override
-    public long getLong()
-    {
+    public long getLong() {
         return record.getLong(field);
     }
 
     @Override
-    public double getDouble()
-    {
+    public double getDouble() {
         return record.getDouble(field);
     }
 
     @Override
-    public Slice getSlice()
-    {
+    public Slice getSlice() {
         return record.getSlice(field);
     }
 
     @Override
-    public boolean isNull()
-    {
+    public boolean isNull() {
         return record.isNull(field);
     }
 }

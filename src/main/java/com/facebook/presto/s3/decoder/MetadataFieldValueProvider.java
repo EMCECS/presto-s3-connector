@@ -23,50 +23,42 @@ import io.airlift.slice.Slices;
 import java.util.Map;
 
 public class MetadataFieldValueProvider
-        extends FieldValueProvider
-{
+        extends FieldValueProvider {
     private final S3ColumnHandle column;
 
     private final Map<String, Object> valueMap;
 
-    public MetadataFieldValueProvider(S3ColumnHandle column, Map<String, Object> valueMap)
-    {
+    public MetadataFieldValueProvider(S3ColumnHandle column, Map<String, Object> valueMap) {
         this.column = column;
         this.valueMap = valueMap;
     }
 
     @Override
-    public boolean getBoolean()
-    {
+    public boolean getBoolean() {
         return Boolean.parseBoolean(String.valueOf(value()));
     }
 
     @Override
-    public long getLong()
-    {
+    public long getLong() {
         return Long.parseLong(String.valueOf(value()));
     }
 
     @Override
-    public double getDouble()
-    {
+    public double getDouble() {
         return Double.parseDouble(String.valueOf(value()));
     }
 
     @Override
-    public Slice getSlice()
-    {
+    public Slice getSlice() {
         return Slices.utf8Slice(String.valueOf(value()));
     }
 
     @Override
-    public boolean isNull()
-    {
+    public boolean isNull() {
         return value() == null;
     }
 
-    private Object value()
-    {
+    private Object value() {
         return valueMap.get(column.getName().toLowerCase());
     }
 }

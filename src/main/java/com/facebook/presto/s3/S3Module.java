@@ -29,10 +29,12 @@ import com.facebook.presto.decoder.dummy.DummyRowDecoder;
 import com.facebook.presto.decoder.dummy.DummyRowDecoderFactory;
 import com.facebook.presto.decoder.raw.RawRowDecoder;
 import com.facebook.presto.decoder.raw.RawRowDecoderFactory;
+import com.facebook.presto.parquet.cache.MetadataReader;
+import com.facebook.presto.parquet.cache.ParquetCacheConfig;
+import com.facebook.presto.parquet.cache.ParquetMetadataSource;
 import com.facebook.presto.s3.decoder.JsonRowDecoder;
 import com.facebook.presto.s3.decoder.JsonRowDecoderFactory;
 import com.facebook.presto.s3.parquet.ParquetPageSourceFactory;
-import com.facebook.presto.parquet.cache.*;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
 import com.google.inject.Binder;
@@ -56,11 +58,10 @@ import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static java.util.Objects.requireNonNull;
 
 public class S3Module
-        extends AbstractConfigurationAwareModule
- {
+        extends AbstractConfigurationAwareModule {
     private final String connectorId;
-    public S3Module(String connectorId)
-    {
+
+    public S3Module(String connectorId) {
         this.connectorId = requireNonNull(connectorId, "connector id is null");
     }
 
@@ -94,33 +95,28 @@ public class S3Module
             decoderFactoriesByName.addBinding(AvroRowDecoder.NAME).to(AvroRowDecoderFactory.class).in(SINGLETON);
             decoderFactoriesByName.addBinding(JsonRowDecoder.NAME).to(JsonRowDecoderFactory.class).in(SINGLETON);
             binder1.bind(DispatchingRowDecoderFactory.class).in(SINGLETON);
-
         });
     }
 
     @Singleton
     @Provides
-    public ParquetMetadataSource createParquetMetadataSource()
-    {
+    public ParquetMetadataSource createParquetMetadataSource() {
         ParquetMetadataSource parquetMetadataSource = new MetadataReader();
         return parquetMetadataSource;
     }
 
     public static final class TypeDeserializer
-            extends FromStringDeserializer<Type>
-    {
+            extends FromStringDeserializer<Type> {
         private final TypeManager typeManager;
 
         @Inject
-        public TypeDeserializer(TypeManager typeManager)
-        {
+        public TypeDeserializer(TypeManager typeManager) {
             super(Type.class);
             this.typeManager = requireNonNull(typeManager, "typeManager is null");
         }
 
         @Override
-        protected Type _deserialize(String value, DeserializationContext context)
-        {
+        protected Type _deserialize(String value, DeserializationContext context) {
             Type type = typeManager.getType(parseTypeSignature(value));
             checkArgument(type != null, "Unknown type %s", value);
             return type;

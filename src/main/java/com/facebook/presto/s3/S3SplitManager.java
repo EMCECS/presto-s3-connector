@@ -17,13 +17,15 @@
 package com.facebook.presto.s3;
 
 import com.facebook.airlift.log.Logger;
-import com.facebook.presto.spi.*;
+import com.facebook.presto.spi.ConnectorSession;
+import com.facebook.presto.spi.ConnectorSplitSource;
+import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
-import javax.inject.Inject;
+import java.util.Iterator;
 
-import java.util.*;
+import javax.inject.Inject;
 
 import static com.facebook.presto.s3.S3Const.*;
 import static com.facebook.presto.s3.S3Util.boolProp;
@@ -54,7 +56,7 @@ public class S3SplitManager
         S3TableLayoutHandle layoutHandle = checkType(layout, S3TableLayoutHandle.class, "layout");
 
         Iterator<S3ObjectRange> objectContentsIterator;
-        if(!layoutHandle.getTable().getSchemaName().equals("s3_buckets")) {
+        if (!layoutHandle.getTable().getSchemaName().equals("s3_buckets")) {
             // higher batch size here, so we can answer isFinished() without reading more from server
             int batchSize = intProp(session, SESSION_PROP_SPLIT_BATCH, 100);
             batchSize = batchSize + batchSize / 2;
@@ -63,8 +65,9 @@ public class S3SplitManager
                     layoutHandle.getTable().getBucketObjectsMap(),
                     rangeBytes, batchSize);
         } else {
-                objectContentsIterator = new Iterator<S3ObjectRange>() {
+            objectContentsIterator = new Iterator<S3ObjectRange>() {
                 int objectCount = layoutHandle.getTable().getBucketObjectsMap().size();
+
                 @Override
                 public boolean hasNext() {
                     return objectCount-- > 0;

@@ -16,8 +16,7 @@
 
 package com.facebook.presto.s3;
 
-public class S3SelectProps
-{
+public class S3SelectProps {
 
     private String fieldDelim = ",";
 
@@ -26,8 +25,7 @@ public class S3SelectProps
     private final boolean useHeader;
 
     public S3SelectProps(boolean useHeader, String definedRecordDelimiter,
-                         String definedFieldDelimiter)
-    {
+                         String definedFieldDelimiter) {
         this.useHeader = useHeader;
         if (definedRecordDelimiter != null) {
             recordDelim = definedRecordDelimiter;
@@ -38,18 +36,15 @@ public class S3SelectProps
         }
     }
 
-    public String getFieldDelim()
-    {
+    public String getFieldDelim() {
         return fieldDelim;
     }
 
-    public String getRecordDelim()
-    {
+    public String getRecordDelim() {
         return recordDelim;
     }
 
-    public boolean getUseHeader()
-    {
+    public boolean getUseHeader() {
         return useHeader;
     }
 }

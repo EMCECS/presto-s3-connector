@@ -66,16 +66,16 @@ public final class S3ColumnHandle
 
     @JsonCreator
     public S3ColumnHandle(
-        @JsonProperty("connectorId") String connectorId,
-        @JsonProperty("ordinalPosition") int ordinalPosition,
-        @JsonProperty("name") String name,
-        @JsonProperty("type") Type type,
-        @JsonProperty("mapping") String mapping,
-        @JsonProperty("dataFormat") String dataFormat,
-        @JsonProperty("formatHint") String formatHint,
-        @JsonProperty("keyDecoder") boolean keyDecoder,
-        @JsonProperty("hidden") boolean hidden,
-        @JsonProperty("internal") boolean internal){
+            @JsonProperty("connectorId") String connectorId,
+            @JsonProperty("ordinalPosition") int ordinalPosition,
+            @JsonProperty("name") String name,
+            @JsonProperty("type") Type type,
+            @JsonProperty("mapping") String mapping,
+            @JsonProperty("dataFormat") String dataFormat,
+            @JsonProperty("formatHint") String formatHint,
+            @JsonProperty("keyDecoder") boolean keyDecoder,
+            @JsonProperty("hidden") boolean hidden,
+            @JsonProperty("internal") boolean internal) {
         this.connectorId = requireNonNull(connectorId, "connectorId is null");
         this.ordinalPosition = ordinalPosition;
         this.name = requireNonNull(name, "columnName is null");
@@ -91,8 +91,7 @@ public final class S3ColumnHandle
     }
 
     // copy ctor to update position+mapping.  use case is s3select which may not return all columns
-    public S3ColumnHandle(S3ColumnHandle columnHandle, int position)
-    {
+    public S3ColumnHandle(S3ColumnHandle columnHandle, int position) {
         this.connectorId = columnHandle.connectorId;
         this.ordinalPosition = position;
         this.absoluteSchemaPosition = columnHandle.absoluteSchemaPosition;
@@ -107,71 +106,63 @@ public final class S3ColumnHandle
     }
 
     @JsonProperty
-    public String getConnectorId()
-    {
+    public String getConnectorId() {
         return connectorId;
     }
 
     @JsonProperty
-    public int getOrdinalPosition()
-    {
+    public int getOrdinalPosition() {
         return ordinalPosition;
     }
 
     @JsonProperty
-    public int getAbsoluteSchemaPosition()
-    {
+    public int getAbsoluteSchemaPosition() {
         return absoluteSchemaPosition;
     }
 
     @Override
     @JsonProperty
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
     @Override
     @JsonProperty
-    public Type getType()
-    {
+    public Type getType() {
         return type;
     }
 
     @Override
     @JsonProperty
-    public String getMapping()
-    {
+    public String getMapping() {
         return mapping;
     }
 
     @Override
     @JsonProperty
-    public String getDataFormat()
-    {
+    public String getDataFormat() {
         return dataFormat;
     }
 
     @Override
     @JsonProperty
-    public String getFormatHint()
-    {
+    public String getFormatHint() {
         return formatHint;
     }
 
     @JsonProperty
-    public boolean isKeyDecoder() { return keyDecoder; }
+    public boolean isKeyDecoder() {
+        return keyDecoder;
+    }
 
     @JsonProperty
-    public boolean isHidden()
-    {
+    public boolean isHidden() {
         return hidden;
     }
 
     @Override
     @JsonProperty
-    public boolean isInternal()
-    {
+    public boolean isInternal() {
         return internal;
     }
 
@@ -226,5 +217,4 @@ public final class S3ColumnHandle
     public int compareTo(S3ColumnHandle s3ColumnHandle) {
         return Integer.compare(this.getOrdinalPosition(), this.getOrdinalPosition());
     }
-
 }

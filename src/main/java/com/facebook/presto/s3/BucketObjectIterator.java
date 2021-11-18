@@ -27,8 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class BucketObjectIterator
-        implements Iterator<S3ObjectSummary>
-{
+        implements Iterator<S3ObjectSummary> {
     private final AmazonS3 s3Client;
 
     private final String bucket;

@@ -18,10 +18,10 @@ package com.facebook.presto.s3.integration;
 
 import com.facebook.airlift.log.Level;
 import com.facebook.presto.Session;
+import com.facebook.presto.s3.S3Const;
+import com.facebook.presto.s3.S3Plugin;
 import com.facebook.presto.tests.DistributedQueryRunner;
 import com.google.common.collect.ImmutableMap;
-
-import com.facebook.presto.s3.*;
 
 import com.facebook.airlift.log.Logging;
 import com.facebook.airlift.log.LoggingConfiguration;

@@ -29,11 +29,14 @@ import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.testng.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import static com.facebook.presto.s3.S3Const.*;
 import static com.facebook.presto.s3.S3SchemaRegistryManager.setDataType;
@@ -53,7 +56,7 @@ public class S3SchemaRegistryManagerTest {
 
         S3ConnectorConfig config = new S3ConnectorConfig();
         config.setSchemaRegistryServerIP("127.0.0.1")
-                .setSchemaRegistryServerPort(schemaRegistry.port());
+              .setSchemaRegistryServerPort(schemaRegistry.port());
 
         schemaManager = new S3SchemaRegistryManager(config);
     }
@@ -77,9 +80,9 @@ public class S3SchemaRegistryManagerTest {
 
         Map<String, Object> properties =
                 ImmutableMap.<String, Object>builder()
-                        .put("external_location", "s3a://test/date/")
-                        .put("format", "json")
-                        .build();
+                            .put("external_location", "s3a://test/date/")
+                            .put("format", "json")
+                            .build();
 
         createGroup("test");
         schemaManager.createTable(new ConnectorTableMetadata(schemaTableName, columns, properties));
@@ -107,50 +110,51 @@ public class S3SchemaRegistryManagerTest {
     @Test
     public void testSetDataType() {
         JSONObject out = new JSONObject();
-        setDataType(out,"field1",
+        setDataType(out, "field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_STRING));
         assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_VARCHAR);
         assertFalse(out.has(JSON_PROP_DATA_FORMAT));
 
         out = new JSONObject();
-        setDataType(out,"field1",
+        setDataType(out, "field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_STRING)
-                        .put(JSON_PROP_FORMAT, FORMAT_VALUE_DATE_TIME));
+                                .put(JSON_PROP_FORMAT, FORMAT_VALUE_DATE_TIME));
         assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_TIMESTAMP);
         assertEquals(out.getString(JSON_PROP_DATA_FORMAT), JSON_VALUE_DATE_ISO);
 
         out = new JSONObject();
-        setDataType(out,"field1",
+        setDataType(out, "field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_STRING)
-                        .put(JSON_PROP_FORMAT, FORMAT_VALUE_DATE));
+                                .put(JSON_PROP_FORMAT, FORMAT_VALUE_DATE));
         assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_DATE);
         assertEquals(out.getString(JSON_PROP_DATA_FORMAT), JSON_VALUE_DATE_ISO);
 
         out = new JSONObject();
-        setDataType(out,"field1",
+        setDataType(out, "field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_STRING)
-                        .put(JSON_PROP_FORMAT, FORMAT_VALUE_TIME));
+                                .put(JSON_PROP_FORMAT, FORMAT_VALUE_TIME));
         assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_TIME);
         assertEquals(out.getString(JSON_PROP_DATA_FORMAT), JSON_VALUE_DATE_ISO);
 
         out = new JSONObject();
-        setDataType(out,"field1",
+        setDataType(out, "field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_NUMBER));
         assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_DOUBLE);
 
         out = new JSONObject();
-        setDataType(out,"field1",
+        setDataType(out, "field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_INTEGER));
         assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_BIGINT);
 
         out = new JSONObject();
-        setDataType(out,"field1",
+        setDataType(out, "field1",
                 new JSONObject().put(JSON_PROP_TYPE, JSON_TYPE_BOOLEAN));
         assertEquals(out.getString(JSON_PROP_TYPE), JSON_TYPE_BOOLEAN);
     }
 
     /**
      * extract columns from the S3Table for the given schema.table
+     *
      * @param schema
      * @param table
      * @return
@@ -169,13 +173,13 @@ public class S3SchemaRegistryManagerTest {
 
     /**
      * create group in Schema Registry if it does not already exist
+     *
      * @param groupId
      */
     private void createGroup(String groupId) {
         try {
             schemaRegistry.client().getSchemas(groupId);
-        }
-        catch (RegistryExceptions.ResourceNotFoundException e) {
+        } catch (RegistryExceptions.ResourceNotFoundException e) {
             schemaRegistry.client().addGroup(groupId,
                     new GroupProperties(SerializationFormat.Json,
                             Compatibility.allowAny(),

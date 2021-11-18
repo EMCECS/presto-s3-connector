@@ -32,8 +32,7 @@ public class S3TableLayoutHandle
 
     @JsonCreator
     public S3TableLayoutHandle(@JsonProperty("table") S3TableHandle table,
-                               @JsonProperty("constraints") TupleDomain<ColumnHandle> constraints)
-    {
+                               @JsonProperty("constraints") TupleDomain<ColumnHandle> constraints) {
         this.table = table;
         this.constraints = constraints;
     }
@@ -44,8 +43,7 @@ public class S3TableLayoutHandle
     }
 
     @JsonProperty
-    public TupleDomain<ColumnHandle> getConstraints()
-    {
+    public TupleDomain<ColumnHandle> getConstraints() {
         return constraints;
     }
 

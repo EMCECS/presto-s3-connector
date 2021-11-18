@@ -42,8 +42,7 @@ public class S3PageSource implements ConnectorPageSource {
     public S3PageSource(
             List<S3PageSourceProvider.ColumnMapping> columnMappings,
             TypeManager typeManager,
-            ConnectorPageSource delegate)
-    {
+            ConnectorPageSource delegate) {
         requireNonNull(columnMappings, "columnMappings is null");
         requireNonNull(typeManager, "typeManager is null");
 
@@ -62,33 +61,29 @@ public class S3PageSource implements ConnectorPageSource {
             types[columnIndex] = type;
         }
     }
+
     @Override
-    public long getCompletedBytes()
-    {
+    public long getCompletedBytes() {
         return delegate.getCompletedBytes();
     }
 
     @Override
-    public long getCompletedPositions()
-    {
+    public long getCompletedPositions() {
         return delegate.getCompletedPositions();
     }
 
     @Override
-    public long getReadTimeNanos()
-    {
+    public long getReadTimeNanos() {
         return delegate.getReadTimeNanos();
     }
 
     @Override
-    public boolean isFinished()
-    {
+    public boolean isFinished() {
         return delegate.isFinished();
     }
 
     @Override
-    public Page getNextPage()
-    {
+    public Page getNextPage() {
         try {
             Page dataPage = delegate.getNextPage();
             if (dataPage == null) {
@@ -103,47 +98,39 @@ public class S3PageSource implements ConnectorPageSource {
                 blocks.add(block);
             }
             return new Page(batchSize, blocks.toArray(new Block[0]));
-        }
-        catch (PrestoException e) {
+        } catch (PrestoException e) {
             closeWithSuppression(e);
             throw e;
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             closeWithSuppression(e);
             throw new PrestoException(S3_CURSOR_ERROR, e);
         }
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         try {
             delegate.close();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return delegate.toString();
     }
 
     @Override
-    public long getSystemMemoryUsage()
-    {
+    public long getSystemMemoryUsage() {
         return delegate.getSystemMemoryUsage();
     }
 
-    private void closeWithSuppression(Throwable throwable)
-    {
+    private void closeWithSuppression(Throwable throwable) {
         requireNonNull(throwable, "throwable is null");
         try {
             close();
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             // Self-suppression not permitted
             if (throwable != e) {
                 throwable.addSuppressed(e);
@@ -152,8 +139,7 @@ public class S3PageSource implements ConnectorPageSource {
     }
 
     @VisibleForTesting
-    ConnectorPageSource getPageSource()
-    {
+    ConnectorPageSource getPageSource() {
         return delegate;
     }
 }

@@ -24,29 +24,25 @@ import java.io.Serializable;
 import static com.google.common.base.MoreObjects.toStringHelper;
 
 public class S3ReaderProps
-        implements Serializable
-{
+        implements Serializable {
     private final boolean s3SelectEnabled;
 
     private final int bufferSizeBytes;
 
     @JsonCreator
     public S3ReaderProps(@JsonProperty("s3SelectEnabled") boolean s3SelectEnabled,
-                         @JsonProperty("bufferSizeBytes") int bufferSizeBytes)
-    {
+                         @JsonProperty("bufferSizeBytes") int bufferSizeBytes) {
         this.s3SelectEnabled = s3SelectEnabled;
         this.bufferSizeBytes = bufferSizeBytes;
     }
 
     @JsonProperty
-    public boolean getS3SelectEnabled()
-    {
+    public boolean getS3SelectEnabled() {
         return s3SelectEnabled;
     }
 
     @JsonProperty
-    public int getBufferSizeBytes()
-    {
+    public int getBufferSizeBytes() {
         return bufferSizeBytes;
     }
 

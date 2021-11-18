@@ -21,14 +21,29 @@ import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.decoder.DispatchingRowDecoderFactory;
 import com.facebook.presto.decoder.RowDecoder;
-import com.facebook.presto.spi.*;
+import com.facebook.presto.spi.ColumnHandle;
+import com.facebook.presto.spi.ConnectorPageSource;
+import com.facebook.presto.spi.ConnectorSession;
+import com.facebook.presto.spi.ConnectorSplit;
+import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.facebook.presto.spi.RecordPageSource;
+import com.facebook.presto.spi.SchemaTableName;
+import com.facebook.presto.spi.SplitContext;
 import com.facebook.presto.spi.connector.ConnectorPageSourceProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
+
 import javax.inject.Inject;
-import java.util.*;
+
 import java.util.stream.Collectors;
 
 import static com.facebook.presto.s3.S3Const.*;
@@ -41,8 +56,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 public class S3PageSourceProvider
-        implements ConnectorPageSourceProvider
-{
+        implements ConnectorPageSourceProvider {
     private final TypeManager typeManager;
     private final DispatchingRowDecoderFactory decoderFactory;
     private final Set<S3BatchPageSourceFactory> pageSourceFactories;
@@ -53,8 +67,7 @@ public class S3PageSourceProvider
     public S3PageSourceProvider(TypeManager typeManager,
                                 DispatchingRowDecoderFactory decoderFactory,
                                 Set<S3BatchPageSourceFactory> pageSourceFactories,
-                                S3AccessObject accessObject)
-    {
+                                S3AccessObject accessObject) {
         this.typeManager = typeManager;
         this.pageSourceFactories = ImmutableSet.copyOf(requireNonNull(pageSourceFactories, "pageSourceFactories is null"));
         this.decoderFactory = requireNonNull(decoderFactory, "decoderFactory is null");
@@ -68,23 +81,21 @@ public class S3PageSourceProvider
             ConnectorSplit split,
             ConnectorTableLayoutHandle layout,
             List<ColumnHandle> columns,
-            SplitContext splitContext)
-    {
+            SplitContext splitContext) {
 
         S3Split s3Split = convertSplit(split);
         S3TableHandle s3TableHandle = s3Split.getS3TableHandle();
-        if(!s3TableHandle.getObjectDataFormat().equalsIgnoreCase(PARQUET)) {
+        if (!s3TableHandle.getObjectDataFormat().equalsIgnoreCase(PARQUET)) {
             return notParquetPageSourceHelper(columns, s3Split, s3TableHandle, session);
         } else {
-           return parquetPageSourceHelper(columns, s3Split, s3TableHandle, session, splitContext);
+            return parquetPageSourceHelper(columns, s3Split, s3TableHandle, session, splitContext);
         }
-
     }
 
-    private ConnectorPageSource notParquetPageSourceHelper(List<ColumnHandle> columns, S3Split s3Split, S3TableHandle s3TableHandle, ConnectorSession session){
+    private ConnectorPageSource notParquetPageSourceHelper(List<ColumnHandle> columns, S3Split s3Split, S3TableHandle s3TableHandle, ConnectorSession session) {
         List<S3ColumnHandle> s3Columns = columns.stream()
-                .map(S3HandleResolver::convertColumnHandle)
-                .collect(Collectors.toList());
+                                                .map(S3HandleResolver::convertColumnHandle)
+                                                .collect(Collectors.toList());
 
         if (useS3Pushdown(s3Split, s3TableHandle.getObjectDataFormat())) {
             // update relative positions for s3 select so we can properly
@@ -101,26 +112,26 @@ public class S3PageSourceProvider
                     s3TableHandle.getObjectDataFormat(),
                     getDecoderParameters(s3Split.getObjectDataSchemaContents()),
                     s3Columns.stream()
-                            .filter(col -> !col.isInternal())
-                            .filter(S3ColumnHandle::isKeyDecoder)
-                            .collect(toImmutableSet()));
+                             .filter(col -> !col.isInternal())
+                             .filter(S3ColumnHandle::isKeyDecoder)
+                             .collect(toImmutableSet()));
         }
 
         return new RecordPageSource(new S3RecordSet(session, s3Split, s3Columns, accessObject, objectDecoder, s3TableHandle));
     }
 
-    private ConnectorPageSource parquetPageSourceHelper(List<ColumnHandle> columns, S3Split s3Split, S3TableHandle s3TableHandle, ConnectorSession session, SplitContext splitContext){
-        S3ObjectRange obj  = S3ObjectRange.deserialize(s3Split.getObjectRange());
+    private ConnectorPageSource parquetPageSourceHelper(List<ColumnHandle> columns, S3Split s3Split, S3TableHandle s3TableHandle, ConnectorSession session, SplitContext splitContext) {
+        S3ObjectRange obj = S3ObjectRange.deserialize(s3Split.getObjectRange());
         long start = obj.getOffset();
-        int length  = obj.getLength();
+        int length = obj.getLength();
         S3TableLayoutHandle s3Layout = s3Split.getS3TableLayoutHandle();
         String bucket = s3Layout.getTable().getBucketObjectsMap().keySet().iterator().next();
         String object = s3Layout.getTable().getBucketObjectsMap().get(bucket).get(0);
         List<S3ColumnHandle> selectedColumns = columns.stream()
-                .map(S3ColumnHandle.class::cast)
-                .collect(toList());
+                                                      .map(S3ColumnHandle.class::cast)
+                                                      .collect(toList());
         TupleDomain<S3ColumnHandle> effectivePredicate = s3Layout.getConstraints()
-                .transform(S3ColumnHandle.class::cast);
+                                                                 .transform(S3ColumnHandle.class::cast);
 
         Optional<ConnectorPageSource> pageSource = createS3PageSource(
                 pageSourceFactories,
@@ -140,7 +151,6 @@ public class S3PageSourceProvider
         throw new IllegalStateException("Could not find a file reader for split " + s3Split);
     }
 
-
     public static Optional<ConnectorPageSource> createS3PageSource(
             Set<S3BatchPageSourceFactory> pageSourceFactories,
             ConnectorSession session,
@@ -152,8 +162,7 @@ public class S3PageSourceProvider
             TupleDomain<S3ColumnHandle> effectivePredicate,
             TypeManager typeManager,
             SchemaTableName tableName,
-            boolean s3SelectPushdownEnabled)
-    {
+            boolean s3SelectPushdownEnabled) {
         List<S3ColumnHandle> allColumns = s3Columns;
 
         List<com.facebook.presto.s3.S3PageSourceProvider.ColumnMapping> columnMappings = com.facebook.presto.s3.S3PageSourceProvider.ColumnMapping.buildColumnMappings(
@@ -178,49 +187,41 @@ public class S3PageSourceProvider
             }
         }
 
-
         return Optional.empty();
     }
-    private Map<String, String> getDecoderParameters(Optional<String> dataSchema)
-    {
+
+    private Map<String, String> getDecoderParameters(Optional<String> dataSchema) {
         ImmutableMap.Builder<String, String> parameters = ImmutableMap.builder();
         dataSchema.ifPresent(schema -> parameters.put("dataSchema", schema));
         return parameters.build();
     }
 
-    public static class ColumnMapping
-    {
+    public static class ColumnMapping {
         private final S3ColumnHandle s3ColumnHandle;
         /**
          * ordinal of this column in the underlying page source or record cursor
          */
         private final OptionalInt index;
 
-
-        private ColumnMapping(S3ColumnHandle s3ColumnHandle, OptionalInt index)
-        {
+        private ColumnMapping(S3ColumnHandle s3ColumnHandle, OptionalInt index) {
             this.s3ColumnHandle = requireNonNull(s3ColumnHandle, "s3ColumnHandle is null");
             this.index = requireNonNull(index, "index is null");
         }
-        public static com.facebook.presto.s3.S3PageSourceProvider.ColumnMapping regular(S3ColumnHandle s3ColumnHandle, int index)
-        {
+
+        public static com.facebook.presto.s3.S3PageSourceProvider.ColumnMapping regular(S3ColumnHandle s3ColumnHandle, int index) {
             return new com.facebook.presto.s3.S3PageSourceProvider.ColumnMapping(s3ColumnHandle, OptionalInt.of(index));
         }
 
-        public S3ColumnHandle getS3ColumnHandle()
-        {
+        public S3ColumnHandle getS3ColumnHandle() {
             return s3ColumnHandle;
         }
 
-        public int getIndex()
-        {
+        public int getIndex() {
             return index.getAsInt();
         }
 
-
         public static List<ColumnMapping> buildColumnMappings(
-                List<S3ColumnHandle> columns)
-        {
+                List<S3ColumnHandle> columns) {
             int regularIndex = 0;
             Set<Integer> regularColumnIndices = new HashSet<>();
             ImmutableList.Builder<ColumnMapping> columnMappings = ImmutableList.builder();
@@ -233,24 +234,23 @@ public class S3PageSourceProvider
             return columnMappings.build();
         }
 
-        public static List<S3ColumnHandle> toColumnHandles(List<ColumnMapping> regularColumnMappings)
-        {
+        public static List<S3ColumnHandle> toColumnHandles(List<ColumnMapping> regularColumnMappings) {
             return regularColumnMappings.stream()
-                    .map(columnMapping -> {
-                        S3ColumnHandle columnHandle = columnMapping.getS3ColumnHandle();
-                        return new S3ColumnHandle(
-                                columnHandle.getConnectorId(),
-                                columnHandle.getOrdinalPosition(),
-                                columnHandle.getName(),
-                                columnHandle.getType(),
-                                columnHandle.getMapping(),
-                                columnHandle.getDataFormat(),
-                                columnHandle.getFormatHint(),
-                                columnHandle.isKeyDecoder(),
-                                columnHandle.isHidden(),
-                                columnHandle.isInternal());
-                    })
-                    .collect(toList());
+                                        .map(columnMapping -> {
+                                            S3ColumnHandle columnHandle = columnMapping.getS3ColumnHandle();
+                                            return new S3ColumnHandle(
+                                                    columnHandle.getConnectorId(),
+                                                    columnHandle.getOrdinalPosition(),
+                                                    columnHandle.getName(),
+                                                    columnHandle.getType(),
+                                                    columnHandle.getMapping(),
+                                                    columnHandle.getDataFormat(),
+                                                    columnHandle.getFormatHint(),
+                                                    columnHandle.isKeyDecoder(),
+                                                    columnHandle.isHidden(),
+                                                    columnHandle.isInternal());
+                                        })
+                                        .collect(toList());
         }
     }
 }

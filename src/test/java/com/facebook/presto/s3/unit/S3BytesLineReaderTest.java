@@ -16,19 +16,17 @@
 
 package com.facebook.presto.s3.unit;
 
-import com.facebook.presto.s3.*;
-
+import com.facebook.presto.s3.BytesLineReader;
 import org.testng.annotations.Test;
+
 import java.io.ByteArrayInputStream;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-public class S3BytesLineReaderTest
-{
+public class S3BytesLineReaderTest {
     @Test
-    public void testParseLine()
-    {
+    public void testParseLine() {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
@@ -45,8 +43,7 @@ public class S3BytesLineReaderTest
     }
 
     @Test
-    public void testParseLineMulti()
-    {
+    public void testParseLineMulti() {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
@@ -67,8 +64,7 @@ public class S3BytesLineReaderTest
     }
 
     @Test
-    public void testParseRequireRefill()
-    {
+    public void testParseRequireRefill() {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
@@ -90,8 +86,7 @@ public class S3BytesLineReaderTest
     }
 
     @Test
-    public void testParseMixEndOfRecordSep()
-    {
+    public void testParseMixEndOfRecordSep() {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
@@ -119,8 +114,7 @@ public class S3BytesLineReaderTest
     }
 
     @Test
-    public void testEmptyLine()
-    {
+    public void testEmptyLine() {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
@@ -137,8 +131,7 @@ public class S3BytesLineReaderTest
     }
 
     @Test
-    public void testNonZeroStart()
-    {
+    public void testNonZeroStart() {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
@@ -153,8 +146,7 @@ public class S3BytesLineReaderTest
     }
 
     @Test
-    public void testNonMaxEnd()
-    {
+    public void testNonMaxEnd() {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
@@ -172,9 +164,8 @@ public class S3BytesLineReaderTest
         assertEquals("andrew", line);
     }
 
-        @Test
-    public void testNonZeroAndNonMaxEnd()
-    {
+    @Test
+    public void testNonZeroAndNonMaxEnd() {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];
@@ -192,10 +183,8 @@ public class S3BytesLineReaderTest
         assertEquals(reader.read(lineBuf), -1);
     }
 
-
     @Test
-    public void testPartial()
-    {
+    public void testPartial() {
         int len;
         String line;
         byte[] lineBuf = new byte[1024];

@@ -17,11 +17,13 @@
 package com.facebook.presto.s3.unit;
 
 import com.facebook.presto.common.predicate.TupleDomain;
+import com.facebook.presto.s3.S3ObjectRange;
+import com.facebook.presto.s3.S3Split;
+import com.facebook.presto.s3.S3TableHandle;
+import com.facebook.presto.s3.S3TableLayoutHandle;
 import com.google.common.collect.ImmutableList;
 import com.facebook.presto.spi.HostAddress;
 import org.testng.annotations.Test;
-
-import com.facebook.presto.s3.*;
 
 import java.util.List;
 import java.util.Optional;

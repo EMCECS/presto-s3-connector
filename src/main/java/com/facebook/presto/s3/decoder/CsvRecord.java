@@ -19,31 +19,30 @@ import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 
 // TODO: https://github.com/EMCECS/presto-s3-connector/issues/27
-public class CsvRecord
-{
+public class CsvRecord {
     public int len;
     public byte[] value;
+    public boolean decoded = false;
 
     int positions;
+
     private final Position[] position;
 
     private final char fieldSep;
-
-    public boolean decoded = false;
 
     private static final byte QUOTE = '"';
 
     private static class Position {
         int pos;
         int len;
+
         Position(int pos, int len) {
             this.pos = pos;
             this.len = len;
         }
     }
 
-    public CsvRecord(char fieldSep)
-    {
+    public CsvRecord(char fieldSep) {
         this.fieldSep = fieldSep;
 
         this.len = 0;
@@ -51,8 +50,7 @@ public class CsvRecord
         this.position = new Position[1024];
     }
 
-    public void decode()
-    {
+    public void decode() {
         positions = 0;
 
         int idx = 0;
@@ -68,14 +66,14 @@ public class CsvRecord
         while (idx < len) {
             // terminate field with separator or end of line
             if ((value[idx] == fieldSep && !quoted) ||
-                    idx+1 == len) {
+                    idx + 1 == len) {
 
                 // code assumes length includes field sep.  adjust if end of line
                 l = idx - p + (value[idx] == fieldSep ? 0 : 1);
 
-                if (value[p] == QUOTE && value[p+l-1] == QUOTE) {
+                if (value[p] == QUOTE && value[p + l - 1] == QUOTE) {
                     p++;
-                    l-=2; // backup before quote and account for p++
+                    l -= 2; // backup before quote and account for p++
                 }
 
                 position[positions++] = new Position(p, l);
@@ -90,40 +88,35 @@ public class CsvRecord
         decoded = true;
     }
 
-    public boolean isNull(int field)
-    {
+    public boolean isNull(int field) {
         if (!decoded) {
             decode();
         }
         return field >= positions || position[field].len == 0;
     }
 
-    public long getLong(int field)
-    {
+    public long getLong(int field) {
         if (!decoded) {
             decode();
         }
         return Long.parseLong(new String(value, position[field].pos, position[field].len));
     }
 
-    public double getDouble(int field)
-    {
+    public double getDouble(int field) {
         if (!decoded) {
             decode();
         }
         return Double.parseDouble(new String(value, position[field].pos, position[field].len));
     }
 
-    public boolean getBoolean(int field)
-    {
+    public boolean getBoolean(int field) {
         if (!decoded) {
             decode();
         }
         return Boolean.parseBoolean(new String(value, position[field].pos, position[field].len));
     }
 
-    public Slice getSlice(int field)
-    {
+    public Slice getSlice(int field) {
         if (!decoded) {
             decode();
         }

@@ -18,7 +18,12 @@ package com.facebook.presto.s3;
 
 import com.facebook.airlift.bootstrap.LifeCycleManager;
 import com.facebook.airlift.log.Logger;
-import com.facebook.presto.spi.connector.*;
+import com.facebook.presto.spi.connector.Connector;
+import com.facebook.presto.spi.connector.ConnectorMetadata;
+import com.facebook.presto.spi.connector.ConnectorPageSinkProvider;
+import com.facebook.presto.spi.connector.ConnectorPageSourceProvider;
+import com.facebook.presto.spi.connector.ConnectorSplitManager;
+import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 import com.facebook.presto.spi.session.PropertyMetadata;
 import com.facebook.presto.spi.transaction.IsolationLevel;
 import com.google.common.collect.ImmutableList;
@@ -75,21 +80,17 @@ public class S3Connector
     }
 
     @Override
-    public ConnectorPageSinkProvider getPageSinkProvider()
-    {
+    public ConnectorPageSinkProvider getPageSinkProvider() {
         return pageSinkProvider;
     }
 
     @Override
-    public ConnectorPageSourceProvider getPageSourceProvider()
-    {
+    public ConnectorPageSourceProvider getPageSourceProvider() {
         return pageSourceProvider;
     }
 
-
     @Override
-    public List<PropertyMetadata<?>> getSessionProperties()
-    {
+    public List<PropertyMetadata<?>> getSessionProperties() {
         return buildSessionPropertyList();
     }
 

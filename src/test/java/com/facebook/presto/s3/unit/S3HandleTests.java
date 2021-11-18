@@ -16,26 +16,25 @@
 
 package com.facebook.presto.s3.unit;
 
-import com.facebook.presto.common.block.Block;
-import com.facebook.presto.common.block.BlockBuilder;
-import com.facebook.presto.common.block.BlockBuilderStatus;
-import com.facebook.presto.common.block.UncheckedBlock;
-import com.facebook.presto.common.function.SqlFunctionProperties;
-import com.facebook.presto.common.type.BigintType;
 import com.facebook.presto.common.type.Type;
-import com.facebook.presto.common.type.TypeSignature;
+import com.facebook.presto.s3.S3Column;
+import com.facebook.presto.s3.S3ConnectorId;
+import com.facebook.presto.s3.S3InsertTableHandle;
+import com.facebook.presto.s3.S3OutputTableHandle;
+import com.facebook.presto.s3.S3TableHandle;
 import com.facebook.presto.spi.SchemaTableName;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.airlift.slice.Slice;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.testng.annotations.Test;
-
-import com.facebook.presto.s3.*;
-
-import java.util.*;
 
 import static org.testng.Assert.*;
 import static com.facebook.presto.common.type.BigintType.BIGINT;
-
 
 public class S3HandleTests {
 
@@ -131,25 +130,25 @@ public class S3HandleTests {
         columnTypes.add(BIGINT);
         columnTypes.add(BIGINT);
         S3InsertTableHandle insertTableHandle = new S3InsertTableHandle(
-                        connectorId.toString(),
-                        schemaName,
-                        tableName,
-                        columnNames,
-                        columnTypes,
-                        tableBucketName,
-                        tableBucketPrefix,
-                        has_header_row,
-                        record_delimiter,
-                        field_delimiter,
-                        objectDataFormat);
+                connectorId.toString(),
+                schemaName,
+                tableName,
+                columnNames,
+                columnTypes,
+                tableBucketName,
+                tableBucketPrefix,
+                has_header_row,
+                record_delimiter,
+                field_delimiter,
+                objectDataFormat);
 
         assertTrue(insertTableHandle.getConnectorId().equalsIgnoreCase(connectorId.toString()));
         assertTrue(insertTableHandle.getSchemaName().equalsIgnoreCase(schemaName));
         assertTrue(insertTableHandle.getTableBucketName().equalsIgnoreCase(tableBucketName));
         assertTrue(insertTableHandle.getTableBucketPrefix().equalsIgnoreCase(tableBucketPrefix));
         assertTrue(insertTableHandle.getTableName().equalsIgnoreCase(tableName));
-        assertEquals(insertTableHandle.getColumnNames().size(),2);
-        assertEquals(insertTableHandle.getColumnTypes().size(),2);
+        assertEquals(insertTableHandle.getColumnNames().size(), 2);
+        assertEquals(insertTableHandle.getColumnTypes().size(), 2);
         assertTrue(insertTableHandle.getObjectDataFormat().equalsIgnoreCase(objectDataFormat));
     }
 
