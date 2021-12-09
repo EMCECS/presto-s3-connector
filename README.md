@@ -6,6 +6,17 @@ Amazon S3 or Amazon Simple Storage Service is a service offered by Amazon Web Se
 
 See the [User Manual](https://prestodb.github.io/docs/current/) for Presto deployment instructions and end user documentation.
 
+## Features
+
+The S3 Presto connector has the following features
+
+- Generic S3 object store queries (hive not required)
+- Supports CSV, JSON, Parquet and Avro input
+- Snappy and gzip compressed files
+- Create table support (CSV and JSON), including 'Create Table AS'
+- Uses Dell Schema Registry (https://github.com/pravega/schema-registry) for dynamic table creation, but also supports static configuration of tables using JSON configuration files
+- S3 Select support
+
 ## Types of S3 Servers Evaluated
 
 The S3 Presto connector has been evaluated with the following S3 compatible object storage servers
@@ -13,6 +24,7 @@ The S3 Presto connector has been evaluated with the following S3 compatible obje
 - Dell Technologies Elastic Cloud Storage [ECS](https://www.delltechnologies.com/en-us/storage/ecs/index.htm)
 - Scality Cloudserver [Scality](https://www.scality.com/)
 - Minio Object Storage [MinIO](https://min.io/)
+
 
 ## Requirements
 
