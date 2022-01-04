@@ -10,12 +10,12 @@ See the [User Manual](https://prestodb.github.io/docs/current/) for Presto deplo
 
 The S3 Presto connector has the following features
 
-- Generic S3 object store queries (hive not required)
-- Supports CSV, JSON, Parquet and Avro input
+- Generic S3 object store queries using the AWS S3 client API (hive not required)
+- Supports CSV, JSON, Parquet and Avro format objects
 - Snappy and gzip compressed files
 - Create table support (CSV and JSON), including 'Create Table AS'
 - Uses Dell Schema Registry (https://github.com/pravega/schema-registry) for dynamic table creation, but also supports static configuration of tables using JSON configuration files
-- S3 Select support
+- S3 Select support for CSV, JSON and Parquet format objects 
 
 ## Types of S3 Servers Evaluated
 
