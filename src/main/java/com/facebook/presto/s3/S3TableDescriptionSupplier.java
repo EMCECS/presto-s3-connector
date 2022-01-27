@@ -35,7 +35,9 @@ import javax.inject.Inject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static com.facebook.presto.s3.S3Const.*;
@@ -65,6 +67,10 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
 
         ImmutableMap.Builder<SchemaTableName, S3Table> builder = ImmutableMap.builder();
         List<Bucket> listOfBuckets = this.accessObject.listBuckets();
+        Set<String> set = listOfBuckets.stream().map(Bucket::getName).map(String::toLowerCase).collect(Collectors.toSet());
+        if(set.size()<listOfBuckets.size()){
+            throw new IllegalArgumentException("Two or more buckets have been found with the same name, but different case of some of the letters");
+        }
         for (Bucket bucket : listOfBuckets) {
             JSONObject sources = new JSONObject();
             S3Table table = this.objectDescriptionCodec.fromJson(
