@@ -69,7 +69,7 @@ public class S3TableDescriptionSupplier implements Supplier<Map<SchemaTableName,
         List<Bucket> listOfBuckets = this.accessObject.listBuckets();
         Set<String> set = listOfBuckets.stream().map(Bucket::getName).map(String::toLowerCase).collect(Collectors.toSet());
         if(set.size()<listOfBuckets.size()){
-            throw new IllegalArgumentException("Duplicate bucket name found");
+            throw new IllegalArgumentException("Two or more buckets have been found with the same name, but different case of some of the letters");
         }
         for (Bucket bucket : listOfBuckets) {
             JSONObject sources = new JSONObject();
